@@ -4,6 +4,7 @@
   // 🧩 子組件引入
   import MapTab from '../tabs/MapTab.vue';
   import DashboardTab from '../tabs/DashboardTab.vue';
+  import D3jsTab from '../tabs/D3jsTab.vue';
 
   export default {
     name: 'UpperView',
@@ -15,6 +16,7 @@
     components: {
       MapTab,
       DashboardTab,
+      D3jsTab,
     },
 
     /**
@@ -56,6 +58,10 @@
       const DashboardTab = ref(null);
       /** 📊 儀表板容器引用 (用於控制滑鼠事件) */
       const dashboardContainerRef = ref(null);
+      /** 📊 D3.js 視圖組件引用 */
+      const D3jsTab = ref(null);
+      /** 📊 D3.js 容器引用 (用於控制滑鼠事件) */
+      const d3jsContainerRef = ref(null);
 
       /**
        * 👀 監聽拖曳狀態和分頁變化 (Watch Dragging State and Tab Changes)
@@ -65,6 +71,7 @@
         [() => props.isPanelDragging, () => props.activeUpperTab],
         ([dragging, tab]) => {
           nextTick(() => {
+            // 處理儀表板容器
             if (dashboardContainerRef.value) {
               if (dragging && tab === 'dashboard') {
                 // 拖曳時禁用儀表板的滑鼠事件
@@ -75,6 +82,25 @@
                 dashboardContainerRef.value.style.pointerEvents = 'auto';
                 console.log(
                   'MainContent: Dashboard container pointer-events set to auto (dragging:',
+                  dragging,
+                  ', tab:',
+                  tab,
+                  ')'
+                );
+              }
+            }
+
+            // 處理 D3.js 容器
+            if (d3jsContainerRef.value) {
+              if (dragging && tab === 'd3js') {
+                // 拖曳時禁用 D3.js 容器的滑鼠事件
+                d3jsContainerRef.value.style.pointerEvents = 'none';
+                console.log('MainContent: D3.js container pointer-events set to none');
+              } else {
+                // 恢復 D3.js 容器的滑鼠事件
+                d3jsContainerRef.value.style.pointerEvents = 'auto';
+                console.log(
+                  'MainContent: D3.js container pointer-events set to auto (dragging:',
                   dragging,
                   ', tab:',
                   tab,
@@ -192,7 +218,9 @@
       return {
         MapTab, // 地圖組件引用
         DashboardTab, // 儀表板組件引用
+        D3jsTab, // D3.js 組件引用
         dashboardContainerRef, // 儀表板容器引用
+        d3jsContainerRef, // D3.js 容器引用
         highlightFeature, // 高亮顯示功能
         resetView, // 重設視圖功能
         fitToTainanBounds, // 適應邊界功能
@@ -232,6 +260,18 @@
           >
             <i class="fas fa-chart-bar"></i>
           </button>
+          <!-- 📈 D3.js 按鈕 (D3.js Button) -->
+          <button
+            class="btn rounded-circle border-0 d-flex align-items-center justify-content-center my-btn-transparent my-font-size-xs"
+            :class="{
+              'my-btn-blue': activeUpperTab === 'd3js',
+            }"
+            @click="$emit('update:activeUpperTab', 'd3js')"
+            style="width: 30px; height: 30px"
+            title="D3.js 數據視覺化"
+          >
+            <i class="fas fa-chart-line"></i>
+          </button>
         </div>
       </div>
 
@@ -260,6 +300,22 @@
         <div style="height: 40px"></div>
         <DashboardTab
           ref="DashboardTab"
+          :containerHeight="contentHeight"
+          :isPanelDragging="isPanelDragging"
+          :activeMarkers="activeMarkers"
+        />
+      </div>
+
+      <!-- D3.js 分頁內容 -->
+      <div
+        v-show="activeUpperTab === 'd3js'"
+        ref="d3jsContainerRef"
+        class="h-100 overflow-auto pt-5"
+      >
+        <!-- 🎛️ 為導航按鈕組預留空間 (Reserve Space for Navigation Buttons) -->
+        <div style="height: 40px"></div>
+        <D3jsTab
+          ref="D3jsTab"
           :containerHeight="contentHeight"
           :isPanelDragging="isPanelDragging"
           :activeMarkers="activeMarkers"

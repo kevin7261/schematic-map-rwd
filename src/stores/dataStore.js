@@ -620,6 +620,14 @@ export const useDataStore = defineStore(
       return allLayers;
     };
 
+    /**
+     * 獲取可用於地圖顯示的圖層（過濾掉 hideFromMap 的圖層）
+     * @returns {Array} 可用於地圖顯示的圖層列表
+     */
+    const getMapLayers = () => {
+      return getAllLayers().filter((layer) => !layer.hideFromMap);
+    };
+
     // ==================== 主要圖層處理函數 ====================
 
     // 控制圖層的顯示/隱藏，並在需要時自動載入資料
@@ -951,6 +959,7 @@ export const useDataStore = defineStore(
       mergeLayersWithStates,
       isYearDataAvailable,
       getAvailableYears,
+      getMapLayers,
     };
   },
   {

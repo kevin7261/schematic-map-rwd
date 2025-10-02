@@ -55,7 +55,7 @@
 
       // 📊 計算屬性：檢查是否有任何圖層可見 (Computed Property: Check if Any Layer is Visible)
       const isAnyLayerVisible = computed(
-        () => dataStore.getAllLayers().some((l) => l.visible && l.geoJsonData) // 檢查所有圖層中是否有可見且有資料的圖層
+        () => dataStore.getMapLayers().some((l) => l.visible && l.geoJsonData) // 檢查地圖圖層中是否有可見且有資料的圖層
       );
 
       // 🏗️ 創建地圖實例函數 (Create Map Instance Function)
@@ -515,7 +515,7 @@
         if (!mapInstance || !isMapReady.value) return;
 
         // 獲取資料存儲中的所有圖層
-        const storeLayers = dataStore.getAllLayers();
+        const storeLayers = dataStore.getMapLayers();
         // 獲取當前地圖上的圖層 ID 列表
         const currentLayerIds = Object.keys(layerGroups);
         // 篩選出可見且有資料的圖層

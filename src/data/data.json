@@ -1,0 +1,70 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "台北市",
+        "count": 150,
+        "category": "主要城市",
+        "population": 2600000
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [121.5654, 25.033]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "台中市",
+        "count": 120,
+        "category": "主要城市",
+        "population": 2800000
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [120.6819, 24.1477]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "高雄市",
+        "count": 100,
+        "category": "主要城市",
+        "population": 2700000
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [120.3119, 22.6209]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "台南市",
+        "count": 80,
+        "category": "歷史城市",
+        "population": 1900000
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [120.1551, 23.1417]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "新北市",
+        "count": 90,
+        "category": "主要城市",
+        "population": 4000000
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [121.6739, 24.9157]
+      }
+    }
+  ]
+}

@@ -13,6 +13,7 @@
 import {
   loadDistrictGeoJson,
   loadPointGeoJson,
+  loadDataLayerGeoJson,
   loadExcelSheet,
   mergeGeoJSONWithExcel,
   calculateClassification,
@@ -263,6 +264,27 @@ function createSpecialLayer(layerConfig, analysisType) {
   return baseLayer;
 }
 
+/**
+ * 創建數據圖層配置（不顯示在 MapTab 中）
+ * @param {string} layerId
+ * @param {string} layerName
+ * @param {string} colorName
+ * @param {string} dataFileName - JSON 數據文件名
+ */
+function createDataLayer(layerId, layerName, colorName, dataFileName) {
+  const baseLayer = createBaseLayer(layerId, layerName, 'point', colorName);
+
+  return {
+    ...baseLayer,
+    geojsonLoader: loadDataLayerGeoJson, // 使用特殊的載入函數
+    geojsonFileName: dataFileName,
+    // 標記為數據圖層，不在 MapTab 中顯示
+    isDataLayer: true,
+    // 標記為不可在地圖上顯示
+    hideFromMap: true,
+  };
+}
+
 // ==================== 主要函數 ====================
 
 /**
@@ -354,6 +376,10 @@ export function createCityPopulationLayers(city) {
     )
   );
 
+  // 添加數據圖層到人口社會圖資群組中
+  const dataLayer = createDataLayer('data_layer', '數據圖層', 'purple', 'data.json');
+  groupLayers.push(dataLayer);
+
   return {
     groupName: '人口社會圖資',
     groupLayers,
@@ -428,7 +454,7 @@ export function createKaohsiungPopulationLayers() {
  * 根據年份和城市動態生成所有圖層配置（新結構）
  * 規則：
  * 1. 分析資料主群組：包含二級統計區、村里、鄉鎮市區子群組
- * 2. 地理資料主群組：包含人口社會圖資子群組
+ * 2. 地理資料主群組：包含人口社會圖資子群組（包含數據圖層）
  * 3. 每個統計區子群組包含：面域 + 點位
  * @param {number} year
  * @param {string} city - '台南市區' | '高雄市區'
@@ -448,7 +474,7 @@ export function generateDynamicLayers(year, city = '台南市區') {
   };
   layers.push(analysisGroup);
 
-  // 2. 地理資料主群組
+  // 2. 地理資料主群組（包含人口社會圖資和數據圖層）
   const geoGroup = {
     groupName: '地理資料',
     subGroups: [createCityPopulationLayers(city)],

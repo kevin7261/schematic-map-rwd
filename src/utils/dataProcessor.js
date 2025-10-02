@@ -1425,6 +1425,55 @@ export function calculateClassification_JoinCounts(geoJsonData, binaryThreshold 
 /**
  * 載入點 GeoJSON 資料（直接使用 geojson 中的數據，不需要合併 Excel）
  */
+export async function loadDataLayerGeoJson(layer) {
+  try {
+    console.log('🔄 載入數據圖層 GeoJSON 資料...');
+
+    const fileName = layer.geojsonFileName;
+    // 數據圖層直接從 /data/ 路徑載入，不使用 geojson 子目錄
+    const dataPath = `/schematic-map-rwd/data/${fileName}`;
+    const response = await fetch(dataPath);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status} - ${dataPath}`);
+    }
+    
+    const geoJsonData = await response.json();
+    
+    // 處理數據圖層的特殊邏輯
+    return await processDataLayerGeoJson(geoJsonData, layer);
+  } catch (error) {
+    console.error('❌ 數據圖層 GeoJSON 數據載入或處理失敗:', error);
+    throw error;
+  }
+}
+
+/**
+ * 處理數據圖層 GeoJSON 數據
+ */
+async function processDataLayerGeoJson(geoJsonData, layer) {
+  // 為每個特徵建立標準化的屬性結構
+  geoJsonData.features.forEach((feature, index) => {
+    // 使用 stationCount 作為 count 值，如果沒有則使用預設值 1
+    const count = feature.properties.stationCount || 1;
+    buildFeatureProperties(feature, index, layer.layerId, layer.layerName, 'name', count);
+  });
+
+  // 建立摘要資料
+  const summaryData = {
+    totalCount: geoJsonData.features.length,
+    districtCount: geoJsonData.features.map(feature => ({
+      name: feature.properties.name,
+      count: feature.properties.stationCount || 1
+    }))
+  };
+
+  return {
+    geoJsonData,
+    summaryData
+  };
+}
+
 export async function loadPointGeoJson(layer) {
   try {
     console.log('🔄 載入點 GeoJSON 資料...');
