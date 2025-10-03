@@ -82,7 +82,7 @@
     const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
 
     // 設定比例尺
-    const maxCount = d3.max(districtCount, (d) => d.count);
+    const maxCount = d3.max(districtCount, (d) => Math.max(0, d.count || 0));
     const xScale = d3.scaleLinear().domain([0, maxCount]).range([0, width]);
 
     /**
@@ -156,7 +156,7 @@
       .attr('class', 'bar')
       .attr('x', 0)
       .attr('y', (d, i) => i * barSpacing + (barSpacing - barHeight) / 2)
-      .attr('width', (d) => xScale(d.count))
+      .attr('width', (d) => Math.max(0, xScale(Math.max(0, d.count || 0))))
       .attr('height', barHeight)
       .attr('fill', 'var(--my-color-blue)');
 
@@ -166,11 +166,11 @@
       .enter()
       .append('text')
       .attr('class', 'label my-font-size-xs')
-      .attr('x', (d) => xScale(d.count) + 5)
+      .attr('x', (d) => Math.max(0, xScale(Math.max(0, d.count || 0))) + 5)
       .attr('y', (d, i) => i * barSpacing + barSpacing / 2)
       .attr('dy', '0.35em')
       .attr('fill', 'var(--my-color-black)')
-      .text((d) => d.count);
+      .text((d) => Math.max(0, d.count || 0));
 
     // 添加區域名稱標籤
     g.selectAll('.district-label')

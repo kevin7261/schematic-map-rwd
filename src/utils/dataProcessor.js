@@ -1433,13 +1433,13 @@ export async function loadDataLayerGeoJson(layer) {
     // 數據圖層直接從 /data/ 路徑載入，不使用 geojson 子目錄
     const dataPath = `/schematic-map-rwd/data/${fileName}`;
     const response = await fetch(dataPath);
-    
+
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status} - ${dataPath}`);
     }
-    
+
     const geoJsonData = await response.json();
-    
+
     // 處理數據圖層的特殊邏輯
     return await processDataLayerGeoJson(geoJsonData, layer);
   } catch (error) {
@@ -1462,15 +1462,15 @@ async function processDataLayerGeoJson(geoJsonData, layer) {
   // 建立摘要資料
   const summaryData = {
     totalCount: geoJsonData.features.length,
-    districtCount: geoJsonData.features.map(feature => ({
+    districtCount: geoJsonData.features.map((feature) => ({
       name: feature.properties.name,
-      count: feature.properties.stationCount || 1
-    }))
+      count: Math.max(0, feature.properties.stationCount || 1), // 確保 count 不為負值
+    })),
   };
 
   return {
     geoJsonData,
-    summaryData
+    summaryData,
   };
 }
 

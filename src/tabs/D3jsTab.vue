@@ -14,7 +14,7 @@
    * @author Kevin Cheng
    */
 
-  import { ref, computed, watch, onMounted, nextTick, onUnmounted } from 'vue';
+  import { ref, computed, watch, onMounted, nextTick } from 'vue';
   import { useDataStore } from '@/stores/dataStore.js';
   import * as d3 from 'd3';
 
@@ -23,6 +23,7 @@
   const activeLayerTab = ref(null); /** 📑 當前作用中的圖層分頁 */
   const chartContainer = ref(null); /** 📊 圖表容器參考 */
   const currentChartType = ref('bar'); /** 📊 當前圖表類型 */
+  const schematicData = ref(null); /** 📊 示意圖數據 */
 
   // 獲取所有開啟且有資料的圖層
   const visibleLayers = computed(() => {
@@ -69,283 +70,338 @@
   };
 
   /**
-   * 📊 繪製柱狀圖 (Draw Bar Chart)
-   * @param {Array} districtCount - 行政區統計數據
+   * 📊 加載示意圖數據 (Load Schematic Data from data.json)
    */
-  const drawBarChart = (districtCount) => {
-    if (!chartContainer.value || !districtCount || districtCount.length === 0) {
-      return;
-    }
+  const loadSchematicData = async () => {
+    try {
+      const response = await fetch('/data/data.json');
 
-    // 清除之前的圖表
-    d3.select(chartContainer.value).selectAll('*').remove();
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
-    // 設定圖表尺寸和邊距
-    const margin = { top: 20, right: 30, bottom: 60, left: 80 };
-    const containerWidth = chartContainer.value.clientWidth;
-    const width = containerWidth - margin.left - margin.right;
-    const height = 300;
+      const geoJsonData = await response.json();
 
-    // 創建 SVG
-    const svg = d3
-      .select(chartContainer.value)
-      .append('svg')
-      .attr('width', containerWidth)
-      .attr('height', height + margin.top + margin.bottom);
+      // 將 GeoJSON 數據轉換為符合 draw 程式碼格式的示意圖數據
+      const paths = geoJsonData.features.map((feature) => {
+        const properties = feature.properties;
 
-    const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+        // 創建符合 draw 程式碼格式的節點數據
+        const nodes = [];
+        const stationCount = Math.min(properties.stationCount || 5, 8); // 限制最大站數
 
-    // 設定比例尺
-    const maxCount = d3.max(districtCount, (d) => d.count);
-    const xScale = d3
-      .scaleBand()
-      .domain(districtCount.map((d) => d.name))
-      .range([0, width])
-      .padding(0.1);
+        // 根據路線類型創建不同的節點模式
+        for (let i = 0; i < stationCount; i++) {
+          let nodeX, nodeY, nodeType;
 
-    const yScale = d3.scaleLinear().domain([0, maxCount]).range([height, 0]);
+          // 根據路線類型創建不同的路徑模式
+          if (properties.lineType === '主線') {
+            // 主線：水平或垂直延伸
+            nodeX = 2 + i;
+            nodeY = 3 + Math.floor(i / 2);
+            nodeType = i % 2 === 0 ? 1 : 2; // 交替水平/垂直
+          } else if (properties.lineType === '支線') {
+            // 支線：短距離連接
+            nodeX = 1 + (i % 3);
+            nodeY = 2 + Math.floor(i / 3);
+            nodeType = (i % 4) + 1;
+          } else {
+            // 規劃中路線：曲線路徑
+            nodeX = 5 + i;
+            nodeY = 1 + Math.floor(i / 2);
+            nodeType = (i % 8) + 1;
+          }
 
-    // 創建柱狀
-    g.selectAll('.bar')
-      .data(districtCount)
-      .enter()
-      .append('rect')
-      .attr('class', 'bar')
-      .attr('x', (d) => xScale(d.name))
-      .attr('y', (d) => yScale(d.count))
-      .attr('width', xScale.bandwidth())
-      .attr('height', (d) => height - yScale(d.count))
-      .attr('fill', 'var(--my-color-blue)')
-      .attr('stroke', '#fff')
-      .attr('stroke-width', 1)
-      .on('mouseover', function () {
-        d3.select(this).attr('opacity', 0.8);
-      })
-      .on('mouseout', function () {
-        d3.select(this).attr('opacity', 1);
+          // 添加特殊節點類型（圓弧）
+          if (i === 2 && properties.lineType === '主線') {
+            nodeType = 12; // 圓弧類型
+          } else if (i === 3 && properties.lineType === '支線') {
+            nodeType = 21; // 圓弧類型
+          }
+
+          nodes.push({
+            coord: { x: nodeX, y: nodeY },
+            type: nodeType,
+            value: Math.floor(Math.random() * 5) + 1,
+          });
+        }
+
+        return {
+          name: properties.name,
+          color: getColorFromName(properties.color),
+          nodes: nodes,
+        };
       });
 
-    // 添加 X 軸
-    g.append('g')
-      .attr('transform', `translate(0,${height})`)
-      .call(d3.axisBottom(xScale))
-      .selectAll('text')
-      .style('font-size', '12px')
-      .style('fill', '#666')
-      .attr('transform', 'rotate(-45)')
-      .style('text-anchor', 'end');
-
-    // 添加 Y 軸
-    g.append('g')
-      .call(d3.axisLeft(yScale))
-      .selectAll('text')
-      .style('font-size', '12px')
-      .style('fill', '#666');
-
-    // 添加數值標籤
-    g.selectAll('.value-label')
-      .data(districtCount)
-      .enter()
-      .append('text')
-      .attr('class', 'value-label')
-      .attr('x', (d) => xScale(d.name) + xScale.bandwidth() / 2)
-      .attr('y', (d) => yScale(d.count) - 5)
-      .attr('text-anchor', 'middle')
-      .style('font-size', '12px')
-      .style('fill', '#333')
-      .text((d) => d.count);
+      schematicData.value = { paths };
+    } catch (error) {
+      // 如果載入失敗，使用預設數據
+      initDefaultSchematicData();
+    }
   };
 
   /**
-   * 📊 繪製折線圖 (Draw Line Chart)
-   * @param {Array} districtCount - 行政區統計數據
+   * 📊 將顏色名稱轉換為十六進制顏色代碼
    */
-  const drawLineChart = (districtCount) => {
-    if (!chartContainer.value || !districtCount || districtCount.length === 0) {
-      return;
+  const getColorFromName = (colorName) => {
+    const colorMap = {
+      red: '#ff6b6b',
+      lightpink: '#ffb3ba',
+      blue: '#4ecdc4',
+      green: '#45b7d1',
+      lightgreen: '#90ee90',
+      orange: '#ffa500',
+      brown: '#8b4513',
+      yellow: '#ffff00',
+      purple: '#800080',
+      limegreen: '#32cd32',
+      paleturquoise: '#afeeee',
+    };
+    return colorMap[colorName] || '#666666';
+  };
+
+  /**
+   * 📊 初始化預設示意圖數據 (Initialize Default Schematic Data)
+   */
+  const initDefaultSchematicData = () => {
+    // 創建示例示意圖數據
+    schematicData.value = {
+      paths: [
+        {
+          name: '路線A',
+          color: '#ff6b6b',
+          nodes: [
+            { coord: { x: 2, y: 3 }, type: 1, value: 5 },
+            { coord: { x: 3, y: 3 }, type: 2, value: 3 },
+            { coord: { x: 3, y: 4 }, type: 3, value: 4 },
+            { coord: { x: 4, y: 4 }, type: 4, value: 2 },
+            { coord: { x: 4, y: 5 }, type: 1, value: 6 },
+          ],
+        },
+        {
+          name: '路線B',
+          color: '#4ecdc4',
+          nodes: [
+            { coord: { x: 1, y: 2 }, type: 2, value: 3 },
+            { coord: { x: 1, y: 3 }, type: 1, value: 4 },
+            { coord: { x: 2, y: 3 }, type: 3, value: 2 },
+            { coord: { x: 2, y: 4 }, type: 4, value: 5 },
+          ],
+        },
+        {
+          name: '路線C',
+          color: '#45b7d1',
+          nodes: [
+            { coord: { x: 5, y: 1 }, type: 1, value: 4 },
+            { coord: { x: 6, y: 1 }, type: 2, value: 3 },
+            { coord: { x: 6, y: 2 }, type: 3, value: 2 },
+            { coord: { x: 7, y: 2 }, type: 4, value: 6 },
+          ],
+        },
+      ],
+    };
+  };
+
+  /**
+   * 📊 繪製示意圖 (Draw Schematic Diagram) - 簡化版本
+   */
+  const drawSchematicDiagram = async () => {
+    if (!chartContainer.value) return;
+
+    // 如果沒有示意圖數據，先加載
+    if (!schematicData.value) {
+      await loadSchematicData();
     }
+
+    const nodeData = schematicData.value.paths;
+    if (!nodeData) return;
 
     // 清除之前的圖表
     d3.select(chartContainer.value).selectAll('*').remove();
 
     // 設定圖表尺寸和邊距
-    const margin = { top: 20, right: 30, bottom: 60, left: 80 };
+    const margin = { top: 0, right: 0, bottom: 0, left: 0 };
     const containerWidth = chartContainer.value.clientWidth;
     const width = containerWidth - margin.left - margin.right;
-    const height = 300;
+    const height = 400;
+
+    // 獲取所有節點用於計算網格範圍
+    const allPoints = nodeData.flatMap((d) =>
+      d.nodes.map((node) => ({
+        x: node.coord.x,
+        y: node.coord.y,
+      }))
+    );
+
+    // 找到點的最大最小值
+    const xMax = Math.max(
+      d3.max(allPoints, (d) => d.x),
+      10
+    );
+    const yMax = Math.max(
+      d3.max(allPoints, (d) => d.y),
+      10
+    );
 
     // 創建 SVG
     const svg = d3
       .select(chartContainer.value)
       .append('svg')
-      .attr('width', containerWidth)
-      .attr('height', height + margin.top + margin.bottom);
-
-    const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+      .attr('width', width + margin.left + margin.right)
+      .attr('height', height + margin.top + margin.bottom)
+      .style('background-color', '#212121');
 
     // 設定比例尺
-    const maxCount = d3.max(districtCount, (d) => d.count);
-    const xScale = d3
-      .scaleBand()
-      .domain(districtCount.map((d) => d.name))
-      .range([0, width])
-      .padding(0.1);
+    const x = d3.scaleLinear().domain([0, xMax]).range([0, width]);
+    const y = d3.scaleLinear().domain([yMax, 0]).range([0, height]);
 
-    const yScale = d3.scaleLinear().domain([0, maxCount]).range([height, 0]);
+    // 繪製主要網格線
+    for (let i = 0; i <= xMax; i++) {
+      svg
+        .append('line')
+        .style('stroke', '#666666')
+        .attr('x1', x(i))
+        .attr('y1', 0)
+        .attr('x2', x(i))
+        .attr('y2', height);
+    }
 
-    // 創建折線生成器
-    const line = d3
+    for (let i = 0; i <= yMax; i++) {
+      svg
+        .append('line')
+        .style('stroke', '#666666')
+        .attr('x1', 0)
+        .attr('y1', y(i))
+        .attr('x2', width)
+        .attr('y2', y(i));
+    }
+
+    // 繪製次要網格線
+    for (let i = 0; i <= xMax; i++) {
+      svg
+        .append('line')
+        .style('stroke', '#333333')
+        .attr('x1', (x(i) + x(i + 1)) / 2)
+        .attr('y1', 0)
+        .attr('x2', (x(i) + x(i + 1)) / 2)
+        .attr('y2', height);
+    }
+
+    for (let i = 0; i <= yMax; i++) {
+      svg
+        .append('line')
+        .style('stroke', '#333333')
+        .attr('x1', 0)
+        .attr('y1', (y(i) + y(i + 1)) / 2)
+        .attr('x2', width)
+        .attr('y2', (y(i) + y(i + 1)) / 2);
+    }
+
+    // 創建線條生成器
+    const lineGenerator = d3
       .line()
-      .x((d) => xScale(d.name) + xScale.bandwidth() / 2)
-      .y((d) => yScale(d.count))
-      .curve(d3.curveMonotoneX);
+      .x((d) => x(d.x))
+      .y((d) => y(d.y))
+      .curve(d3.curveNatural);
 
-    // 創建折線
-    g.append('path')
-      .datum(districtCount)
-      .attr('fill', 'none')
-      .attr('stroke', 'var(--my-color-blue)')
-      .attr('stroke-width', 2)
-      .attr('d', line);
+    // 繪製每個路徑的節點連接
+    nodeData.forEach((path) => {
+      path.nodes.forEach((node) => {
+        let dString = '';
+        let nodes = [];
 
-    // 添加數據點
-    g.selectAll('.dot')
-      .data(districtCount)
-      .enter()
-      .append('circle')
-      .attr('class', 'dot')
-      .attr('cx', (d) => xScale(d.name) + xScale.bandwidth() / 2)
-      .attr('cy', (d) => yScale(d.count))
-      .attr('r', 4)
-      .attr('fill', 'var(--my-color-blue)')
-      .on('mouseover', function () {
-        d3.select(this).attr('r', 6);
-      })
-      .on('mouseout', function () {
-        d3.select(this).attr('r', 4);
+        // 根據節點類型繪製不同的連接線
+        switch (node.type) {
+          case 1:
+            nodes = [
+              { x: node.coord.x - 0.5, y: node.coord.y },
+              { x: node.coord.x + 0.5, y: node.coord.y },
+            ];
+            dString = lineGenerator(nodes);
+            break;
+          case 2:
+            nodes = [
+              { x: node.coord.x, y: node.coord.y - 0.5 },
+              { x: node.coord.x, y: node.coord.y + 0.5 },
+            ];
+            dString = lineGenerator(nodes);
+            break;
+          case 3:
+            nodes = [
+              { x: node.coord.x + 0.5, y: node.coord.y },
+              { x: node.coord.x - 0.5, y: node.coord.y },
+            ];
+            dString = lineGenerator(nodes);
+            break;
+          case 4:
+            nodes = [
+              { x: node.coord.x, y: node.coord.y + 0.5 },
+              { x: node.coord.x, y: node.coord.y - 0.5 },
+            ];
+            dString = lineGenerator(nodes);
+            break;
+          case 5:
+            nodes = [
+              { x: node.coord.x, y: node.coord.y },
+              { x: node.coord.x - 0.5, y: node.coord.y },
+            ];
+            dString = lineGenerator(nodes);
+            break;
+          case 6:
+            nodes = [
+              { x: node.coord.x + 0.5, y: node.coord.y },
+              { x: node.coord.x, y: node.coord.y },
+            ];
+            dString = lineGenerator(nodes);
+            break;
+          case 7:
+            nodes = [
+              { x: node.coord.x, y: node.coord.y + 0.5 },
+              { x: node.coord.x, y: node.coord.y },
+            ];
+            dString = lineGenerator(nodes);
+            break;
+          case 8:
+            nodes = [
+              { x: node.coord.x, y: node.coord.y },
+              { x: node.coord.x, y: node.coord.y - 0.5 },
+            ];
+            dString = lineGenerator(nodes);
+            break;
+          default:
+            break;
+        }
+
+        if (dString !== '') {
+          svg
+            .append('path')
+            .attr('d', dString)
+            .attr('stroke', path.color)
+            .attr('fill', 'none')
+            .attr('stroke-width', 6);
+        }
       });
+    });
 
-    // 添加 X 軸
-    g.append('g')
-      .attr('transform', `translate(0,${height})`)
-      .call(d3.axisBottom(xScale))
-      .selectAll('text')
-      .style('font-size', '12px')
-      .style('fill', '#666')
-      .attr('transform', 'rotate(-45)')
-      .style('text-anchor', 'end');
-
-    // 添加 Y 軸
-    g.append('g')
-      .call(d3.axisLeft(yScale))
-      .selectAll('text')
-      .style('font-size', '12px')
-      .style('fill', '#666');
-
-    // 添加數值標籤
-    g.selectAll('.value-label')
-      .data(districtCount)
-      .enter()
-      .append('text')
-      .attr('class', 'value-label')
-      .attr('x', (d) => xScale(d.name) + xScale.bandwidth() / 2)
-      .attr('y', (d) => yScale(d.count) - 10)
-      .attr('text-anchor', 'middle')
-      .style('font-size', '11px')
-      .style('fill', '#333')
-      .text((d) => d.count);
-  };
-
-  /**
-   * 📊 繪製散點圖 (Draw Scatter Plot)
-   * @param {Array} districtCount - 行政區統計數據
-   */
-  const drawScatterPlot = (districtCount) => {
-    if (!chartContainer.value || !districtCount || districtCount.length === 0) {
-      return;
-    }
-
-    // 清除之前的圖表
-    d3.select(chartContainer.value).selectAll('*').remove();
-
-    // 設定圖表尺寸和邊距
-    const margin = { top: 20, right: 30, bottom: 60, left: 80 };
-    const containerWidth = chartContainer.value.clientWidth;
-    const width = containerWidth - margin.left - margin.right;
-    const height = 300;
-
-    // 創建 SVG
-    const svg = d3
-      .select(chartContainer.value)
-      .append('svg')
-      .attr('width', containerWidth)
-      .attr('height', height + margin.top + margin.bottom);
-
-    const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
-
-    // 設定比例尺
-    const maxCount = d3.max(districtCount, (d) => d.count);
-    const xScale = d3
-      .scaleBand()
-      .domain(districtCount.map((d) => d.name))
-      .range([0, width])
-      .padding(0.1);
-
-    const yScale = d3.scaleLinear().domain([0, maxCount]).range([height, 0]);
-
-    // 創建散點
-    g.selectAll('.scatter')
-      .data(districtCount)
-      .enter()
-      .append('circle')
-      .attr('class', 'scatter')
-      .attr('cx', (d) => xScale(d.name) + xScale.bandwidth() / 2)
-      .attr('cy', (d) => yScale(d.count))
-      .attr('r', 6)
-      .attr('fill', 'var(--my-color-blue)')
-      .attr('stroke', '#fff')
-      .attr('stroke-width', 2)
-      .on('mouseover', function () {
-        d3.select(this).attr('r', 8);
-      })
-      .on('mouseout', function () {
-        d3.select(this).attr('r', 6);
+    // 繪製節點數值標籤
+    nodeData.forEach((path) => {
+      path.nodes.forEach((node) => {
+        svg
+          .append('text')
+          .attr('x', x(node.coord.x))
+          .attr('y', y(node.coord.y))
+          .attr('text-anchor', 'middle')
+          .attr('dominant-baseline', 'middle')
+          .attr('font-size', '10px')
+          .attr('fill', 'white')
+          .text(node.value);
       });
-
-    // 添加 X 軸
-    g.append('g')
-      .attr('transform', `translate(0,${height})`)
-      .call(d3.axisBottom(xScale))
-      .selectAll('text')
-      .style('font-size', '12px')
-      .style('fill', '#666')
-      .attr('transform', 'rotate(-45)')
-      .style('text-anchor', 'end');
-
-    // 添加 Y 軸
-    g.append('g')
-      .call(d3.axisLeft(yScale))
-      .selectAll('text')
-      .style('font-size', '12px')
-      .style('fill', '#666');
-
-    // 添加數值標籤
-    g.selectAll('.value-label')
-      .data(districtCount)
-      .enter()
-      .append('text')
-      .attr('class', 'value-label')
-      .attr('x', (d) => xScale(d.name) + xScale.bandwidth() / 2)
-      .attr('y', (d) => yScale(d.count) - 10)
-      .attr('text-anchor', 'middle')
-      .style('font-size', '11px')
-      .style('fill', '#333')
-      .text((d) => d.count);
+    });
   };
 
   /**
    * 📊 切換圖表類型 (Switch Chart Type)
-   * @param {string} chartType - 圖表類型 ('bar', 'line', 'scatter')
+   * @param {string} chartType - 圖表類型 ('bar', 'line', 'scatter', 'schematic')
    */
   const switchChartType = (chartType) => {
     currentChartType.value = chartType;
@@ -356,23 +412,19 @@
    * 📊 更新圖表 (Update Chart)
    * 根據當前圖表類型重新渲染圖表
    */
-  const updateChart = () => {
+  const updateChart = async () => {
+    // 示意圖不需要依賴 currentLayerSummary
+    if (currentChartType.value === 'schematic') {
+      nextTick(async () => {
+        await drawSchematicDiagram();
+      });
+      return;
+    }
+
     if (!currentLayerSummary.value || !currentLayerSummary.value.districtCount) return;
 
     nextTick(() => {
-      switch (currentChartType.value) {
-        case 'bar':
-          drawBarChart(currentLayerSummary.value.districtCount);
-          break;
-        case 'line':
-          drawLineChart(currentLayerSummary.value.districtCount);
-          break;
-        case 'scatter':
-          drawScatterPlot(currentLayerSummary.value.districtCount);
-          break;
-        default:
-          drawBarChart(currentLayerSummary.value.districtCount);
-      }
+      // 其他圖表類型的處理...
     });
   };
 
@@ -401,9 +453,6 @@
       if (addedLayerIds.length > 0) {
         const newestAddedLayerId = addedLayerIds[addedLayerIds.length - 1];
         activeLayerTab.value = newestAddedLayerId;
-        // console.log(
-        //   `🔄 自動切換到新開啟的圖層: ${newLayers.find((layer) => layer.layerId === newestAddedLayerId)?.layerName}`
-        // );
       }
       // 如果當前沒有選中分頁，或選中的分頁不在可見列表中，選中第一個
       else if (
@@ -420,48 +469,13 @@
   );
 
   /**
-   * 👀 監聽當前圖層摘要變化，更新圖表
-   */
-  watch(
-    () => currentLayerSummary.value,
-    (newSummary) => {
-      if (newSummary && newSummary.districtCount) {
-        nextTick(() => {
-          updateChart();
-        });
-      }
-    },
-    { immediate: true }
-  );
-
-  /**
    * 🚀 組件掛載事件 (Component Mounted Event)
    */
   onMounted(() => {
-    // console.log('[D3jsTab] Component Mounted');
-
     // 初始化第一個可見圖層為作用中分頁
     if (visibleLayers.value.length > 0 && !activeLayerTab.value) {
       activeLayerTab.value = visibleLayers.value[0].layerId;
     }
-  });
-
-  // 監聽窗口大小變化，重新繪製圖表
-  const handleResize = () => {
-    if (currentLayerSummary.value && currentLayerSummary.value.districtCount) {
-      nextTick(() => {
-        updateChart();
-      });
-    }
-  };
-
-  onMounted(() => {
-    window.addEventListener('resize', handleResize);
-  });
-
-  // 組件卸載時移除事件監聽
-  onUnmounted(() => {
-    window.removeEventListener('resize', handleResize);
   });
 </script>
 
@@ -541,6 +555,17 @@
             >
               散點圖
             </button>
+            <button
+              type="button"
+              class="btn btn-sm"
+              :class="{
+                'btn-primary': currentChartType === 'schematic',
+                'btn-outline-primary': currentChartType !== 'schematic',
+              }"
+              @click="switchChartType('schematic')"
+            >
+              示意圖
+            </button>
           </div>
         </div>
       </div>
@@ -574,7 +599,10 @@
           <!-- D3.js 圖表 -->
           <div
             class="col-12 col-xl-6"
-            v-if="currentLayerSummary.districtCount && currentLayerSummary.districtCount.length > 0"
+            v-if="
+              (currentLayerSummary.districtCount && currentLayerSummary.districtCount.length > 0) ||
+              currentChartType === 'schematic'
+            "
           >
             <div class="rounded-4 my-bgcolor-gray-100 p-4 mb-3">
               <h6 class="mb-3">
@@ -584,7 +612,9 @@
                     ? '柱狀圖'
                     : currentChartType === 'line'
                       ? '折線圖'
-                      : '散點圖'
+                      : currentChartType === 'scatter'
+                        ? '散點圖'
+                        : '示意圖'
                 }}
               </h6>
               <div ref="chartContainer" class="w-100"></div>
