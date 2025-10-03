@@ -1,17 +1,50 @@
+/** * 🗺️ 中間主要內容面板組件 (Middle Main Content Panel Component) * * 功能說明 (Features): * 1. 📊
+分層佈局管理：管理上半部（地圖/儀表板）和下半部（表格）的垂直佈局 * 2. 🖱️
+拖曳調整功能：提供垂直拖曳調整器，讓使用者動態調整上下面板高度比例 * 3. 📱
+響應式設計：根據螢幕尺寸和面板狀態自動調整佈局 * 4. 🔄
+事件轉發：將子組件事件轉發給父組件，實現組件間通信 * 5. 🎯 高亮功能：提供地圖要素高亮顯示的統一介面
+* 6. 📏 尺寸計算：動態計算各面板的實際像素高度 * * 技術特點 (Technical Features): * - 使用 Vue 3
+Composition API 進行狀態管理 * - 支援動態面板高度調整和響應式佈局 * - 實現完整的拖曳調整功能 * -
+提供事件轉發和狀態同步機制 * - 整合多個子組件的協調工作 * * 佈局結構 (Layout Structure): * -
+上半部：UpperView（地圖、儀表板、D3.js 圖表等） * - 中間：垂直拖曳調整器 * -
+下半部：BottomView（資料表格、樣式設定等） * * @file MiddleView.vue * @version 2.0.0 * @author Kevin
+Cheng * @since 1.0.0 */
 <script setup>
+  // ==================== 📦 第三方庫引入 (Third-Party Library Imports) ====================
+
+  /**
+   * Vue 3 Composition API 核心功能引入
+   * 提供響應式數據、計算屬性、生命週期鉤子等功能
+   *
+   * @see https://vuejs.org/
+   */
   import {
-    ref,
-    computed,
-    onMounted,
-    onUnmounted,
-    defineProps,
-    defineEmits,
-    defineExpose,
-    watch,
+    ref, // 響應式引用
+    computed, // 計算屬性
+    onMounted, // 組件掛載生命週期
+    onUnmounted, // 組件卸載生命週期
+    defineProps, // 定義組件屬性
+    defineEmits, // 定義組件事件
+    defineExpose, // 暴露組件方法
+    watch, // 監聽器
   } from 'vue';
 
-  // 🧩 組件引入
+  // ==================== 🧩 子組件引入 (Subcomponent Imports) ====================
+
+  /**
+   * 上半部區域組件引入
+   * 包含地圖、儀表板、D3.js 圖表等主要內容
+   *
+   * @see ./UpperView.vue
+   */
   import UpperView from './UpperView.vue';
+
+  /**
+   * 下半部區域組件引入
+   * 包含資料表格、樣式設定等輔助功能
+   *
+   * @see ./BottomView.vue
+   */
   import BottomView from './BottomView.vue';
 
   // --- 📥 組件屬性定義 (Component Props) ---

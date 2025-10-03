@@ -1,7 +1,45 @@
+/** * 📊 右側分析面板組件 (Right Analysis Panel Component) * * 功能說明 (Features): * 1. 📋
+屬性資訊顯示：顯示選中地圖要素的詳細屬性資訊 * 2. 📊 圖層資訊管理：提供圖層統計資訊和項目數量顯示 *
+3. 🔄 分頁切換：支援屬性分頁和圖層資訊分頁的切換 * 4. 📱 響應式設計：適配不同螢幕尺寸的顯示需求 * 5.
+🎯 狀態同步：與全域狀態管理系統保持同步 * 6. 🎨 視覺化增強：提供美觀的分頁導航和內容展示 * *
+技術特點 (Technical Features): * - 使用 Vue 2 Options API 進行組件管理 * - 整合 Pinia 狀態管理系統 *
+- 支援響應式佈局和動態尺寸調整 * - 提供完整的事件處理和狀態同步 * - 整合多個分頁組件的協調工作 * *
+包含分頁 (Included Tabs): * - PropertiesTab：屬性分頁，顯示選中要素的詳細屬性 * -
+SpatialAnalysisTab：圖層資訊分頁，顯示圖層統計和項目數量 * * @file RightView.vue * @version 2.0.0 *
+@author Kevin Cheng * @since 1.0.0 */
 <script>
+  // ==================== 📦 第三方庫引入 (Third-Party Library Imports) ====================
+
+  /**
+   * 屬性分頁組件引入
+   * 提供選中地圖要素的詳細屬性顯示功能
+   *
+   * @see ../tabs/PropertiesTab.vue
+   */
   import PropertiesTab from '../tabs/PropertiesTab.vue';
+
+  /**
+   * 空間分析分頁組件引入
+   * 提供圖層資訊和統計數據顯示功能
+   *
+   * @see ../tabs/SpatialAnalysisTab.vue
+   */
   import SpatialAnalysisTab from '../tabs/SpatialAnalysisTab.vue';
+
+  /**
+   * Pinia 狀態管理庫引入
+   * 提供集中式狀態管理和跨組件數據共享
+   *
+   * @see ../stores/dataStore.js
+   */
   import { useDataStore } from '../stores/dataStore';
+
+  /**
+   * Vue Composition API 核心功能引入
+   * 提供響應式數據和計算屬性功能
+   *
+   * @see https://vuejs.org/
+   */
   import { computed, watch } from 'vue';
 
   export default {

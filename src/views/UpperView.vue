@@ -1,8 +1,39 @@
+/** * 🌟 上半部區域組件 (Upper Area Component) * * 功能說明 (Features): * 1. 📊
+分頁管理：管理儀表板和 D3.js 圖表的分頁切換 * 2. 🗺️ 地圖顯示：提供地圖視覺化和互動功能 * 3. 📈
+數據視覺化：整合 D3.js 進行各種圖表繪製 * 4. 📱 響應式設計：適配不同螢幕尺寸的顯示需求 * 5. 🎯
+高亮功能：提供地圖要素高亮顯示功能 * 6. 🔄 狀態同步：與父組件保持狀態同步 * * 技術特點 (Technical
+Features): * - 使用 Vue 2 Options API 進行組件管理 * - 整合多個分頁組件，提供統一的介面 * -
+支援響應式佈局和動態尺寸調整 * - 提供完整的事件處理和狀態管理 * - 整合地圖和圖表視覺化功能 * *
+包含分頁 (Included Tabs): * - DashboardTab：儀表板分頁，顯示統計圖表和摘要資訊 * - D3jsTab：D3.js
+圖表分頁，提供進階數據視覺化 * * @file UpperView.vue * @version 2.0.0 * @author Kevin Cheng * @since
+1.0.0 */
 <script>
-  // 🔧 Vue Composition API 引入
+  // ==================== 📦 第三方庫引入 (Third-Party Library Imports) ====================
+
+  /**
+   * Vue Composition API 核心功能引入
+   * 提供響應式數據、生命週期鉤子等功能
+   *
+   * @see https://vuejs.org/
+   */
   import { ref, watch, nextTick } from 'vue';
-  // 🧩 子組件引入
+
+  // ==================== 🧩 子組件引入 (Subcomponent Imports) ====================
+
+  /**
+   * 儀表板分頁組件引入
+   * 提供統計圖表和數據摘要顯示功能
+   *
+   * @see ../tabs/DashboardTab.vue
+   */
   import DashboardTab from '../tabs/DashboardTab.vue';
+
+  /**
+   * D3.js 圖表分頁組件引入
+   * 提供進階數據視覺化和圖表繪製功能
+   *
+   * @see ../tabs/D3jsTab.vue
+   */
   import D3jsTab from '../tabs/D3jsTab.vue';
 
   export default {
