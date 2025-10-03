@@ -56,6 +56,7 @@
     'update:tableSearchQuery', // 更新搜尋查詢
     'sort-table', // 表格排序
     'highlight-on-map', // 在地圖上高亮顯示
+    'feature-selected', // 選中特徵事件
 
     // 🔄 操作相關事件
     'reset-view', // 重設視圖
@@ -351,6 +352,7 @@
         :isPanelDragging="isOverallDragging"
         @update:activeBottomTab="$emit('update:activeBottomTab', $event)"
         @highlight-on-map="$emit('highlight-on-map', $event)"
+        @feature-selected="$emit('feature-selected', $event)"
         @reset-view="$emit('reset-view')"
       />
     </div>

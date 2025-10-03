@@ -17,7 +17,6 @@
  * - Bootstrap 5 - 響應式 UI 框架
  * - Font Awesome - 圖示字體庫
  * - D3.js - 數據視覺化庫
- * - Turf.js - 地理空間運算庫
  *
  * 架構設計 (Architecture Design):
  * - 採用 Composition API 提供更好的 TypeScript 支援
@@ -72,7 +71,6 @@ import router from './router';
  * 版本：5.3.0
  */
 import 'bootstrap/dist/css/bootstrap.min.css';
-
 
 /**
  * Font Awesome 圖示庫

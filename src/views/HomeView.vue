@@ -838,6 +838,7 @@
               @update:activeBottomTab="activeBottomTab = $event"
               @highlight-on-map="handleHighlight"
               @highlight-feature="handleHighlight"
+              @feature-selected="handleFeatureSelected"
             />
           </div>
         </div>

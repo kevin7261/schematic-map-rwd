@@ -1240,10 +1240,18 @@ async function processDataLayerGeoJson(geoJsonData, layer) {
       lineNames: geoJsonData.map((line) => line.name),
     };
 
+    // 為示意圖數據建立 tableData，每個路線作為一個項目
+    const tableData = geoJsonData.map((line, index) => ({
+      '#': index + 1,
+      color: line.color,
+      name: line.name,
+      nodes: line.nodes,
+    }));
+
     return {
       geoJsonData: null, // 示意圖數據不需要地圖顯示
       summaryData,
-      tableData: null,
+      tableData,
     };
   }
 
