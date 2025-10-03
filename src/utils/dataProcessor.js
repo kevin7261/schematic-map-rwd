@@ -1229,6 +1229,30 @@ export async function loadDataLayerGeoJson(layer) {
  * 處理數據圖層 GeoJSON 數據
  */
 async function processDataLayerGeoJson(geoJsonData, layer) {
+  // 檢查是否為示意圖節點格式
+  if (Array.isArray(geoJsonData) && geoJsonData.length > 0 && geoJsonData[0].nodes) {
+    // 這是示意圖節點格式，不需要處理為地圖圖層
+    console.log('📊 載入示意圖節點數據，共', geoJsonData.length, '條路線');
+
+    // 建立摘要資料
+    const summaryData = {
+      totalLines: geoJsonData.length,
+      totalNodes: geoJsonData.reduce((sum, line) => sum + line.nodes.length, 0),
+      lineNames: geoJsonData.map((line) => line.name),
+    };
+
+    return {
+      geoJsonData: null, // 示意圖數據不需要地圖顯示
+      summaryData,
+      tableData: null,
+    };
+  }
+
+  // 標準 GeoJSON 格式處理
+  if (!geoJsonData.features) {
+    throw new Error('無效的 GeoJSON 格式：缺少 features 屬性');
+  }
+
   // 為每個特徵建立標準化的屬性結構
   geoJsonData.features.forEach((feature, index) => {
     // 使用 stationCount 作為 count 值，如果沒有則使用預設值 1

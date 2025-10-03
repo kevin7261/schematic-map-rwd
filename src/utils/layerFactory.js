@@ -10,122 +10,18 @@
  * - 使用規則：人口分佈圖層一律置底（最後 push），確保列表排序穩定。
  */
 
-import {
-  loadDistrictGeoJson,
-  loadPointGeoJson,
-  loadDataLayerGeoJson,
-  loadExcelSheet,
-  mergeGeoJSONWithExcel,
-  calculateClassification,
-  loadPolygonGeoJson,
-} from './dataProcessor.js';
-
-import { calculatePysdaAnalysis, calculateMSTDBSCANAnalysis } from './pysda.js';
+import { loadDataLayerGeoJson, loadPolygonGeoJson } from './dataProcessor.js';
 
 // ==================== 配置常數 ====================
-
-/**
- * 城市配置映射
- *
- * 說明：
- * - geojsonFiles：該城市不同層級的 GeoJSON 檔名（相對於 public/data/geojson）。
- * - excelSheetPatterns：用於產生 Excel 工作表名稱的規則（輸入 yearShort，例如 '24'）。
- * - mergeFields：GeoJSON 與 Excel 合併時使用的鍵值欄位。
- * - thresholds：空間分析 Join Counts 所需的二元分類閾值。
- */
-const CITY_CONFIGS = {
-  台南市區: {
-    geojsonFiles: {
-      village: '113年12月行政區人口統計_村里_台南市區.geojson',
-      code2: '113年12月行政區人口統計_二級統計區_台南市區.geojson',
-      township: '113年12月行政區人口統計_鄉鎮市區_台南市區.geojson',
-    },
-    excelSheetPatterns: {
-      village: (yearShort) => `${yearShort}_台南市區_合併位置_村里`,
-      code2: (yearShort) => `${yearShort}_台南市區_合併位置_二級統計區`,
-      township: (yearShort) => `${yearShort}_台南市區_合併位置_鄉鎮市區`,
-    },
-    mergeFields: {
-      village: 'VILLAGE',
-      code2: 'CODE2',
-      township: 'TOWN',
-    },
-    thresholds: {
-      village: null, // 自動計算為 (min + max) / 2
-      code2: null, // 自動計算為 (min + max) / 2
-      township: null, // 自動計算為 (min + max) / 2
-    },
-  },
-  高雄市區: {
-    geojsonFiles: {
-      village: '113年12月行政區人口統計_村里_高雄市區.geojson',
-      code2: '113年12月行政區人口統計_二級統計區_高雄市區.geojson',
-      township: '113年12月行政區人口統計_鄉鎮市區_高雄市區.geojson',
-    },
-    excelSheetPatterns: {
-      village: () => '14_高雄市區_合併位置_村里', // 高雄市區的 _1 版本只到 2014 年
-      code2: () => '14_高雄市區_合併位置_二級統計區', // 高雄市區的 _2 版本只到 2014 年
-      township: () => '16_高雄市區_合併位置_鄉鎮市區', // 高雄市區的合併位置只到 2016 年
-    },
-    mergeFields: {
-      village: 'VILLAGE',
-      code2: 'CODE2',
-      township: 'TOWN',
-    },
-    thresholds: {
-      village: null, // 自動計算為 (min + max) / 2
-      code2: null, // 自動計算為 (min + max) / 2
-      township: null, // 自動計算為 (min + max) / 2
-    },
-  },
-};
 
 /**
  * 圖層類型配置
  *
  * 統一定義不同「語意層級」的顯示名稱與預設屬性。
  * 顏色規則：
- * - 面域：統一使用 lime 顏色
- * - 點位：統一使用 green 顏色
  * - 人口分佈：統一使用 orange 顏色
  */
 const LAYER_TYPES = {
-  // 面域圖層 - 統一使用 lime 顏色
-  POLYGON_LAYER: {
-    code2: {
-      layerName: '二級統計區',
-      colorName: 'lime',
-      type: 'polygon',
-    },
-    village: {
-      layerName: '村里',
-      colorName: 'lime',
-      type: 'polygon',
-    },
-    township: {
-      layerName: '鄉鎮市區',
-      colorName: 'lime',
-      type: 'polygon',
-    },
-  },
-  // 點位圖層 - 統一使用 green 顏色
-  POINT_LAYER: {
-    code2: {
-      layerName: '二級統計區',
-      colorName: 'green',
-      type: 'point',
-    },
-    village: {
-      layerName: '村里',
-      colorName: 'green',
-      type: 'point',
-    },
-    township: {
-      layerName: '鄉鎮市區',
-      colorName: 'green',
-      type: 'point',
-    },
-  },
   // 人口分佈圖層 - 統一使用 orange 顏色
   GEO_LAYER: {
     code2: {
@@ -174,41 +70,6 @@ function createBaseLayer(layerId, layerName, type, colorName) {
 }
 
 /**
- * 創建分析圖層配置
- * @param {string} layerId
- * @param {{layerName:string,type:string,colorName:string}} layerConfig
- * @param {{geojsonFiles:Object,excelSheetPatterns:Object,mergeFields:Object,thresholds:Object}} cityConfig
- * @param {'village'|'code2'|'township'} level
- * @param {string} yearShort - 年份後兩碼，如 '98','15','24'
- */
-function createAnalysisLayer(layerId, layerConfig, cityConfig, level, yearShort) {
-  const baseLayer = createBaseLayer(
-    layerId,
-    layerConfig.layerName,
-    layerConfig.type,
-    layerConfig.colorName
-  );
-
-  return {
-    ...baseLayer,
-    legendData_SpatialLag: null,
-    legendData_JoinCounts: null,
-    geojsonLoader: loadDistrictGeoJson,
-    excelSheetLoader: loadExcelSheet,
-    mergeFunction: mergeGeoJSONWithExcel,
-    classificationFunction: calculateClassification,
-    geojsonFileName: cityConfig.geojsonFiles[level],
-    excelFileName: 'Dengue Daily_台南市區_高雄市區.xlsx',
-    excelSheetName: cityConfig.excelSheetPatterns[level](yearShort),
-    geojsonMergeField: cityConfig.mergeFields[level],
-    excelMergeField: 'name',
-    binaryThreshold: cityConfig.thresholds[level],
-    valueField: 'count',
-    isAnalysisLayer: true,
-  };
-}
-
-/**
  * 創建人口分佈圖層配置（僅載入 GeoJSON，不做分析）
  * @param {string} layerId
  * @param {{layerName:string,type:string}} layerConfig
@@ -225,41 +86,6 @@ function createPopulationLayer(layerId, layerConfig, geojsonFileName, colorName)
     // 標記為人口分佈圖層，供樣式與圖例選擇使用
     isPopulationLayer: true,
   };
-}
-
-/**
- * 創建特殊分析圖層配置（點位）
- * @param {{layerId:string,layerName:string,type:string,colorName:string}} layerConfig
- * @param {'POINTS'} analysisType
- */
-function createSpecialLayer(layerConfig, analysisType) {
-  const baseLayer = createBaseLayer(
-    layerConfig.layerId,
-    layerConfig.layerName,
-    layerConfig.type,
-    layerConfig.colorName
-  );
-
-  if (analysisType === 'POINTS') {
-    // 純點位圖層（不進行分析）
-    return {
-      ...baseLayer,
-      geojsonLoader: loadPointGeoJson,
-      geojsonFileName: '', // 將由調用者設置
-      // 啟用點位的雙分析模式（PySDA + MSTDBSCAN）
-      isPointCombinedLayer: true,
-      pysdaAnalysisFunction: calculatePysdaAnalysis,
-      mstdbscanAnalysisFunction: calculateMSTDBSCANAnalysis,
-      // 結果容器
-      pysdaResults: null,
-      pysdaSummary: null,
-      pysdaFigureData: null,
-      mstdbscanResults: null,
-      mstdbscanSummary: null,
-    };
-  }
-
-  return baseLayer;
 }
 
 /**
@@ -284,64 +110,6 @@ function createDataLayer(layerId, layerName, colorName, dataFileName) {
 }
 
 // ==================== 主要函數 ====================
-
-/**
- * 根據統計區級別創建包含面域和點位的圖層群組
- * @param {number} year - 例如 1998、2015、2024
- * @param {string} city - '台南市區' | '高雄市區'
- * @param {string} districtLevel - '二級統計區' | '村里' | '鄉鎮市區'
- * @returns {{groupName:string, groupLayers:Array<object>}}
- */
-export function createDistrictLevelGroup(year, city = '台南市區', districtLevel) {
-  const yearShort = String(year).slice(-2);
-  const cityConfig = CITY_CONFIGS[city] || CITY_CONFIGS['台南市區'];
-  const cityFolder = city === '台南市區' ? '台南市區' : '高雄市區';
-
-  let districtType, pointFileName;
-
-  switch (districtLevel) {
-    case '二級統計區':
-      districtType = 'code2';
-      pointFileName = `${cityFolder}_二級統計區_點位_2014-2024/${cityFolder}_二級統計區_點位_${yearShort}.geojson`;
-      break;
-    case '村里':
-      districtType = 'village';
-      pointFileName = `${cityFolder}_居住村里_點位_2014-2024/${cityFolder}_居住村里_點位_${yearShort}.geojson`;
-      break;
-    case '鄉鎮市區':
-      districtType = 'township';
-      pointFileName = `${cityFolder}_居住鄉鎮_點位_2014-2024/${cityFolder}_居住鄉鎮_點位_${yearShort}.geojson`;
-      break;
-    default:
-      throw new Error(`未知的統計區級別: ${districtLevel}`);
-  }
-
-  // 創建面域圖層
-  const polygonLayer = createAnalysisLayer(
-    `${yearShort}_${city}_${districtLevel}_面域`,
-    LAYER_TYPES.POLYGON_LAYER[districtType],
-    cityConfig,
-    districtType,
-    yearShort
-  );
-  polygonLayer.layerName = '面域';
-
-  // 創建點位圖層
-  const pointLayerConfig = {
-    ...LAYER_TYPES.POINT_LAYER[districtType],
-    layerId: `POINTS_${districtLevel}_${city}_${year}`,
-  };
-  const pointLayer = createSpecialLayer(pointLayerConfig, 'POINTS');
-  pointLayer.geojsonFileName = pointFileName;
-  pointLayer.layerName = '點位';
-
-  const groupLayers = [polygonLayer, pointLayer];
-
-  return {
-    groupName: districtLevel,
-    groupLayers,
-  };
-}
 
 /**
  * 創建城市人口分佈圖層配置
@@ -384,76 +152,12 @@ export function createCityPopulationLayers(city) {
   };
 }
 
-/**
- * 向後兼容函數：創建點位圖層配置（已棄用，請使用 createDistrictLevelGroup）
- * @deprecated 請使用 createDistrictLevelGroup 替代
- * @returns {{groupName:string, groupLayers:Array<object>}}
- */
-export function createPointAnalysisLayers() {
-  // 向後兼容：返回空群組
-  // eslint-disable-next-line no-console
-  console.warn('createPointAnalysisLayers 已棄用，請使用新的按統計區分組的結構');
-  return {
-    groupName: '點位分析 (已棄用)',
-    groupLayers: [],
-  };
-}
-
-/**
- * 向後兼容函數：創建面域圖層配置（已棄用，請使用 createDistrictLevelGroup）
- * @deprecated 請使用 createDistrictLevelGroup 替代
- * @returns {{groupName:string, groupLayers:Array<object>}}
- */
-export function createCityYearBasedLayers() {
-  // 向後兼容：返回空群組
-  // eslint-disable-next-line no-console
-  console.warn('createCityYearBasedLayers 已棄用，請使用新的按統計區分組的結構');
-  return {
-    groupName: '面域分析 (已棄用)',
-    groupLayers: [],
-  };
-}
-
-/**
- * 向後兼容：高雄市區點位分析圖層
- * @param {number} year - 年份
- * @returns {{groupName:string, groupLayers:Array<object>}}
- */
-export function createKaohsiungStaticLayers(year) {
-  return createPointAnalysisLayers(year, '高雄市區');
-}
-
-// ==================== 向後兼容函數 ====================
-
-/**
- * 向後兼容：台南年份群組
- */
-export function createTainanYearBasedLayers(year) {
-  return createCityYearBasedLayers(year, '台南市區');
-}
-
-/**
- * 向後兼容：台南人口分佈群組
- */
-export function createTainanPopulationLayers() {
-  return createCityPopulationLayers('台南市區');
-}
-
-/**
- * 向後兼容：高雄人口分佈群組
- */
-export function createKaohsiungPopulationLayers() {
-  return createCityPopulationLayers('高雄市區');
-}
-
 // ==================== 動態圖層生成 ====================
 
 /**
- * 根據年份和城市動態生成所有圖層配置（新結構）
+ * 根據年份和城市動態生成所有圖層配置（只保留地理資料）
  * 規則：
- * 1. 分析資料主群組：包含二級統計區、村里、鄉鎮市區子群組
- * 2. 地理資料主群組：包含人口社會圖資子群組（包含數據圖層）
- * 3. 每個統計區子群組包含：面域 + 點位
+ * 1. 地理資料主群組：包含人口社會圖資子群組（包含數據圖層）
  * @param {number} year
  * @param {string} city - '台南市區' | '高雄市區'
  * @returns {Array<{groupName:string, subGroups:Array<object>}>}
@@ -461,18 +165,7 @@ export function createKaohsiungPopulationLayers() {
 export function generateDynamicLayers(year, city = '台南市區') {
   const layers = [];
 
-  // 1. 分析資料主群組
-  const analysisGroup = {
-    groupName: '分析資料',
-    subGroups: [
-      createDistrictLevelGroup(year, city, '二級統計區'),
-      createDistrictLevelGroup(year, city, '村里'),
-      createDistrictLevelGroup(year, city, '鄉鎮市區'),
-    ],
-  };
-  layers.push(analysisGroup);
-
-  // 2. 地理資料主群組（包含人口社會圖資和數據圖層）
+  // 地理資料主群組（包含人口社會圖資和數據圖層）
   const geoGroup = {
     groupName: '地理資料',
     subGroups: [createCityPopulationLayers(city)],
