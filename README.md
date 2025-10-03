@@ -3,7 +3,6 @@
 <div align="center">
 
 ![Vue.js](https://img.shields.io/badge/Vue.js-3.2.13-4FC08D?style=for-the-badge&logo=vue.js&logoColor=white)
-![Leaflet](https://img.shields.io/badge/Leaflet-1.9.0-199900?style=for-the-badge&logo=leaflet&logoColor=white)
 ![D3.js](https://img.shields.io/badge/D3.js-7.8.0-FF6600?style=for-the-badge&logo=d3.js&logoColor=white)
 ![Bootstrap](https://img.shields.io/badge/Bootstrap-5.3.0-7952B3?style=for-the-badge&logo=bootstrap&logoColor=white)
 ![Pinia](https://img.shields.io/badge/Pinia-2.1.0-FFD859?style=for-the-badge&logo=pinia&logoColor=black)
@@ -49,7 +48,7 @@ epidemic analysis**
 **登革熱空間分析視覺化系統**是一個專為登革熱疫情分析而設計的現代化 Web 應用程式。本系統以 2014 年台南市登革熱疫情為案例，整合了多種先進的空間統計方法，提供直觀的視覺化介面，讓研究人員能夠深入分析疾病傳播模式、識別疫情熱點，以及追蹤時空演化特徵。
 
 本專案採用 Vue.js 3 + Composition
-API 架構，結合 Leaflet 地圖引擎、D3.js 數據視覺化、Bootstrap 5
+API 架構，結合 D3.js 數據視覺化、Bootstrap 5
 UI 框架，以及 Pinia 狀態管理，打造了一個功能完整、性能優異的地理空間分析平台。
 
 ### 🎯 應用場景
@@ -193,7 +192,6 @@ UI 框架，以及 Pinia 狀態管理，打造了一個功能完整、性能優�
 | **Vue.js**     | 3.2.13 | 前端框架       | [Vue.js](https://vuejs.org/)                | 主要前端框架，使用 Composition API 架構      |
 | **Vue Router** | 4.5.1  | 路由管理       | [Vue Router](https://router.vuejs.org/)     | 單頁應用路由，支援程式碼分割和懶載入         |
 | **Pinia**      | 2.1.0  | 狀態管理       | [Pinia](https://pinia.vuejs.org/)           | 集中式狀態管理，管理圖層、分析結果和用戶設定 |
-| **Leaflet**    | 1.9.0  | 地圖引擎       | [Leaflet](https://leafletjs.com/)           | 互動式地圖渲染，支援多底圖和圖層管理         |
 | **D3.js**      | 7.8.0  | 數據視覺化     | [D3.js](https://d3js.org/)                  | 統計圖表繪製，Moran Plot 和密度分布圖        |
 | **Bootstrap**  | 5.3.0  | UI 框架        | [Bootstrap](https://getbootstrap.com/)      | 響應式佈局系統和 UI 組件                     |
 | **Turf.js**    | 7.2.0  | 地理計算       | [Turf.js](https://turfjs.org/)              | 地理空間計算，距離測量和幾何運算             |
@@ -646,7 +644,7 @@ schematic-map-rwd/
 
 **`src/tabs/MapTab.vue`** - 地圖標籤頁組件
 
-- **功能**：Leaflet 地圖渲染、圖層管理、互動操作
+- **功能**：地圖渲染、圖層管理、互動操作
 - **特色**：多底圖支援、圖層透明度控制
 - **應用**：地理數據視覺化和空間查詢
 
@@ -1214,7 +1212,7 @@ actions: {
 ```javascript
 // 地圖狀態
 state: {
-  map: null,            // Leaflet 地圖實例
+  map: null,            // 地圖實例
   center: [23.0, 120.0], // 地圖中心
   zoom: 8,              // 縮放級別
   baseLayers: {},       // 底圖圖層
@@ -1547,7 +1545,6 @@ A: 確保 SPA 路由配置正確：
 感謝以下開源專案和工具的支持：
 
 - [Vue.js](https://vuejs.org/) - 漸進式 JavaScript 框架
-- [Leaflet](https://leafletjs.com/) - 開源地圖庫
 - [D3.js](https://d3js.org/) - 數據驅動文檔
 - [Bootstrap](https://getbootstrap.com/) - CSS 框架
 - [Pinia](https://pinia.vuejs.org/) - Vue 狀態管理

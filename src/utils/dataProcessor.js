@@ -7,7 +7,7 @@
  * 3. 🎨 值域分級與顏色指定：支援多種分類方法和顏色方案
  * 4. 📋 數據預處理：點/面資料的標準化處理
  * 5. 📊 表格/摘要資料建構：生成統計摘要和數據表格
- * 6. 🧮 空間分析數據準備：為空間統計分析準備數據
+ * 6. 🧮 數據預處理：為統計分析準備數據
  *
  * 支援的數據格式 (Supported Data Formats):
  * - GeoJSON：地理空間數據標準格式
@@ -851,7 +851,6 @@ export async function loadDistrictGeoJson(layer) {
       tableData: geoJsonData.features.map((f) => ({ ...f.properties.tableData })),
       summaryData: { totalCount: geoJsonData.features.length },
       legendData: null,
-      spatialAnalysisData: null,
     };
   } catch (error) {
     console.error('❌ GeoJSON 數據載入或處理失敗:', error);
@@ -1346,7 +1345,6 @@ export async function loadPointGeoJson(layer) {
       tableData: geoJsonData.features.map((f) => ({ ...f.properties.tableData })),
       summaryData,
       legendData: null,
-      spatialAnalysisData: null,
     };
   } catch (error) {
     console.error('❌ 點 GeoJSON 數據載入或處理失敗:', error);
@@ -1858,7 +1856,6 @@ export async function loadPolygonGeoJson(layer) {
       summaryData,
       legendData,
       ...populationLegends, // 展開所有人口屬性圖例
-      spatialAnalysisData: null,
     };
   } catch (error) {
     console.error('❌ 多邊形 GeoJSON 載入或處理失敗:', error);

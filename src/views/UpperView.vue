@@ -133,43 +133,43 @@
       /**
        * 🎯 高亮顯示指定地圖特徵 (Highlight Feature on Map)
        * 如果當前不在地圖分頁，會自動切換到地圖分頁再執行高亮
-       * 注意：已移除 Leaflet 功能，此函數現在為空函數
+       * 注意：地圖功能已移除，此函數現在為空函數
        *
        * @param {Object} highlightData - 包含 layerId 和 id 的高亮數據物件
        */
       const highlightFeature = (highlightData) => {
         console.log('🎯 UpperView: highlightFeature called with data:', highlightData);
         console.log('🎯 highlightFeature: 地圖功能已移除，無需高亮顯示');
-        // 已移除 Leaflet 功能，不需要高亮顯示
+        // 地圖功能已移除，不需要高亮顯示
       };
 
       /**
        * 🔄 重設地圖視圖 (Reset Map View)
        * 將地圖恢復到初始視圖狀態
-       * 注意：已移除 Leaflet 功能，此函數現在為空函數
+       * 注意：地圖功能已移除，此函數現在為空函數
        */
       const resetView = () => {
-        // 已移除 Leaflet 功能，不需要重設視圖
+        // 地圖功能已移除，不需要重設視圖
         console.log('🔄 resetView: 地圖功能已移除，無需重設視圖');
       };
 
       /**
        * 🗺️ 適應台南地區邊界 (Fit to Tainan Bounds)
        * 調整地圖視圖以完整顯示台南地區
-       * 注意：已移除 Leaflet 功能，此函數現在為空函數
+       * 注意：地圖功能已移除，此函數現在為空函數
        */
       const fitToTainanBounds = () => {
-        // 已移除 Leaflet 功能，不需要適應邊界
+        // 地圖功能已移除，不需要適應邊界
         console.log('🗺️ fitToTainanBounds: 地圖功能已移除，無需適應邊界');
       };
 
       /**
        * 📏 手動刷新地圖尺寸 (Manually Refresh Map Size)
        * 當容器大小變化但自動偵測失效時使用
-       * 注意：已移除 Leaflet 功能，此函數現在為空函數
+       * 注意：地圖功能已移除，此函數現在為空函數
        */
       const invalidateMapSize = () => {
-        // 已移除 Leaflet 功能，不需要刷新地圖尺寸
+        // 地圖功能已移除，不需要刷新地圖尺寸
         console.log('🔄 invalidateMapSize: 地圖功能已移除，無需刷新尺寸');
       };
 

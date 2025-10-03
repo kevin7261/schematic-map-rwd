@@ -5,7 +5,6 @@
  * 1. 🏙️ 使用者選擇的城市與年份管理
  * 2. 🗺️ 動態生成圖層群組（委託 layerFactory）
  * 3. 👁️ 圖層顯示狀態與資料載入流程控制
- * 4. 🎨 空間分析顏色模式管理（Spatial Lag / Join Counts）
  * 5. 📊 選中要素和圖層的狀態管理
  * 6. 🔄 分析結果的存儲和更新
  * 7. 📈 統計數據的計算和快取
@@ -26,7 +25,6 @@
  * - layers: 圖層列表和配置
  * - selectedFeature: 當前選中的地理要素
  * - selectedLayer: 當前選中的圖層
- * - analysisResults: 空間分析結果
  * - colorModes: 顏色模式配置
  * - loadingStates: 載入狀態管理
  *
@@ -90,7 +88,6 @@ import {
  * 支援的圖層類型：
  * - 人口社會圖資：GeoJSON 地理數據
  * - 合併圖層：GeoJSON + Excel 統計數據
- * - 分析圖層：空間分析結果
  * - 時序圖層：多年份數據
  *
  * @class LayerProcessor
@@ -163,56 +160,8 @@ class LayerProcessor {
   }
 
   /**
-   * 處理點位雙分析圖層（PySDA + MSTDBSCAN）
-   * 對點位數據進行時空點擴散分析和時空動態聚類分析
-   * @param {Object} layer - 圖層配置對象
-   * @returns {number} - 處理的要素數量
-   * @throws {Error} - 當載入或處理過程中發生錯誤時
-   */
-  async processPointCombinedLayer(layer) {
-    const geojsonResult = await layer.geojsonLoader(layer);
-
-    const pysdaResult = layer.pysdaAnalysisFunction(geojsonResult.geoJsonData, {
-      ttitle: '發病日',
-      tunit: 'day',
-      T1: 6,
-      T2: 23,
-      SR: 300,
-      resample: 9,
-      confidence: 0.8,
-    });
-
-    const mstdbscanResult = layer.mstdbscanAnalysisFunction(geojsonResult.geoJsonData, {
-      ttitle: '發病日',
-      tunit: 'day',
-      eps_spatial: 300,
-      eps_temporalLow: 1,
-      eps_temporalHigh: 2,
-      min_pts: 3,
-      movingRatio: 0.1,
-      areaRatio: 0.1,
-    });
-
-    // 更新圖層資料（保留圖層的表格與摘要供屬性面板使用）
-    this.updateLayerData(layer, {
-      geoJsonData: geojsonResult.geoJsonData,
-      tableData: geojsonResult.tableData,
-      summaryData: geojsonResult.summaryData,
-      // PySDA
-      pysdaResults: pysdaResult.data,
-      pysdaSummary: pysdaResult.summary,
-      pysdaFigureData: pysdaResult.figureData,
-      // MSTDBSCAN
-      mstdbscanResults: mstdbscanResult.data,
-      mstdbscanSummary: mstdbscanResult.summary,
-    });
-
-    return geojsonResult.geoJsonData.features.length;
-  }
-
-  /**
    * 處理僅載入 GeoJSON 的圖層
-   * 載入 GeoJSON 數據但不進行額外的空間分析
+   * 載入 GeoJSON 數據
    * @param {Object} layer - 圖層配置對象
    * @returns {number} - 處理的要素數量
    * @throws {Error} - 當載入過程中發生錯誤時
@@ -386,8 +335,6 @@ export const useDataStore = defineStore(
                     excelSheetLoader: layer.excelSheetLoader,
                     mergeFunction: layer.mergeFunction,
                     classificationFunction: layer.classificationFunction,
-                    pysdaAnalysisFunction: layer.pysdaAnalysisFunction,
-                    mstdbscanAnalysisFunction: layer.mstdbscanAnalysisFunction,
                   };
                 }
                 return layer;
@@ -410,8 +357,6 @@ export const useDataStore = defineStore(
                   excelSheetLoader: layer.excelSheetLoader,
                   mergeFunction: layer.mergeFunction,
                   classificationFunction: layer.classificationFunction,
-                  pysdaAnalysisFunction: layer.pysdaAnalysisFunction,
-                  mstdbscanAnalysisFunction: layer.mstdbscanAnalysisFunction,
                 };
               }
               return layer;
@@ -585,13 +530,6 @@ export const useDataStore = defineStore(
             if (layer.excelSheetLoader && layer.mergeFunction) {
               dataCount = await layerProcessor.processExcelMergedLayer(layer);
             } else if (
-              layer.isPointCombinedLayer &&
-              layer.geojsonLoader &&
-              layer.pysdaAnalysisFunction &&
-              layer.mstdbscanAnalysisFunction
-            ) {
-              dataCount = await layerProcessor.processPointCombinedLayer(layer);
-            } else if (
               layer.geojsonLoader &&
               !layer.excelSheetLoader &&
               !layer.classificationFunction
@@ -627,11 +565,6 @@ export const useDataStore = defineStore(
             legendData_P_CNT: layer.legendData_P_CNT,
             legendData_M_CNT: layer.legendData_M_CNT,
             legendData_F_CNT: layer.legendData_F_CNT,
-            pysdaResults: layer.pysdaResults,
-            pysdaSummary: layer.pysdaSummary,
-            pysdaFigureData: layer.pysdaFigureData,
-            mstdbscanResults: layer.mstdbscanResults,
-            mstdbscanSummary: layer.mstdbscanSummary,
           });
         } catch (error) {
           console.error(`❌ 載入圖層 "${layer.layerName}" 失敗:`, error);

@@ -243,14 +243,10 @@
 
   /**
    * 🔄 重設地圖視圖 (Reset Map View)
-   * 透過 mainContentRef 呼叫地圖重設功能
-   * 將地圖恢復到預設的縮放等級和中心位置
+   * MapTab已移除，此功能不再需要
    */
   const resetMapTab = () => {
-    if (mainContentRef.value) {
-      console.log('🔄 MiddleView: 呼叫 resetMapTab');
-      mainContentRef.value.resetView(); // 假設 UpperView 有 resetView 方法
-    }
+    console.log('🔄 MiddleView: MapTab已移除，resetMapTab功能已停用');
   };
 
   /**

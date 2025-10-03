@@ -16,7 +16,7 @@
       LayersTab, // 圖層列表分頁組件
       DataTableTab, // 資料表格分頁組件
       PropertiesTab, // 物件屬性分頁組件
-      SpatialAnalysisTab, // 空間分析分頁組件
+      SpatialAnalysisTab, // 圖層資訊分頁組件
     },
 
     /**
@@ -25,7 +25,7 @@
      */
     props: {
       activeTab: { type: String, default: 'layers' },
-      activeRightTab: { type: String, default: 'spatial-analysis' },
+      activeRightTab: { type: String, default: 'layer-info' },
       activeBottomTab: { type: String, default: 'table' },
     },
 
@@ -39,6 +39,7 @@
       'update:activeBottomTab', // 更新底部分頁
       'highlight-on-map', // 在地圖上高亮顯示
       'highlight-feature', // 高亮顯示特徵
+      'feature-selected', // 特徵選中事件
     ],
 
     /**
@@ -57,7 +58,7 @@
         { id: 'layers', name: '圖層', icon: 'fas fa-layer-group' },
         { id: 'table', name: '資料表', icon: 'fas fa-table' },
         { id: 'properties', name: '屬性', icon: 'fa-solid fa-location-dot' },
-        { id: 'spatial-analysis', name: '空間分析', icon: 'fas fa-chart-area' },
+        { id: 'layer-info', name: '圖層資訊', icon: 'fas fa-info-circle' },
       ]);
 
       /**
@@ -83,8 +84,8 @@
 
         return {
           'min-height': `${baseHeight}px`,
-          'height': `${baseHeight + extraPadding}px`,
-          'padding': `8px 4px ${extraPadding}px 4px`,
+          height: `${baseHeight + extraPadding}px`,
+          padding: `8px 4px ${extraPadding}px 4px`,
         };
       });
 
@@ -161,7 +162,10 @@
 
       <!-- 📊 資料表格分頁內容 -->
       <div v-show="activeTab === 'table'" class="h-100">
-        <DataTableTab @highlight-on-map="$emit('highlight-on-map', $event)" />
+        <DataTableTab
+          @highlight-on-map="$emit('highlight-on-map', $event)"
+          @feature-selected="$emit('feature-selected', $event)"
+        />
       </div>
 
       <!-- 📈 物件屬性分頁內容 -->
@@ -169,8 +173,8 @@
         <PropertiesTab @highlight-feature="$emit('highlight-feature', $event)" />
       </div>
 
-      <!-- 📊 空間分析分頁內容 -->
-      <div v-show="activeTab === 'spatial-analysis'" class="h-100">
+      <!-- 📊 圖層資訊分頁內容 -->
+      <div v-show="activeTab === 'layer-info'" class="h-100">
         <SpatialAnalysisTab />
       </div>
     </div>

@@ -44,7 +44,7 @@ function createBaseLayer(layerId, layerName, type, colorName) {
 }
 
 /**
- * 創建數據圖層配置（不顯示在 MapTab 中）
+ * 創建數據圖層配置（數據圖層）
  * @param {string} layerId
  * @param {string} layerName
  * @param {string} colorName
@@ -57,7 +57,7 @@ function createDataLayer(layerId, layerName, colorName, dataFileName) {
     ...baseLayer,
     geojsonLoader: loadDataLayerGeoJson, // 使用特殊的載入函數
     geojsonFileName: dataFileName,
-    // 標記為數據圖層，不在 MapTab 中顯示
+    // 標記為數據圖層
     isDataLayer: true,
     // 標記為不可在地圖上顯示
     hideFromMap: true,

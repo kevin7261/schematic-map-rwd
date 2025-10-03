@@ -2,6 +2,9 @@
   import { ref, onMounted } from 'vue';
   import { useDataStore } from '../stores/dataStore';
 
+  // 定義組件事件
+  const emit = defineEmits(['feature-selected']);
+
   const dataStore = ref([]); /** 📊 地鐵線路數據 */
   const sortState = ref({ key: null, order: 'asc' }); /** 📊 排序狀態 */
 
@@ -155,6 +158,9 @@
 
     console.log('設置 selectedFeature:', feature);
     piniaDataStore.setSelectedFeature(feature);
+
+    // 觸發 feature-selected 事件，讓 HomeView 自動切換到屬性標籤
+    emit('feature-selected', feature);
   };
 
   /**

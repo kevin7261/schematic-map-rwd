@@ -13,7 +13,7 @@
    * 架構說明：
    * - 左側面板 (LeftView)：圖層管理和控制項
    * - 中間面板 (MiddleView/UpperView)：地圖顯示和儀表板
-   * - 右側面板 (RightView)：屬性資訊和空間分析
+   * - 右側面板 (RightView)：屬性資訊和圖層資訊
    * - 下方面板 (ResponsiveLowerView)：資料表格和樣式設定
    *
    * 響應式設計：
@@ -81,7 +81,7 @@
       /** 📋 底部分頁狀態（表格/樣式） */
       const activeBottomTab = ref('table');
       /** 📊 右側分頁狀態（屬性/分析） */
-      const activeRightTab = ref('spatial-analysis');
+      const activeRightTab = ref('layer-info');
       /** 📱 響應式下半部分頁狀態（行動版/平板版） */
       const activeLowerTab = ref('layers');
 
@@ -173,9 +173,8 @@
        * 將地圖恢復到初始狀態
        */
       const resetView = () => {
-        if (middlePanelRef.value) {
-          middlePanelRef.value.resetMapTab();
-        }
+        // MapTab已移除，此功能不再需要
+        console.log('MapTab已移除，resetView功能已停用');
       };
 
       // 🔧 拖拽調整功能 (Drag Resize Functions)

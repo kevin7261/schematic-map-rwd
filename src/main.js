@@ -7,7 +7,7 @@
  * 3. 🗺️ 設定 Vue Router 4 路由導航系統
  * 4. 📦 配置 Pinia 狀態管理系統
  * 5. 🌍 掛載應用程式到 DOM 容器中
- * 6. 🔧 整合第三方庫（Leaflet、Font Awesome、Bootstrap）
+ * 6. 🔧 整合第三方庫（Font Awesome、Bootstrap）
  * 7. 🐛 提供開發環境調試資訊輸出
  *
  * 技術棧 (Technology Stack):
@@ -15,10 +15,9 @@
  * - Vue Router 4 - 單頁應用路由管理
  * - Pinia - Vue 3 官方推薦的狀態管理庫
  * - Bootstrap 5 - 響應式 UI 框架
- * - Leaflet - 開源地圖庫
  * - Font Awesome - 圖示字體庫
  * - D3.js - 數據視覺化庫
- * - Turf.js - 地理空間分析庫
+ * - Turf.js - 地理空間運算庫
  *
  * 架構設計 (Architecture Design):
  * - 採用 Composition API 提供更好的 TypeScript 支援
@@ -74,7 +73,6 @@ import router from './router';
  */
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-// Leaflet 地圖功能已移除
 
 /**
  * Font Awesome 圖示庫
@@ -182,5 +180,4 @@ console.log('🚀 登革熱分析平台已啟動');
 console.log('📦 Pinia 狀態管理已初始化');
 console.log('🗺️ Vue Router 路由系統已就緒');
 console.log('🎨 Bootstrap 5 UI 框架已載入');
-console.log('🗺️ Leaflet 地圖庫已準備就緒');
 console.log('🔤 Font Awesome 圖示庫已載入');

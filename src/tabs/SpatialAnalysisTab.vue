@@ -84,7 +84,7 @@
       if (newLayerId) {
         const layer = dataStore.findLayerById(newLayerId);
         if (layer && layer.geoJsonData) {
-          performSpatialAnalysis(layer);
+          loadLayerInfo(layer);
         }
       } else {
         analysisResults.value = null;
@@ -94,109 +94,49 @@
   );
 
   /**
-   * 📊 執行空間分析 (Perform Spatial Analysis)
-   * @param {Object} layer - 要分析的圖層
+   * 📊 載入圖層基本資訊 (Load Layer Basic Information)
+   * @param {Object} layer - 要載入的圖層
    */
-  const performSpatialAnalysis = async (layer) => {
+  const loadLayerInfo = async (layer) => {
     if (!layer || !layer.geoJsonData) {
-      console.warn('無法執行分析：圖層數據不存在');
+      console.warn('無法載入資訊：圖層數據不存在');
       return;
     }
 
     isLoadingAnalysis.value = true;
 
     try {
-      // 模擬分析過程（實際應用中這裡會是真正的空間分析算法）
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // 模擬載入過程
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
       const features = layer.geoJsonData.features;
 
-      // 基本統計分析
+      // 基本統計資訊
       const stats = {
         totalFeatures: features.length,
-        totalPopulation: features.reduce((sum, f) => sum + (f.properties.population || 0), 0),
+        totalPopulation: features.reduce((sum, f) => sum + (f.properties.P_CNT || 0), 0),
         totalCount: features.reduce((sum, f) => sum + (f.properties.count || 0), 0),
         avgPopulation: 0,
         avgCount: 0,
-        categories: {},
-        spatialDistribution: {
-          north: 0,
-          south: 0,
-          east: 0,
-          west: 0,
-        },
       };
 
       // 計算平均值
-      stats.avgPopulation = stats.totalPopulation / stats.totalFeatures;
-      stats.avgCount = stats.totalCount / stats.totalFeatures;
-
-      // 統計分類
-      features.forEach((feature) => {
-        const category = feature.properties.category || '未知';
-        stats.categories[category] = (stats.categories[category] || 0) + 1;
-
-        // 簡單的空間分布分析（基於經緯度）
-        const [lon, lat] = feature.geometry.coordinates;
-        if (lat > 24.5) stats.spatialDistribution.north++;
-        else if (lat < 23.5) stats.spatialDistribution.south++;
-        if (lon > 121) stats.spatialDistribution.east++;
-        else if (lon < 120.5) stats.spatialDistribution.west++;
-      });
-
-      // 計算密度和變異係數
-      const populationValues = features.map((f) => f.properties.population || 0);
-      const countValues = features.map((f) => f.properties.count || 0);
-
-      const populationStd = Math.sqrt(
-        populationValues.reduce((sum, val) => sum + Math.pow(val - stats.avgPopulation, 2), 0) /
-          populationValues.length
-      );
-      const countStd = Math.sqrt(
-        countValues.reduce((sum, val) => sum + Math.pow(val - stats.avgCount, 2), 0) /
-          countValues.length
-      );
-
-      stats.coefficientOfVariation = {
-        population: populationStd / stats.avgPopulation,
-        count: countStd / stats.avgCount,
-      };
-
-      // 空間聚集分析（簡化版）
-      const distances = [];
-      for (let i = 0; i < features.length; i++) {
-        for (let j = i + 1; j < features.length; j++) {
-          const [lon1, lat1] = features[i].geometry.coordinates;
-          const [lon2, lat2] = features[j].geometry.coordinates;
-          const distance = Math.sqrt(Math.pow(lon2 - lon1, 2) + Math.pow(lat2 - lat1, 2));
-          distances.push(distance);
-        }
+      if (stats.totalFeatures > 0) {
+        stats.avgPopulation = stats.totalPopulation / stats.totalFeatures;
+        stats.avgCount = stats.totalCount / stats.totalFeatures;
       }
-
-      stats.spatialClustering = {
-        avgDistance: distances.reduce((sum, d) => sum + d, 0) / distances.length,
-        minDistance: Math.min(...distances),
-        maxDistance: Math.max(...distances),
-      };
 
       analysisResults.value = {
         layerName: layer.layerName,
         timestamp: new Date().toLocaleString(),
         statistics: stats,
-        features: features.map((f) => ({
-          name: f.properties.name,
-          population: f.properties.population,
-          count: f.properties.count,
-          category: f.properties.category,
-          coordinates: f.geometry.coordinates,
-        })),
       };
 
-      console.log('空間分析完成:', analysisResults.value);
+      console.log('圖層資訊載入完成:', analysisResults.value);
     } catch (error) {
-      console.error('空間分析失敗:', error);
+      console.error('載入圖層資訊失敗:', error);
       analysisResults.value = {
-        error: '分析過程中發生錯誤',
+        error: '載入過程中發生錯誤',
         details: error.message,
       };
     } finally {
@@ -216,7 +156,7 @@
 </script>
 
 <template>
-  <!-- 📊 空間分析分頁視圖組件 -->
+  <!-- 📊 圖層資訊分頁視圖組件 -->
   <div class="d-flex flex-column my-bgcolor-gray-200 h-100">
     <!-- 📑 圖層分頁導航 -->
     <div v-if="visibleLayers.length > 0" class="">
@@ -250,29 +190,40 @@
     <div v-if="visibleLayers.length > 0" class="my-bgcolor-white h-100">
       <div>
         <div class="p-3">
-          <!-- 分析狀態區域 -->
+          <!-- 載入狀態區域 -->
           <div v-if="isLoadingAnalysis" class="pb-2">
-            <div class="my-title-xs-gray pb-1">分析狀態</div>
+            <div class="my-title-xs-gray pb-1">載入狀態</div>
             <div class="my-content-sm-black pb-1">
               <i class="fas fa-spinner fa-spin me-2"></i>
-              正在分析圖層數據...
+              正在載入圖層資訊...
             </div>
           </div>
 
-          <!-- 分析結果顯示區域 -->
+          <!-- 圖層資訊顯示區域 -->
           <template v-if="analysisResults && !analysisResults.error">
-            <!-- 只顯示總要素數 -->
             <div class="pb-2">
               <div class="my-title-xs-gray pb-1">總要素數</div>
               <div class="my-content-sm-black pb-1">
                 {{ analysisResults.statistics.totalFeatures }}
               </div>
             </div>
+            <div class="pb-2">
+              <div class="my-title-xs-gray pb-1">總人口數</div>
+              <div class="my-content-sm-black pb-1">
+                {{ analysisResults.statistics.totalPopulation.toLocaleString() }}
+              </div>
+            </div>
+            <div class="pb-2">
+              <div class="my-title-xs-gray pb-1">平均人口</div>
+              <div class="my-content-sm-black pb-1">
+                {{ Math.round(analysisResults.statistics.avgPopulation).toLocaleString() }}
+              </div>
+            </div>
           </template>
 
           <!-- 錯誤顯示 -->
           <div v-else-if="analysisResults && analysisResults.error" class="pb-2">
-            <div class="my-title-xs-gray pb-1">分析錯誤</div>
+            <div class="my-title-xs-gray pb-1">載入錯誤</div>
             <div class="my-content-sm-black pb-1">{{ analysisResults.error }}</div>
             <div v-if="analysisResults.details" class="my-content-xs-gray pb-1">
               詳細信息：{{ analysisResults.details }}
@@ -281,7 +232,7 @@
 
           <!-- 初始狀態 -->
           <div v-else-if="!isLoadingAnalysis" class="pb-2">
-            <div class="my-title-xs-gray pb-1">分析狀態</div>
+            <div class="my-title-xs-gray pb-1">載入狀態</div>
             <div class="my-content-sm-black pb-1">等待圖層數據載入...</div>
           </div>
         </div>

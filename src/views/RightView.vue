@@ -8,13 +8,13 @@
     name: 'RightView',
     components: {
       PropertiesTab, // 物件屬性分頁組件
-      SpatialAnalysisTab, // 空間分析分頁組件
+      SpatialAnalysisTab, // 圖層資訊分頁組件
     },
     props: {
       /** 🔗 當前作用中的右側分頁標籤 */
       activeRightTab: {
         type: String,
-        default: 'spatial-analysis',
+        default: 'layer-info',
       },
       /** 📈 分析結果清單數據 */
       analysisList: {
@@ -55,7 +55,7 @@
 
       // 📊 可用的分頁列表
       const availableTabs = [
-        { id: 'spatial-analysis', name: '空間分析', icon: 'fas fa-chart-area' },
+        { id: 'layer-info', name: '圖層資訊', icon: 'fas fa-info-circle' },
         { id: 'properties', name: '屬性', icon: 'fa-solid fa-location-dot' },
       ];
 
@@ -145,8 +145,8 @@
         />
       </div>
 
-      <!-- 📊 空間分析分頁內容 -->
-      <div v-show="$props.activeRightTab === 'spatial-analysis'" class="h-100">
+      <!-- 📊 圖層資訊分頁內容 -->
+      <div v-show="$props.activeRightTab === 'layer-info'" class="h-100">
         <SpatialAnalysisTab />
       </div>
     </div>
