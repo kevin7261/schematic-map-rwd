@@ -34,6 +34,18 @@
     };
   };
 
+  /**
+   * 📊 取得當前圖層的項目數量 (Get Current Layer Item Count)
+   */
+  const getCurrentLayerItemCount = () => {
+    if (!activeLayerTab.value) return 0;
+    const currentLayer = visibleLayers.value.find(
+      (layer) => layer.layerId === activeLayerTab.value
+    );
+    if (!currentLayer || !currentLayer.tableData) return 0;
+    return currentLayer.tableData.length;
+  };
+
   // 記錄上一次的圖層列表用於比較
   const previousLayers = ref([]);
 
@@ -200,23 +212,11 @@
           </div>
 
           <!-- 圖層資訊顯示區域 -->
-          <template v-if="analysisResults && !analysisResults.error">
+          <template v-if="visibleLayers.length > 0">
             <div class="pb-2">
-              <div class="my-title-xs-gray pb-1">總要素數</div>
+              <div class="my-title-xs-gray pb-1">項目數量</div>
               <div class="my-content-sm-black pb-1">
-                {{ analysisResults.statistics.totalFeatures }}
-              </div>
-            </div>
-            <div class="pb-2">
-              <div class="my-title-xs-gray pb-1">總人口數</div>
-              <div class="my-content-sm-black pb-1">
-                {{ analysisResults.statistics.totalPopulation.toLocaleString() }}
-              </div>
-            </div>
-            <div class="pb-2">
-              <div class="my-title-xs-gray pb-1">平均人口</div>
-              <div class="my-content-sm-black pb-1">
-                {{ Math.round(analysisResults.statistics.avgPopulation).toLocaleString() }}
+                {{ getCurrentLayerItemCount() }}
               </div>
             </div>
           </template>
