@@ -15,7 +15,9 @@
  * - 提供清晰的 API 介面，簡化圖層管理
  *
  * 支援的圖層類型 (Supported Layer Types):
- * - 數據圖層：示意圖節點數據、統計數據等（JSON 格式）
+ * - 數據圖層：示意圖節點數據、統計數據等
+ * - 地理圖層：GeoJSON 格式的地理空間數據
+ * - 分析圖層：包含空間分析結果的圖層
  *
  * 設計原則 (Design Principles):
  * - 可配置化：將配置參數集中管理，便於維護和修改
@@ -83,7 +85,7 @@ function createBaseLayer(layerId, layerName, type, colorName) {
     colorName, // 主色名稱，用於 UI 主題
 
     // 圖層數據存儲
-    jsonData: null, // JSON 數據
+    geoJsonData: null, // GeoJSON 地理數據
     summaryData: null, // 圖層摘要統計數據
     tableData: null, // 表格顯示用的數據
     legendData: null, // 圖例數據
@@ -117,8 +119,8 @@ function createDataLayer(layerId, layerName, colorName, dataFileName) {
     ...baseLayer,
 
     // 數據載入配置
-    jsonLoader: loadDataLayerJson, // 使用專門的數據載入函數
-    jsonFileName: dataFileName, // 數據文件名稱
+    geojsonLoader: loadDataLayerJson, // 使用專門的數據載入函數
+    geojsonFileName: dataFileName, // 數據文件名稱
 
     // 圖層類型標記
     isDataLayer: true, // 標記為數據圖層，用於特殊處理邏輯

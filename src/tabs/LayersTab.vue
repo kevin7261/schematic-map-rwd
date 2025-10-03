@@ -73,10 +73,9 @@
         // 防止事件冒泡，避免觸發父元素的事件
         event.stopPropagation();
 
-        // 在所有圖層群組中查找指定的圖層（支援新的兩層結構）
+        // 在所有圖層群組中查找指定的圖層
         const layer = dataStore.layers
-          .flatMap((mainGroup) => mainGroup.subGroups || [mainGroup]) // 處理新舊結構
-          .flatMap((group) => group.groupLayers)
+          .flatMap((mainGroup) => mainGroup.groupLayers)
           .find((l) => l.layerId === layerId);
 
         // 檢查圖層是否存在
@@ -134,73 +133,65 @@
             <div class="my-title-sm-gray">{{ mainGroup.groupName }}</div>
           </div>
 
-          <!-- 子群組 -->
-          <div v-for="subGroup in mainGroup.subGroups" :key="subGroup.groupName" class="mb-3">
-            <!-- 子群組標題 -->
-            <div class="d-flex align-items-center pb-2">
-              <div class="my-title-xs-gray">{{ subGroup.groupName }}</div>
-            </div>
-
-            <!-- 圖層列表 -->
-            <div v-for="layer in subGroup.groupLayers" :key="layer.layerId" class="mb-1">
-              <!-- 圖層卡片 -->
-              <div class="btn rounded-0 border-0 d-flex shadow-sm my-bgcolor-white-hover p-0">
-                <!-- 圖層圖示 -->
-                <div :class="`my-bgcolor-${layer.colorName}`" style="min-width: 6px"></div>
-                <div class="w-100">
-                  <div class="d-flex">
-                    <!-- 圖層名稱 - 點擊可切換圖層 -->
-                    <div
-                      class="d-flex align-items-center text-start w-100 px-3 py-2 cursor-pointer"
-                      @click="toggleLayer(layer.layerId)"
-                    >
-                      <span class="my-content-sm-black">
-                        {{ layer.layerName }}
-                        <span class="my-content-xs-gray ms-2">
-                          {{ layer.summaryData?.totalCount }}
-                        </span>
-                      </span>
-                    </div>
-                    <!-- 切換圖層可見性 - 只有開關本身處理切換 -->
-                    <div
-                      class="d-flex align-items-center justify-content-center px-3 py-2"
-                      @click.stop
-                    >
-                      <input
-                        type="checkbox"
-                        :id="'switch-' + layer.layerId"
-                        :checked="layer.visible"
-                        :disabled="layer.isLoading"
-                        @change="handleToggleChange(layer.layerId, $event)"
-                      />
-                      <label :for="'switch-' + layer.layerId"></label>
-                    </div>
-                  </div>
-                  <!-- 左側面板不顯示人口圖層、面域分析圖層和點位分析圖層的 legend -->
+          <!-- 圖層列表 -->
+          <div v-for="layer in mainGroup.groupLayers" :key="layer.layerId" class="mb-1">
+            <!-- 圖層卡片 -->
+            <div class="btn rounded-0 border-0 d-flex shadow-sm my-bgcolor-white-hover p-0">
+              <!-- 圖層圖示 -->
+              <div :class="`my-bgcolor-${layer.colorName}`" style="min-width: 6px"></div>
+              <div class="w-100">
+                <div class="d-flex">
+                  <!-- 圖層名稱 - 點擊可切換圖層 -->
                   <div
-                    v-if="
-                      layer.legendData &&
-                      layer.visible &&
-                      !layer.isPopulationLayer &&
-                      !layer.isAnalysisLayer &&
-                      !layer.isPointCombinedLayer &&
-                      !(layer.layerName && layer.layerName.includes('人口分佈'))
-                    "
-                    class="px-3 pb-2"
+                    class="d-flex align-items-center text-start w-100 px-3 py-2 cursor-pointer"
+                    @click="toggleLayer(layer.layerId)"
+                  >
+                    <span class="my-content-sm-black">
+                      {{ layer.layerName }}
+                      <span class="my-content-xs-gray ms-2">
+                        {{ layer.summaryData?.totalCount }}
+                      </span>
+                    </span>
+                  </div>
+                  <!-- 切換圖層可見性 - 只有開關本身處理切換 -->
+                  <div
+                    class="d-flex align-items-center justify-content-center px-3 py-2"
+                    @click.stop
+                  >
+                    <input
+                      type="checkbox"
+                      :id="'switch-' + layer.layerId"
+                      :checked="layer.visible"
+                      :disabled="layer.isLoading"
+                      @change="handleToggleChange(layer.layerId, $event)"
+                    />
+                    <label :for="'switch-' + layer.layerId"></label>
+                  </div>
+                </div>
+                <!-- 左側面板不顯示人口圖層、面域分析圖層和點位分析圖層的 legend -->
+                <div
+                  v-if="
+                    layer.legendData &&
+                    layer.visible &&
+                    !layer.isPopulationLayer &&
+                    !layer.isAnalysisLayer &&
+                    !layer.isPointCombinedLayer &&
+                    !(layer.layerName && layer.layerName.includes('人口分佈'))
+                  "
+                  class="px-3 pb-2"
+                >
+                  <div
+                    v-for="data in layer.legendData"
+                    :key="data.color"
+                    class="d-flex align-items-center"
                   >
                     <div
-                      v-for="data in layer.legendData"
-                      :key="data.color"
-                      class="d-flex align-items-center"
-                    >
-                      <div
-                        style="min-width: 6px; min-height: 18px"
-                        :style="{
-                          backgroundColor: data.color,
-                        }"
-                      ></div>
-                      <div class="my-content-xs-black text-nowrap ms-2">{{ data.label }}</div>
-                    </div>
+                      style="min-width: 6px; min-height: 18px"
+                      :style="{
+                        backgroundColor: data.color,
+                      }"
+                    ></div>
+                    <div class="my-content-xs-black text-nowrap ms-2">{{ data.label }}</div>
                   </div>
                 </div>
               </div>

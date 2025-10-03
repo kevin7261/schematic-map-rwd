@@ -3,7 +3,7 @@
  *
  * 功能說明 (Features):
  * 1. 🏙️ 使用者選擇的城市管理
- * 2. 🗺️ 動態生成圖層群組（委託 layerFactory）
+ * 2. 🗺️ 靜態定義圖層群組配置
  * 3. 👁️ 圖層顯示狀態與資料載入流程控制
  * 5. 📊 選中要素和圖層的狀態管理
  * 6. 🔄 分析結果的存儲和更新
@@ -60,12 +60,10 @@ import { ref, computed } from 'vue';
  */
 
 /**
- * 圖層工廠工具函數引入
- * 提供動態圖層生成和數據可用性檢查
+ * 數據處理工具函數引入
+ * 提供數據載入功能
  */
-import {
-  generateDynamicLayers, // 動態生成圖層配置
-} from '../utils/layerFactory.js';
+import { loadDataLayerJson } from '../utils/dataProcessor.js';
 
 // ==================== 🏭 圖層處理器類別 (Layer Processor Class) ====================
 
@@ -84,7 +82,9 @@ import {
  * - 觀察者模式：提供進度更新和狀態通知
  *
  * 支援的圖層類型：
- * - 數據圖層：JSON 格式數據
+ * - 人口社會圖資：GeoJSON 地理數據
+ * - 合併圖層：GeoJSON + Excel 統計數據
+ * - 時序圖層：時序數據
  *
  * @class LayerProcessor
  * @version 2.0.0
@@ -103,42 +103,119 @@ class LayerProcessor {
   }
 
   /**
-   * 處理載入 JSON 的圖層
-   * 載入 JSON 數據
+   * 處理需要合併 Excel 的圖層
+   * 載入 GeoJSON 和 Excel 數據，合併後進行分類處理
+   * @param {Object} layer - 圖層配置對象
+   * @returns {number} - 處理的要素數量
+   * @throws {Error} - 當載入或處理過程中發生錯誤時
+   */
+  async processExcelMergedLayer(layer) {
+    // ==================== 📋 步驟 1: 解構圖層配置參數 (Step 1: Destructure Layer Configuration Parameters) ====================
+
+    // 從圖層配置對象中解構所需的函數和參數
+    // 這些參數定義了數據載入、合併和分析的具體流程
+    const {
+      geojsonLoader, // GeoJSON 數據載入函數
+      excelSheetLoader, // Excel 數據載入函數
+      mergeFunction, // 數據合併函數
+      classificationFunction, // 分類計算函數
+      geojsonMergeField, // GeoJSON 合併欄位名
+      excelMergeField, // Excel 合併欄位名
+    } = layer;
+
+    // ==================== 📁 步驟 2: 並行載入數據源 (Step 2: Load Data Sources in Parallel) ====================
+
+    // 同時載入 GeoJSON 和 Excel 數據，提高載入效率
+    // 使用 Promise.all 可以並行執行多個異步操作
+    const geojsonResult = await geojsonLoader(layer);
+    const excelResult = await excelSheetLoader(layer);
+
+    // ==================== 🔗 步驟 3: 合併地理數據和統計數據 (Step 3: Merge Geographic and Statistical Data) ====================
+
+    // 使用合併函數將 GeoJSON 地理數據與 Excel 統計數據合併
+    // 合併基於指定的欄位進行關聯，確保數據的一致性
+    const mergedResult = mergeFunction(
+      geojsonResult.geoJsonData, // 載入的 GeoJSON 地理數據
+      excelResult, // 載入的 Excel 統計數據
+      geojsonMergeField, // GeoJSON 中用於合併的欄位名
+      excelMergeField // Excel 中用於合併的欄位名
+    );
+
+    const classificationResult = classificationFunction(mergedResult.mergedGeoJSON);
+
+    // 更新圖層資料
+    this.updateLayerData(layer, {
+      geoJsonData: classificationResult.geoJsonData,
+      tableData: classificationResult.geoJsonData.features.map((f) => f.properties.tableData),
+      summaryData: geojsonResult.summaryData,
+      legendData: classificationResult.legendData,
+      legendData_InfectionRate: classificationResult.legendData_InfectionRate,
+    });
+
+    return classificationResult.geoJsonData.features.length;
+  }
+
+  /**
+   * 處理僅載入 GeoJSON 的圖層
+   * 載入 GeoJSON 數據
    * @param {Object} layer - 圖層配置對象
    * @returns {number} - 處理的要素數量
    * @throws {Error} - 當載入過程中發生錯誤時
    */
-  async processJsonLayer(layer) {
-    const jsonResult = await layer.jsonLoader(layer);
+  async processGeoJsonOnlyLayer(layer) {
+    const geojsonResult = await layer.geojsonLoader(layer);
 
     // 準備要更新的資料
     const updateData = {
-      jsonData: jsonResult.jsonData,
-      tableData: jsonResult.tableData,
-      summaryData: jsonResult.summaryData,
-      legendData: jsonResult.legendData,
+      geoJsonData: geojsonResult.geoJsonData,
+      tableData: geojsonResult.tableData,
+      summaryData: geojsonResult.summaryData,
+      legendData: geojsonResult.legendData,
     };
 
     // 如果是人口分佈圖層，需要包含所有人口相關的圖例資料
     if (layer.isPopulationLayer) {
       // 包含所有人口屬性圖例
-      Object.keys(jsonResult).forEach((key) => {
+      Object.keys(geojsonResult).forEach((key) => {
         if (key.startsWith('legendData_')) {
-          updateData[key] = jsonResult[key];
+          updateData[key] = geojsonResult[key];
         }
       });
     }
 
     this.updateLayerData(layer, updateData);
 
-    // 對於示意圖數據，jsonData 可能為 null
-    if (jsonResult.jsonData && jsonResult.jsonData.features) {
-      return jsonResult.jsonData.features.length;
+    // 對於示意圖數據，geoJsonData 可能為 null
+    if (geojsonResult.geoJsonData && geojsonResult.geoJsonData.features) {
+      return geojsonResult.geoJsonData.features.length;
     } else {
       // 示意圖數據或其他非地圖數據
       return 0;
     }
+  }
+
+  /**
+   * 處理需要分析的 GeoJSON 圖層
+   * 載入 GeoJSON 數據並進行分類處理
+   * @param {Object} layer - 圖層配置對象
+   * @returns {number} - 處理的要素數量
+   * @throws {Error} - 當載入或分析過程中發生錯誤時
+   */
+  async processAnalysisGeoJsonLayer(layer) {
+    const geojsonResult = await layer.geojsonLoader(layer);
+
+    const classificationResult = layer.classificationFunction(geojsonResult.geoJsonData);
+
+    // 更新圖層資料
+    this.updateLayerData(layer, {
+      geoJsonData: classificationResult.geoJsonData,
+      tableData: classificationResult.geoJsonData.features.map((f) => f.properties.tableData),
+      summaryData: geojsonResult.summaryData,
+      legendData: classificationResult.legendData,
+      legendData_InfectionRate: classificationResult.legendData_InfectionRate,
+    });
+
+    return classificationResult.geoJsonData.features.length;
   }
 
   /**
@@ -166,9 +243,13 @@ class LayerProcessor {
    * @throws {Error} - 驗證失敗拋出錯誤
    */
   validateLayerConfig(layer) {
-    // 檢查 JSON 載入器
-    if (!layer.jsonLoader) {
-      throw new Error(`❌ 圖層 "${layer.layerName}" 缺少 JSON 載入器定義`);
+    // 檢查 Excel 合併欄位
+    if (layer.excelSheetLoader && layer.mergeFunction) {
+      if (!layer.geojsonMergeField || !layer.excelMergeField) {
+        throw new Error(
+          `❌ 圖層 "${layer.layerName}" 缺少合併欄位定義: geojsonMergeField="${layer.geojsonMergeField}", excelMergeField="${layer.excelMergeField}"`
+        );
+      }
     }
 
     return true;
@@ -187,37 +268,45 @@ export const useDataStore = defineStore(
 
     // ==================== 圖層狀態管理 ====================
 
-    // 存儲所有圖層的狀態 (visible, isLoaded, jsonData 等)
+    // 存儲所有圖層的狀態 (visible, isLoaded, geoJsonData 等)
     const layerStates = ref({});
 
-    // 動態生成圖層配置，並與保存的狀態合併
-    const layers = computed(() => {
-      // 讓 computed 依賴於 layerStates，確保狀態更新時重新計算
-      layerStates.value; // 觸發響應式依賴
+    // 靜態定義的圖層配置
+    const layers = ref([
+      {
+        groupName: '數據圖層',
+        groupLayers: [
+          {
+            layerId: 'data_layer',
+            layerName: '數據圖層',
+            visible: false,
+            isLoading: false,
+            isLoaded: false,
+            type: 'point',
+            shape: null,
+            colorName: 'purple',
+            geoJsonData: null,
+            summaryData: null,
+            tableData: null,
+            legendData: null,
+            geojsonLoader: loadDataLayerJson,
+            jsonFileName: 'data.json',
+            isDataLayer: true,
+            hideFromMap: true,
+            display: true,
+          },
+        ],
+      },
+    ]);
 
-      return mergeLayersWithStates(
-        generateDynamicLayers() // 生成圖層配置
-      );
-    });
-
-    // 將動態生成的圖層配置與保存的狀態合併
-    const mergeLayersWithStates = (dynamicLayers) => {
-      // 收集當前動態生成的所有圖層 ID（支援新的兩層結構）
+    // 將靜態圖層配置與保存的狀態合併
+    const mergeLayersWithStates = () => {
+      // 收集當前所有圖層 ID
       const currentLayerIds = new Set();
-      dynamicLayers.forEach((mainGroup) => {
-        if (mainGroup.subGroups) {
-          // 新結構：主群組包含子群組
-          mainGroup.subGroups.forEach((subGroup) => {
-            subGroup.groupLayers.forEach((layer) => {
-              currentLayerIds.add(layer.layerId);
-            });
-          });
-        } else {
-          // 舊結構：直接包含圖層
-          mainGroup.groupLayers.forEach((layer) => {
-            currentLayerIds.add(layer.layerId);
-          });
-        }
+      layers.value.forEach((mainGroup) => {
+        mainGroup.groupLayers.forEach((layer) => {
+          currentLayerIds.add(layer.layerId);
+        });
       });
 
       // 清理不再存在的圖層狀態
@@ -229,49 +318,22 @@ export const useDataStore = defineStore(
       });
       layerStates.value = newLayerStates;
 
-      return dynamicLayers.map((mainGroup) => {
-        if (mainGroup.subGroups) {
-          // 新結構：處理主群組和子群組
-          return {
-            ...mainGroup,
-            subGroups: mainGroup.subGroups.map((subGroup) => ({
-              ...subGroup,
-              groupLayers: subGroup.groupLayers.map((layer) => {
-                const savedState = layerStates.value[layer.layerId];
-                if (savedState) {
-                  // 合併保存的狀態與新的配置
-                  return {
-                    ...layer,
-                    ...savedState,
-                    // 確保函數引用不被覆蓋
-                    jsonLoader: layer.jsonLoader,
-                  };
-                }
-                return layer;
-              }),
-            })),
-          };
-        } else {
-          // 舊結構：直接處理群組
-          return {
-            ...mainGroup,
-            groupLayers: mainGroup.groupLayers.map((layer) => {
-              const savedState = layerStates.value[layer.layerId];
-              if (savedState) {
-                // 合併保存的狀態與新的配置
-                return {
-                  ...layer,
-                  ...savedState,
-                  // 確保函數引用不被覆蓋
-                  jsonLoader: layer.jsonLoader,
-                };
-              }
-              return layer;
-            }),
-          };
-        }
+      // 合併保存的狀態與靜態配置
+      layers.value.forEach((mainGroup) => {
+        mainGroup.groupLayers.forEach((layer) => {
+          const savedState = layerStates.value[layer.layerId];
+          if (savedState) {
+            // 合併保存的狀態與靜態配置
+            Object.assign(layer, savedState);
+            // 確保函數引用不被覆蓋
+            if (layer.geojsonLoader) layer.geojsonLoader = loadDataLayerJson;
+          }
+        });
       });
     };
+
+    // 初始化時合併圖層狀態
+    mergeLayersWithStates();
 
     // 保存圖層狀態到 layerStates
     const saveLayerState = (layerId, stateData) => {
@@ -283,43 +345,23 @@ export const useDataStore = defineStore(
 
     // ==================== 圖層搜尋函數 ====================
 
-    // 在新的分組結構中搜尋指定 ID 的圖層（支援新的兩層結構）
+    // 在靜態圖層配置中搜尋指定 ID 的圖層
     const findLayerById = (layerId) => {
       for (const mainGroup of layers.value) {
-        if (mainGroup.subGroups) {
-          // 新結構：主群組包含子群組
-          for (const subGroup of mainGroup.subGroups) {
-            for (const layer of subGroup.groupLayers) {
-              if (layer.layerId === layerId) {
-                return layer;
-              }
-            }
-          }
-        } else {
-          // 舊結構：直接包含圖層
-          for (const layer of mainGroup.groupLayers) {
-            if (layer.layerId === layerId) {
-              return layer;
-            }
+        for (const layer of mainGroup.groupLayers) {
+          if (layer.layerId === layerId) {
+            return layer;
           }
         }
       }
       return null;
     };
 
-    // 從分組結構中提取所有圖層的扁平陣列（支援新的兩層結構）
+    // 從靜態圖層配置中提取所有圖層的扁平陣列
     const getAllLayers = () => {
       const allLayers = [];
       for (const mainGroup of layers.value) {
-        if (mainGroup.subGroups) {
-          // 新結構：主群組包含子群組
-          for (const subGroup of mainGroup.subGroups) {
-            allLayers.push(...subGroup.groupLayers);
-          }
-        } else {
-          // 舊結構：直接包含圖層
-          allLayers.push(...mainGroup.groupLayers);
-        }
+        allLayers.push(...mainGroup.groupLayers);
       }
       return allLayers;
     };
@@ -348,8 +390,11 @@ export const useDataStore = defineStore(
         currentVisible: layer.visible,
         isLoaded: layer.isLoaded,
         isLoading: layer.isLoading,
-        isDataLayer: layer.isDataLayer,
-        hasJsonLoader: !!layer.jsonLoader,
+        isAnalysisLayer: layer.isAnalysisLayer,
+        isPopulationLayer: layer.isPopulationLayer,
+        hasGeojsonLoader: !!layer.geojsonLoader,
+        hasExcelSheetLoader: !!layer.excelSheetLoader,
+        hasClassificationFunction: !!layer.classificationFunction,
       });
 
       // 如果要開啟圖層且不是人口分佈圖層，則關閉其他非人口分佈圖層
@@ -431,9 +476,16 @@ export const useDataStore = defineStore(
 
           // 根據圖層類型選擇處理方法
           try {
-            if (layer.jsonLoader) {
-              // JSON 圖層
-              dataCount = await layerProcessor.processJsonLayer(layer);
+            if (layer.excelSheetLoader && layer.mergeFunction) {
+              dataCount = await layerProcessor.processExcelMergedLayer(layer);
+            } else if (
+              layer.geojsonLoader &&
+              !layer.excelSheetLoader &&
+              !layer.classificationFunction
+            ) {
+              dataCount = await layerProcessor.processGeoJsonOnlyLayer(layer);
+            } else if (layer.geojsonLoader && layer.classificationFunction) {
+              dataCount = await layerProcessor.processAnalysisGeoJsonLayer(layer);
             } else {
               console.warn(`❌ 圖層 "${layer.layerName}" 缺少必要的載入函數`);
               layer.visible = false;
@@ -453,10 +505,15 @@ export const useDataStore = defineStore(
           // 保存完整的圖層狀態
           saveLayerState(layerId, {
             isLoaded: layer.isLoaded,
-            jsonData: layer.jsonData,
+            geoJsonData: layer.geoJsonData,
             tableData: layer.tableData,
             summaryData: layer.summaryData,
             legendData: layer.legendData,
+            legendData_InfectionRate: layer.legendData_InfectionRate,
+            legendData_POPULATION_DENSITY: layer.legendData_POPULATION_DENSITY,
+            legendData_P_CNT: layer.legendData_P_CNT,
+            legendData_M_CNT: layer.legendData_M_CNT,
+            legendData_F_CNT: layer.legendData_F_CNT,
           });
         } catch (error) {
           console.error(`❌ 載入圖層 "${layer.layerName}" 失敗:`, error);
@@ -536,21 +593,9 @@ export const useDataStore = defineStore(
      */
     const findGroupNameByLayerId = (layerId) => {
       for (const mainGroup of layers.value) {
-        if (mainGroup.subGroups) {
-          // 新結構：主群組包含子群組
-          for (const subGroup of mainGroup.subGroups) {
-            for (const layer of subGroup.groupLayers) {
-              if (layer.layerId === layerId) {
-                return subGroup.groupName; // 返回子群組名稱
-              }
-            }
-          }
-        } else {
-          // 舊結構：直接包含圖層
-          for (const layer of mainGroup.groupLayers) {
-            if (layer.layerId === layerId) {
-              return mainGroup.groupName;
-            }
+        for (const layer of mainGroup.groupLayers) {
+          if (layer.layerId === layerId) {
+            return mainGroup.groupName;
           }
         }
       }
