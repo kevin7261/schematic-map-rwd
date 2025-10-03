@@ -76,12 +76,12 @@ export const useDataStore = defineStore(
             isLoaded: false,
             type: 'point',
             shape: null,
-            colorName: 'purple',
+            colorName: 'orange',
             geoJsonData: null,
             summaryData: null,
             tableData: null,
             legendData: null,
-            geojsonLoader: loadDataLayerJson,
+            jsonLoader: loadDataLayerJson,
             jsonFileName: 'data.json',
             isDataLayer: true,
             hideFromMap: true,
@@ -118,7 +118,7 @@ export const useDataStore = defineStore(
             // 合併保存的狀態與靜態配置
             Object.assign(layer, savedState);
             // 確保函數引用不被覆蓋
-            if (layer.geojsonLoader) layer.geojsonLoader = loadDataLayerJson;
+            if (layer.jsonLoader) layer.jsonLoader = loadDataLayerJson;
           }
         });
       });
@@ -205,7 +205,7 @@ export const useDataStore = defineStore(
           saveLayerState(layerId, { isLoading: layer.isLoading });
 
           // 載入圖層數據
-          const result = await layer.geojsonLoader(layer);
+          const result = await layer.jsonLoader(layer);
 
           // 更新圖層資料
           layer.geoJsonData = result.geoJsonData;

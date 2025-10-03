@@ -46,15 +46,6 @@
   });
 
   /**
-   * 📊 取得當前選中圖層名稱 (Get Current Selected Layer Name)
-   */
-  const currentLayerName = computed(() => {
-    if (!activeLayerTab.value) return '無開啟圖層';
-    const layer = visibleLayers.value.find((l) => l.layerId === activeLayerTab.value);
-    return layer ? layer.layerName || '未知圖層' : '無開啟圖層';
-  });
-
-  /**
    * 📊 取得圖層完整標題 (包含群組名稱) (Get Layer Full Title with Group Name)
    */
   const getLayerFullTitle = (layer) => {
@@ -150,28 +141,12 @@
 
     <!-- 有開啟圖層時的內容 -->
     <div v-if="visibleLayers.length > 0" class="flex-grow-1 overflow-auto my-bgcolor-white p-3">
-      <!-- 📊 當前圖層資訊 -->
-      <div class="mb-4">
-        <h5 class="my-title-md-black">{{ currentLayerName }}</h5>
-      </div>
-
-      <!-- 📊 圖表類型控制 - 只顯示示意圖 -->
-      <div class="mb-4">
-        <div class="d-flex align-items-center gap-2">
-          <span class="my-content-sm-black">圖表類型：</span>
-          <div class="btn-group" role="group">
-            <button type="button" class="btn btn-sm btn-primary">示意圖</button>
-          </div>
-        </div>
-      </div>
-
       <!-- 📊 圖層摘要資料 -->
       <div v-if="currentLayerSummary">
         <div class="row">
           <!-- D3.js 示意圖 -->
           <div class="col-12">
             <div class="rounded-4 my-bgcolor-gray-100 p-4 mb-3">
-              <h6 class="mb-3">行政區分布 - 示意圖</h6>
               <div class="w-100">
                 <AdministrativeDistrictSchematic />
               </div>
@@ -205,10 +180,5 @@
 
   :deep(.dot:hover) {
     cursor: pointer;
-  }
-
-  /* 按鈕樣式 */
-  .btn-group .btn {
-    border-radius: 4px;
   }
 </style>
