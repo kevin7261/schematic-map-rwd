@@ -147,9 +147,24 @@
    * 📏 獲取容器尺寸 (Get Container Dimensions)
    */
   const getDimensions = () => {
+    const container = document.getElementById('diagram');
+    if (container) {
+      // 獲取容器的實際可用尺寸
+      const rect = container.getBoundingClientRect();
+      const width = Math.max(container.clientWidth, rect.width);
+      const height = Math.max(container.clientHeight, rect.height);
+
+      console.log('Container dimensions:', { width, height });
+
+      return {
+        width: width || 800,
+        height: height || 600,
+      };
+    }
+    // 如果找不到容器，使用預設尺寸
     return {
-      width: window.innerWidth,
-      height: window.innerHeight,
+      width: 800,
+      height: 600,
     };
   };
 
@@ -568,8 +583,23 @@
    * 📏 調整尺寸 (Resize)
    */
   const resize = () => {
-    draw();
+    // 使用 nextTick 確保 DOM 更新完成後再重繪
+    nextTick(() => {
+      draw();
+    });
   };
+
+  // 防抖函數，避免過於頻繁的重繪
+  let resizeTimeout = null;
+  const debouncedResize = () => {
+    if (resizeTimeout) {
+      clearTimeout(resizeTimeout);
+    }
+    resizeTimeout = setTimeout(resize, 100); // 100ms 防抖
+  };
+
+  // ResizeObserver 實例
+  let resizeObserver = null;
 
   // 組件掛載
   onMounted(async () => {
@@ -579,11 +609,37 @@
     resize();
 
     // 監聽窗口大小變化
-    window.addEventListener('resize', resize);
+    window.addEventListener('resize', debouncedResize);
+
+    // 監聽容器尺寸變化
+    const container = document.getElementById('diagram');
+    if (container && window.ResizeObserver) {
+      resizeObserver = new ResizeObserver((entries) => {
+        // 檢查尺寸是否真的改變了
+        for (let entry of entries) {
+          if (entry.contentRect.width > 0 && entry.contentRect.height > 0) {
+            debouncedResize();
+          }
+        }
+      });
+      resizeObserver.observe(container);
+    }
   });
 
   // 組件卸載
   onUnmounted(() => {
-    window.removeEventListener('resize', resize);
+    window.removeEventListener('resize', debouncedResize);
+
+    // 清理防抖定時器
+    if (resizeTimeout) {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = null;
+    }
+
+    // 清理 ResizeObserver
+    if (resizeObserver) {
+      resizeObserver.disconnect();
+      resizeObserver = null;
+    }
   });
 </script>

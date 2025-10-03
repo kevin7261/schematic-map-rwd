@@ -145,7 +145,7 @@
       <div v-if="currentLayerSummary" class="flex-grow-1 d-flex flex-column">
         <!-- D3.js 示意圖 - 填滿整個可用空間 -->
         <div class="flex-grow-1 d-flex flex-column">
-          <div class="flex-grow-1">
+          <div class="flex-grow-1" style="min-height: 400px">
             <AdministrativeDistrictSchematic />
           </div>
         </div>
