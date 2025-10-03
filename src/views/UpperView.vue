@@ -2,7 +2,6 @@
   // 🔧 Vue Composition API 引入
   import { ref, watch, nextTick } from 'vue';
   // 🧩 子組件引入
-  import MapTab from '../tabs/MapTab.vue';
   import DashboardTab from '../tabs/DashboardTab.vue';
   import D3jsTab from '../tabs/D3jsTab.vue';
 
@@ -14,7 +13,6 @@
      * 註冊上半部面板內使用的子組件
      */
     components: {
-      MapTab,
       DashboardTab,
       D3jsTab,
     },
@@ -24,7 +22,7 @@
      * 接收來自父組件的配置和狀態數據
      */
     props: {
-      activeUpperTab: { type: String, default: 'map' },
+      activeUpperTab: { type: String, default: 'd3js' },
       mainPanelWidth: { type: Number, default: 60 },
       contentHeight: { type: Number, default: 500 },
       showTainanLayer: { type: Boolean, default: false },
@@ -50,10 +48,8 @@
      * 🔧 組件設定函數 (Component Setup)
      * 使用 Composition API 設定組件邏輯
      */
-    setup(props, { emit }) {
+    setup(props) {
       // 📚 子組件引用 (Child Component References)
-      /** 🗺️ 地圖視圖組件引用 */
-      const MapTab = ref(null);
       /** 📊 儀表板視圖組件引用 */
       const DashboardTab = ref(null);
       /** 📊 儀表板容器引用 (用於控制滑鼠事件) */
@@ -121,22 +117,6 @@
         () => props.activeUpperTab,
         (newTab, oldTab) => {
           console.log('🔄 UpperView: Tab changed from', oldTab, 'to', newTab);
-
-          // 使用 v-show 後組件不會被銷毀，只需要在切換到地圖時刷新尺寸
-          if (newTab === 'map' && oldTab && oldTab !== 'map') {
-            nextTick(() => {
-              if (MapTab.value) {
-                console.log('🗺️ UpperView: Refreshing map size after showing map tab');
-                // 延遲執行，確保容器從隱藏狀態變為可見後再刷新尺寸
-                setTimeout(() => {
-                  if (MapTab.value && props.activeUpperTab === 'map') {
-                    MapTab.value.invalidateSize();
-                    console.log('🗺️ UpperView: Map size refreshed successfully');
-                  }
-                }, 100); // 減少延遲時間，因為現在不需要等待組件重新創建
-              }
-            });
-          }
         }
       );
 
@@ -146,18 +126,6 @@
        */
       watch([() => props.mainPanelWidth, () => props.contentHeight], () => {
         nextTick(() => {
-          if (props.activeUpperTab === 'map' && MapTab.value) {
-            // 🗺️ 重新計算地圖大小，適應新的容器尺寸
-            MapTab.value.invalidateSize();
-
-            // 響應式布局中額外的地圖刷新
-            setTimeout(() => {
-              if (MapTab.value) {
-                MapTab.value.invalidateSize();
-                console.log('🗺️ UpperView: Extra map size invalidation for responsive layout');
-              }
-            }, 200);
-          }
           // Dashboard現在是純文字統計，不需要重新計算圖表大小
         });
       });
@@ -165,58 +133,47 @@
       /**
        * 🎯 高亮顯示指定地圖特徵 (Highlight Feature on Map)
        * 如果當前不在地圖分頁，會自動切換到地圖分頁再執行高亮
+       * 注意：已移除 Leaflet 功能，此函數現在為空函數
        *
        * @param {Object} highlightData - 包含 layerId 和 id 的高亮數據物件
        */
       const highlightFeature = (highlightData) => {
         console.log('🎯 UpperView: highlightFeature called with data:', highlightData);
-
-        // 如果當前不在地圖分頁，先切換到地圖分頁
-        if (props.activeUpperTab !== 'map') {
-          emit('update:activeUpperTab', 'map');
-
-          // 等待分頁切換完成後再執行高亮
-          nextTick(() => {
-            MapTab.value?.highlightFeature(highlightData);
-          });
-        } else {
-          // 如果已經在地圖分頁，直接執行高亮
-          MapTab.value?.highlightFeature(highlightData);
-        }
+        console.log('🎯 highlightFeature: 地圖功能已移除，無需高亮顯示');
+        // 已移除 Leaflet 功能，不需要高亮顯示
       };
 
       /**
        * 🔄 重設地圖視圖 (Reset Map View)
        * 將地圖恢復到初始視圖狀態
+       * 注意：已移除 Leaflet 功能，此函數現在為空函數
        */
       const resetView = () => {
-        if (props.activeUpperTab === 'map' && MapTab.value) {
-          MapTab.value.resetView();
-        }
+        // 已移除 Leaflet 功能，不需要重設視圖
+        console.log('🔄 resetView: 地圖功能已移除，無需重設視圖');
       };
 
       /**
        * 🗺️ 適應台南地區邊界 (Fit to Tainan Bounds)
        * 調整地圖視圖以完整顯示台南地區
+       * 注意：已移除 Leaflet 功能，此函數現在為空函數
        */
       const fitToTainanBounds = () => {
-        if (props.activeUpperTab === 'map' && MapTab.value) {
-          MapTab.value.fitToTainanBounds();
-        }
+        // 已移除 Leaflet 功能，不需要適應邊界
+        console.log('🗺️ fitToTainanBounds: 地圖功能已移除，無需適應邊界');
       };
 
       /**
        * 📏 手動刷新地圖尺寸 (Manually Refresh Map Size)
        * 當容器大小變化但自動偵測失效時使用
+       * 注意：已移除 Leaflet 功能，此函數現在為空函數
        */
       const invalidateMapSize = () => {
-        if (props.activeUpperTab === 'map' && MapTab.value) {
-          MapTab.value.invalidateSize();
-        }
+        // 已移除 Leaflet 功能，不需要刷新地圖尺寸
+        console.log('🔄 invalidateMapSize: 地圖功能已移除，無需刷新尺寸');
       };
 
       return {
-        MapTab, // 地圖組件引用
         DashboardTab, // 儀表板組件引用
         D3jsTab, // D3.js 組件引用
         dashboardContainerRef, // 儀表板容器引用
@@ -236,17 +193,17 @@
       <!-- 統一的導航按鈕組 -->
       <div class="position-absolute top-0 start-0 m-3" style="z-index: 1000">
         <div class="d-flex align-items-center rounded-pill shadow my-blur gap-1 p-2">
-          <!-- 🗺️ 地圖視圖按鈕 (Map View Button) -->
+          <!-- 📈 D3.js 按鈕 (D3.js Button) -->
           <button
             class="btn rounded-circle border-0 d-flex align-items-center justify-content-center my-btn-transparent my-font-size-xs"
             :class="{
-              'my-btn-blue': activeUpperTab === 'map',
+              'my-btn-blue': activeUpperTab === 'd3js',
             }"
-            @click="$emit('update:activeUpperTab', 'map')"
+            @click="$emit('update:activeUpperTab', 'd3js')"
             style="width: 30px; height: 30px"
-            title="地圖視圖"
+            title="D3.js 數據視覺化"
           >
-            <i class="fas fa-map"></i>
+            <i class="fas fa-chart-line"></i>
           </button>
           <!-- 📊 儀表板按鈕 (Dashboard Button) -->
           <button
@@ -260,33 +217,22 @@
           >
             <i class="fas fa-chart-bar"></i>
           </button>
-          <!-- 📈 D3.js 按鈕 (D3.js Button) -->
-          <button
-            class="btn rounded-circle border-0 d-flex align-items-center justify-content-center my-btn-transparent my-font-size-xs"
-            :class="{
-              'my-btn-blue': activeUpperTab === 'd3js',
-            }"
-            @click="$emit('update:activeUpperTab', 'd3js')"
-            style="width: 30px; height: 30px"
-            title="D3.js 數據視覺化"
-          >
-            <i class="fas fa-chart-line"></i>
-          </button>
         </div>
       </div>
 
-      <!-- 地圖分頁內容-->
-      <div v-show="activeUpperTab === 'map'" class="h-100">
-        <MapTab
-          ref="MapTab"
-          :showTainanLayer="showTainanLayer"
-          :selectedFilter="selectedFilter"
-          :zoomLevel="zoomLevel"
-          :maxCount="maxCount"
-          @update:zoomLevel="$emit('update:zoomLevel', $event)"
-          @update:currentCoords="$emit('update:currentCoords', $event)"
-          @update:activeMarkers="$emit('update:activeMarkers', $event)"
-          @feature-selected="$emit('feature-selected', $event)"
+      <!-- D3.js 分頁內容 -->
+      <div
+        v-show="activeUpperTab === 'd3js'"
+        ref="d3jsContainerRef"
+        class="h-100 overflow-auto pt-5"
+      >
+        <!-- 🎛️ 為導航按鈕組預留空間 (Reserve Space for Navigation Buttons) -->
+        <div style="height: 40px"></div>
+        <D3jsTab
+          ref="D3jsTab"
+          :containerHeight="contentHeight"
+          :isPanelDragging="isPanelDragging"
+          :activeMarkers="activeMarkers"
         />
       </div>
 
@@ -300,22 +246,6 @@
         <div style="height: 40px"></div>
         <DashboardTab
           ref="DashboardTab"
-          :containerHeight="contentHeight"
-          :isPanelDragging="isPanelDragging"
-          :activeMarkers="activeMarkers"
-        />
-      </div>
-
-      <!-- D3.js 分頁內容 -->
-      <div
-        v-show="activeUpperTab === 'd3js'"
-        ref="d3jsContainerRef"
-        class="h-100 overflow-auto pt-5"
-      >
-        <!-- 🎛️ 為導航按鈕組預留空間 (Reserve Space for Navigation Buttons) -->
-        <div style="height: 40px"></div>
-        <D3jsTab
-          ref="D3jsTab"
           :containerHeight="contentHeight"
           :isPanelDragging="isPanelDragging"
           :activeMarkers="activeMarkers"

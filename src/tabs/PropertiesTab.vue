@@ -35,6 +35,18 @@
         }
 
         const layerId = selectedFeature.value.properties.layerId;
+
+        // 特殊處理 DataTable 的數據
+        if (layerId === 'datatable') {
+          // 如果有項目顏色，使用該顏色
+          const itemColor = selectedFeature.value.properties.itemColor;
+          return {
+            colorName: 'custom', // 使用自定義顏色
+            layerName: '地鐵線路數據',
+            customColor: itemColor || '#6c757d', // 預設為灰色
+          };
+        }
+
         const layer = dataStore.findLayerById(layerId);
         return layer;
       });
@@ -49,6 +61,15 @@
         }
 
         const layerId = selectedFeature.value.properties.layerId;
+
+        // 特殊處理 DataTable 的數據
+        if (layerId === 'datatable') {
+          return {
+            groupName: '數據表格',
+            layerName: '地鐵線路數據',
+          };
+        }
+
         const layer = dataStore.findLayerById(layerId);
         if (!layer) return layerId;
 
@@ -111,8 +132,14 @@
       <div>
         <div
           v-if="selectedLayer"
-          :class="`my-bgcolor-${selectedLayer.colorName}`"
-          :style="{ minHeight: '4px' }"
+          :class="
+            selectedLayer.colorName === 'custom' ? '' : `my-bgcolor-${selectedLayer.colorName}`
+          "
+          :style="{
+            minHeight: '4px',
+            backgroundColor:
+              selectedLayer.colorName === 'custom' ? selectedLayer.customColor : undefined,
+          }"
         ></div>
 
         <div class="p-3">

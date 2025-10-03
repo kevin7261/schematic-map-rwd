@@ -74,12 +74,7 @@ import router from './router';
  */
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-/**
- * Leaflet 地圖核心樣式
- * 包含地圖容器、控制項、圖層等基本樣式
- * 版本：1.9.0
- */
-import 'leaflet/dist/leaflet.css';
+// Leaflet 地圖功能已移除
 
 /**
  * Font Awesome 圖示庫

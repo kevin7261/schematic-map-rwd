@@ -240,7 +240,13 @@ class LayerProcessor {
 
     this.updateLayerData(layer, updateData);
 
-    return geojsonResult.geoJsonData.features.length;
+    // 對於示意圖數據，geoJsonData 可能為 null
+    if (geojsonResult.geoJsonData && geojsonResult.geoJsonData.features) {
+      return geojsonResult.geoJsonData.features.length;
+    } else {
+      // 示意圖數據或其他非地圖數據
+      return 0;
+    }
   }
 
   /**
@@ -310,83 +316,12 @@ class LayerProcessor {
 export const useDataStore = defineStore(
   'data',
   () => {
-    // 位置篩選（台南市區 / 高雄市區）
-    const selectedAnalysisLocation = ref('台南市區');
-    // 年份篩選（2014 ~ 2024）；若群組名稱中沒有年份則不受此篩選影響
-    const selectedAnalysisYear = ref(2014);
+    // 位置和年份篩選功能已移除
 
     // 初始化圖層處理器
     const layerProcessor = new LayerProcessor();
 
     // ==================== 位置和年份處理函數 ====================
-
-    const doesGroupMatchLocation = (groupName, location) => {
-      // 主群組（分析資料、地理資料）總是顯示
-      const mainGroups = ['分析資料', '地理資料'];
-      if (mainGroups.includes(groupName)) {
-        return true;
-      }
-
-      // 統計區子群組（二級統計區、村里、鄉鎮市區）和人口社會圖資子群組需要檢查圖層是否屬於當前城市
-      const statisticalDistrictGroups = ['二級統計區', '村里', '鄉鎮市區', '人口社會圖資'];
-      if (statisticalDistrictGroups.includes(groupName)) {
-        // 獲取當前動態生成的圖層，檢查對應子群組是否存在
-        const currentLayers = generateDynamicLayers(selectedAnalysisYear.value, location);
-        for (const mainGroup of currentLayers) {
-          if (mainGroup.subGroups) {
-            const targetSubGroup = mainGroup.subGroups.find(
-              (subGroup) => subGroup.groupName === groupName
-            );
-            if (targetSubGroup && targetSubGroup.groupLayers.length > 0) {
-              return true;
-            }
-          }
-        }
-        return false;
-      }
-
-      // 向後兼容：舊的面域分析和點位分析群組
-      if (groupName === '面域分析' || groupName === '點位分析') {
-        // 這些群組在新結構中已經被整合到統計區群組中，返回 false 以隱藏它們
-        return false;
-      }
-
-      if (location === '台南市區') {
-        return groupName.includes('台南市區');
-      }
-      if (location === '高雄市區') {
-        return groupName.includes('高雄市區');
-      }
-      return true;
-    };
-
-    const setAnalysisLocation = (location) => {
-      selectedAnalysisLocation.value = location;
-      setAnalysisYear(2024);
-    };
-
-    const extractYearFromGroupName = (groupName) => {
-      const match = String(groupName).match(/\b(19\d{2}|20\d{2})\b/);
-      return match ? parseInt(match[1]) : null;
-    };
-
-    const doesGroupMatchYear = (groupName, year) => {
-      // 主群組（分析資料、地理資料）總是顯示
-      const mainGroups = ['分析資料', '地理資料'];
-      if (mainGroups.includes(groupName)) {
-        return true;
-      }
-
-      // 子群組需要檢查年份匹配
-      const y = extractYearFromGroupName(groupName);
-      if (!y) return true; // 沒有年份的群組不受影響
-      return y === Number(year);
-    };
-
-    const setAnalysisYear = (year) => {
-      selectedAnalysisYear.value = Number(year);
-      // 動態系統下不需要手動隱藏圖層，因為會重新生成對應年份的圖層
-    };
 
     // ==================== 圖層狀態管理 ====================
 
@@ -398,21 +333,8 @@ export const useDataStore = defineStore(
       // 讓 computed 依賴於 layerStates，確保狀態更新時重新計算
       layerStates.value; // 觸發響應式依賴
 
-      // 檢查當前年份是否有資料可用
-      if (!isYearDataAvailable(selectedAnalysisYear.value)) {
-        console.warn(`年份 ${selectedAnalysisYear.value} 沒有對應的資料`);
-        // 如果沒有資料，回退到最近可用的年份
-        const availableYears = getAvailableYears();
-        const fallbackYear = availableYears[availableYears.length - 1]; // 使用最新的可用年份
-        console.log(`使用回退年份: ${fallbackYear}`);
-        // 這裡不直接修改 selectedAnalysisYear，避免無限循環
-        return mergeLayersWithStates(
-          generateDynamicLayers(fallbackYear, selectedAnalysisLocation.value)
-        );
-      }
-
       return mergeLayersWithStates(
-        generateDynamicLayers(selectedAnalysisYear.value, selectedAnalysisLocation.value)
+        generateDynamicLayers(2024, '台南市區') // 使用固定年份和城市
       );
     });
 
@@ -814,12 +736,6 @@ export const useDataStore = defineStore(
 
     return {
       layers,
-      selectedAnalysisLocation,
-      selectedAnalysisYear,
-      setAnalysisLocation,
-      setAnalysisYear,
-      doesGroupMatchLocation,
-      doesGroupMatchYear,
       findLayerById, // 根據 ID 尋找圖層
       getAllLayers, // 獲取所有圖層的扁平陣列
       findGroupNameByLayerId, // 根據圖層ID找到對應的群組名稱

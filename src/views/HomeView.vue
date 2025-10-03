@@ -77,7 +77,7 @@
 
       // 📑 分頁狀態 (Tab States)
       /** 🗺️ 主要分頁狀態（地圖/儀表板） */
-      const activeUpperTab = ref('map');
+      const activeUpperTab = ref('d3js');
       /** 📋 底部分頁狀態（表格/樣式） */
       const activeBottomTab = ref('table');
       /** 📊 右側分頁狀態（屬性/分析） */

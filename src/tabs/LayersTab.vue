@@ -48,21 +48,6 @@
       /** 📊 從 store 中獲取圖層數據，當 store 狀態改變時自動更新 */
       const layers = computed(() => dataStore.layers);
 
-      /** 🌍 選中的分析位置（台南市區/高雄市區），雙向綁定 */
-      const selectedAnalysisLocation = computed({
-        get: () => dataStore.selectedAnalysisLocation,
-        set: (v) => dataStore.setAnalysisLocation(v),
-      });
-
-      /** 📅 選中的分析年份，雙向綁定 */
-      const selectedAnalysisYear = computed({
-        get: () => dataStore.selectedAnalysisYear,
-        set: (v) => dataStore.setAnalysisYear(v),
-      });
-
-      /** 📅 可用的年份列表，從 store 獲取 */
-      const availableYears = computed(() => dataStore.getAvailableYears());
-
       // 🔧 圖層操作函數 (Layer Operation Functions)
 
       /**
@@ -131,17 +116,8 @@
         toggleLayer, // 切換圖層可見性
         handleToggleChange, // 處理開關變更事件
 
-        // 🔍 篩選控制 (Filter Controls)
-        selectedAnalysisLocation, // 選中的分析位置
-        selectedAnalysisYear, // 選中的分析年份
-        availableYears, // 可用年份列表
-
         // 🛠️ 工具函數 (Utility Functions)
         getIcon, // 圖標獲取函數
-
-        // 📋 群組匹配函數 (Group Matching Functions)
-        doesGroupMatchLocation: dataStore.doesGroupMatchLocation, // 檢查群組是否匹配位置
-        doesGroupMatchYear: dataStore.doesGroupMatchYear, // 檢查群組是否匹配年份
       };
     },
   };
@@ -150,51 +126,16 @@
 <template>
   <div class="h-100 d-flex flex-column overflow-hidden my-bgcolor-gray-100">
     <div class="flex-grow-1 overflow-auto layer-list-container" ref="layerListRef">
-      <div class="p-3">
-        <!-- 主群組標題 -->
-        <div class="d-flex align-items-center justify-content-center pb-2">
-          <div class="my-title-sm-gray">選擇位置與時間</div>
-        </div>
-        <div class="mb-2">
-          <div class="my-title-xs-gray mb-1">分析位置</div>
-          <select v-model="selectedAnalysisLocation" class="form-select form-select-sm px-3 py-2">
-            <option value="台南市區">台南市區</option>
-            <option value="高雄市區">高雄市區</option>
-          </select>
-        </div>
-        <div class="mb-2">
-          <div class="my-title-xs-gray mb-1">分析時間</div>
-          <select v-model="selectedAnalysisYear" class="form-select form-select-sm px-3 py-2">
-            <option v-for="year in availableYears" :key="year" :value="year">{{ year }}</option>
-          </select>
-        </div>
-      </div>
       <div class="mb-3">
         <!-- 主群組 -->
-        <div
-          v-for="mainGroup in layers"
-          :key="mainGroup.groupName"
-          class="p-3"
-          v-show="
-            doesGroupMatchLocation(mainGroup.groupName, selectedAnalysisLocation) &&
-            doesGroupMatchYear(mainGroup.groupName, selectedAnalysisYear)
-          "
-        >
+        <div v-for="mainGroup in layers" :key="mainGroup.groupName" class="p-3">
           <!-- 主群組標題 -->
           <div class="d-flex align-items-center justify-content-center pb-2">
             <div class="my-title-sm-gray">{{ mainGroup.groupName }}</div>
           </div>
 
           <!-- 子群組 -->
-          <div
-            v-for="subGroup in mainGroup.subGroups"
-            :key="subGroup.groupName"
-            class="mb-3"
-            v-show="
-              doesGroupMatchLocation(subGroup.groupName, selectedAnalysisLocation) &&
-              doesGroupMatchYear(subGroup.groupName, selectedAnalysisYear)
-            "
-          >
+          <div v-for="subGroup in mainGroup.subGroups" :key="subGroup.groupName" class="mb-3">
             <!-- 子群組標題 -->
             <div class="d-flex align-items-center pb-2">
               <div class="my-title-xs-gray">{{ subGroup.groupName }}</div>

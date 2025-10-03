@@ -21,7 +21,7 @@
    */
   const props = defineProps({
     // 🎛️ 分頁和面板設定 (Tab and Panel Settings)
-    activeUpperTab: { type: String, default: 'map' },
+    activeUpperTab: { type: String, default: 'd3js' },
     activeBottomTab: { type: String, default: 'table' },
     mainPanelWidth: { type: Number, default: 60 },
     dynamicMainAreaHeight: { type: Number, default: 500 },

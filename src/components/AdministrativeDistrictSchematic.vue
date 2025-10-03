@@ -40,7 +40,7 @@
   const loadData = async () => {
     try {
       // 使用 fetch 載入 data.json
-      const response = await fetch('./data/data.json');
+      const response = await fetch('/schematic-map-rwd/data/data.json');
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);

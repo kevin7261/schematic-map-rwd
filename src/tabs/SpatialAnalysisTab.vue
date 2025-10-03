@@ -5,6 +5,8 @@
   const dataStore = useDataStore();
 
   const activeLayerTab = ref(null); /** 📑 當前作用中的圖層分頁 */
+  const analysisResults = ref(null); /** 📊 分析結果 */
+  const isLoadingAnalysis = ref(false); /** 🔄 分析載入狀態 */
 
   // 獲取所有開啟且有資料的圖層
   const visibleLayers = computed(() => {
@@ -19,15 +21,6 @@
   const setActiveLayerTab = (layerId) => {
     activeLayerTab.value = layerId;
   };
-
-  /**
-   * 📊 取得當前選中圖層名稱 (Get Current Selected Layer Name)
-   */
-  const currentLayerName = computed(() => {
-    if (!activeLayerTab.value) return '無開啟圖層';
-    const layer = visibleLayers.value.find((l) => l.layerId === activeLayerTab.value);
-    return layer ? layer.layerName || '未知圖層' : '無開啟圖層';
-  });
 
   /**
    * 📊 取得圖層完整標題 (包含群組名稱) (Get Layer Full Title with Group Name)
@@ -45,14 +38,15 @@
   const previousLayers = ref([]);
 
   /**
-   * 👀 監聽可見圖層變化，自動切換到新開啟的圖層分頁
+   * 👀 監聽可見圖層變化，自動切換到新開啟的圖層分頁並執行分析
    */
   watch(
     () => visibleLayers.value,
     (newLayers) => {
-      // 如果沒有可見圖層，清除選中的分頁
+      // 如果沒有可見圖層，清除選中的分頁和分析結果
       if (newLayers.length === 0) {
         activeLayerTab.value = null;
+        analysisResults.value = null;
         previousLayers.value = [];
         return;
       }
@@ -80,6 +74,135 @@
     },
     { deep: true, immediate: true }
   );
+
+  /**
+   * 👀 監聽當前選中的圖層變化，自動執行分析
+   */
+  watch(
+    () => activeLayerTab.value,
+    (newLayerId) => {
+      if (newLayerId) {
+        const layer = dataStore.findLayerById(newLayerId);
+        if (layer && layer.geoJsonData) {
+          performSpatialAnalysis(layer);
+        }
+      } else {
+        analysisResults.value = null;
+      }
+    },
+    { immediate: true }
+  );
+
+  /**
+   * 📊 執行空間分析 (Perform Spatial Analysis)
+   * @param {Object} layer - 要分析的圖層
+   */
+  const performSpatialAnalysis = async (layer) => {
+    if (!layer || !layer.geoJsonData) {
+      console.warn('無法執行分析：圖層數據不存在');
+      return;
+    }
+
+    isLoadingAnalysis.value = true;
+
+    try {
+      // 模擬分析過程（實際應用中這裡會是真正的空間分析算法）
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      const features = layer.geoJsonData.features;
+
+      // 基本統計分析
+      const stats = {
+        totalFeatures: features.length,
+        totalPopulation: features.reduce((sum, f) => sum + (f.properties.population || 0), 0),
+        totalCount: features.reduce((sum, f) => sum + (f.properties.count || 0), 0),
+        avgPopulation: 0,
+        avgCount: 0,
+        categories: {},
+        spatialDistribution: {
+          north: 0,
+          south: 0,
+          east: 0,
+          west: 0,
+        },
+      };
+
+      // 計算平均值
+      stats.avgPopulation = stats.totalPopulation / stats.totalFeatures;
+      stats.avgCount = stats.totalCount / stats.totalFeatures;
+
+      // 統計分類
+      features.forEach((feature) => {
+        const category = feature.properties.category || '未知';
+        stats.categories[category] = (stats.categories[category] || 0) + 1;
+
+        // 簡單的空間分布分析（基於經緯度）
+        const [lon, lat] = feature.geometry.coordinates;
+        if (lat > 24.5) stats.spatialDistribution.north++;
+        else if (lat < 23.5) stats.spatialDistribution.south++;
+        if (lon > 121) stats.spatialDistribution.east++;
+        else if (lon < 120.5) stats.spatialDistribution.west++;
+      });
+
+      // 計算密度和變異係數
+      const populationValues = features.map((f) => f.properties.population || 0);
+      const countValues = features.map((f) => f.properties.count || 0);
+
+      const populationStd = Math.sqrt(
+        populationValues.reduce((sum, val) => sum + Math.pow(val - stats.avgPopulation, 2), 0) /
+          populationValues.length
+      );
+      const countStd = Math.sqrt(
+        countValues.reduce((sum, val) => sum + Math.pow(val - stats.avgCount, 2), 0) /
+          countValues.length
+      );
+
+      stats.coefficientOfVariation = {
+        population: populationStd / stats.avgPopulation,
+        count: countStd / stats.avgCount,
+      };
+
+      // 空間聚集分析（簡化版）
+      const distances = [];
+      for (let i = 0; i < features.length; i++) {
+        for (let j = i + 1; j < features.length; j++) {
+          const [lon1, lat1] = features[i].geometry.coordinates;
+          const [lon2, lat2] = features[j].geometry.coordinates;
+          const distance = Math.sqrt(Math.pow(lon2 - lon1, 2) + Math.pow(lat2 - lat1, 2));
+          distances.push(distance);
+        }
+      }
+
+      stats.spatialClustering = {
+        avgDistance: distances.reduce((sum, d) => sum + d, 0) / distances.length,
+        minDistance: Math.min(...distances),
+        maxDistance: Math.max(...distances),
+      };
+
+      analysisResults.value = {
+        layerName: layer.layerName,
+        timestamp: new Date().toLocaleString(),
+        statistics: stats,
+        features: features.map((f) => ({
+          name: f.properties.name,
+          population: f.properties.population,
+          count: f.properties.count,
+          category: f.properties.category,
+          coordinates: f.geometry.coordinates,
+        })),
+      };
+
+      console.log('空間分析完成:', analysisResults.value);
+    } catch (error) {
+      console.error('空間分析失敗:', error);
+      analysisResults.value = {
+        error: '分析過程中發生錯誤',
+        details: error.message,
+      };
+    } finally {
+      isLoadingAnalysis.value = false;
+    }
+  };
 
   /**
    * 🚀 組件掛載事件 (Component Mounted Event)
@@ -124,16 +247,44 @@
     </div>
 
     <!-- 有開啟圖層時的內容 -->
-    <div v-if="visibleLayers.length > 0" class="flex-grow-1 overflow-auto my-bgcolor-white p-3">
-      <!-- 📊 當前圖層資訊 -->
-      <div class="mb-4">
-        <h5 class="my-title-md-black">{{ currentLayerName }}</h5>
-      </div>
+    <div v-if="visibleLayers.length > 0" class="my-bgcolor-white h-100">
+      <div>
+        <div class="p-3">
+          <!-- 分析狀態區域 -->
+          <div v-if="isLoadingAnalysis" class="pb-2">
+            <div class="my-title-xs-gray pb-1">分析狀態</div>
+            <div class="my-content-sm-black pb-1">
+              <i class="fas fa-spinner fa-spin me-2"></i>
+              正在分析圖層數據...
+            </div>
+          </div>
 
-      <!-- 圖層名稱顯示區域 -->
-      <div class="text-center py-5">
-        <div class="my-title-md-gray">空間分析功能已移除</div>
-        <div class="my-content-sm-gray mt-2">此分頁僅顯示圖層名稱</div>
+          <!-- 分析結果顯示區域 -->
+          <template v-if="analysisResults && !analysisResults.error">
+            <!-- 只顯示總要素數 -->
+            <div class="pb-2">
+              <div class="my-title-xs-gray pb-1">總要素數</div>
+              <div class="my-content-sm-black pb-1">
+                {{ analysisResults.statistics.totalFeatures }}
+              </div>
+            </div>
+          </template>
+
+          <!-- 錯誤顯示 -->
+          <div v-else-if="analysisResults && analysisResults.error" class="pb-2">
+            <div class="my-title-xs-gray pb-1">分析錯誤</div>
+            <div class="my-content-sm-black pb-1">{{ analysisResults.error }}</div>
+            <div v-if="analysisResults.details" class="my-content-xs-gray pb-1">
+              詳細信息：{{ analysisResults.details }}
+            </div>
+          </div>
+
+          <!-- 初始狀態 -->
+          <div v-else-if="!isLoadingAnalysis" class="pb-2">
+            <div class="my-title-xs-gray pb-1">分析狀態</div>
+            <div class="my-content-sm-black pb-1">等待圖層數據載入...</div>
+          </div>
+        </div>
       </div>
     </div>
 
