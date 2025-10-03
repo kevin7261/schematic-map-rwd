@@ -140,22 +140,20 @@
     </div>
 
     <!-- 有開啟圖層時的內容 -->
-    <div v-if="visibleLayers.length > 0" class="flex-grow-1 overflow-auto my-bgcolor-white p-3">
+    <div v-if="visibleLayers.length > 0" class="flex-grow-1 d-flex flex-column my-bgcolor-white">
       <!-- 📊 圖層摘要資料 -->
-      <div v-if="currentLayerSummary">
-        <div class="row">
-          <!-- D3.js 示意圖 -->
-          <div class="col-12">
-            <div class="rounded-4 my-bgcolor-gray-100 p-4 mb-3">
-              <div class="w-100">
-                <AdministrativeDistrictSchematic />
-              </div>
-            </div>
+      <div v-if="currentLayerSummary" class="flex-grow-1 d-flex flex-column">
+        <!-- D3.js 示意圖 - 填滿整個可用空間 -->
+        <div class="flex-grow-1 d-flex flex-column">
+          <div class="flex-grow-1">
+            <AdministrativeDistrictSchematic />
           </div>
         </div>
       </div>
-      <div v-else class="text-center py-5">
-        <div class="my-title-md-gray">此圖層沒有可用的摘要資訊</div>
+      <div v-else class="flex-grow-1 d-flex align-items-center justify-content-center">
+        <div class="text-center">
+          <div class="my-title-md-gray">此圖層沒有可用的摘要資訊</div>
+        </div>
       </div>
     </div>
 
