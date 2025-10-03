@@ -84,9 +84,7 @@ import {
  * - 觀察者模式：提供進度更新和狀態通知
  *
  * 支援的圖層類型：
- * - 人口社會圖資：GeoJSON 地理數據
- * - 合併圖層：GeoJSON + Excel 統計數據
- * - 時序圖層：時序數據
+ * - 數據圖層：JSON 格式數據
  *
  * @class LayerProcessor
  * @version 2.0.0
@@ -105,119 +103,42 @@ class LayerProcessor {
   }
 
   /**
-   * 處理需要合併 Excel 的圖層
-   * 載入 GeoJSON 和 Excel 數據，合併後進行分類處理
-   * @param {Object} layer - 圖層配置對象
-   * @returns {number} - 處理的要素數量
-   * @throws {Error} - 當載入或處理過程中發生錯誤時
-   */
-  async processExcelMergedLayer(layer) {
-    // ==================== 📋 步驟 1: 解構圖層配置參數 (Step 1: Destructure Layer Configuration Parameters) ====================
-
-    // 從圖層配置對象中解構所需的函數和參數
-    // 這些參數定義了數據載入、合併和分析的具體流程
-    const {
-      geojsonLoader, // GeoJSON 數據載入函數
-      excelSheetLoader, // Excel 數據載入函數
-      mergeFunction, // 數據合併函數
-      classificationFunction, // 分類計算函數
-      geojsonMergeField, // GeoJSON 合併欄位名
-      excelMergeField, // Excel 合併欄位名
-    } = layer;
-
-    // ==================== 📁 步驟 2: 並行載入數據源 (Step 2: Load Data Sources in Parallel) ====================
-
-    // 同時載入 GeoJSON 和 Excel 數據，提高載入效率
-    // 使用 Promise.all 可以並行執行多個異步操作
-    const geojsonResult = await geojsonLoader(layer);
-    const excelResult = await excelSheetLoader(layer);
-
-    // ==================== 🔗 步驟 3: 合併地理數據和統計數據 (Step 3: Merge Geographic and Statistical Data) ====================
-
-    // 使用合併函數將 GeoJSON 地理數據與 Excel 統計數據合併
-    // 合併基於指定的欄位進行關聯，確保數據的一致性
-    const mergedResult = mergeFunction(
-      geojsonResult.geoJsonData, // 載入的 GeoJSON 地理數據
-      excelResult, // 載入的 Excel 統計數據
-      geojsonMergeField, // GeoJSON 中用於合併的欄位名
-      excelMergeField // Excel 中用於合併的欄位名
-    );
-
-    const classificationResult = classificationFunction(mergedResult.mergedGeoJSON);
-
-    // 更新圖層資料
-    this.updateLayerData(layer, {
-      geoJsonData: classificationResult.geoJsonData,
-      tableData: classificationResult.geoJsonData.features.map((f) => f.properties.tableData),
-      summaryData: geojsonResult.summaryData,
-      legendData: classificationResult.legendData,
-      legendData_InfectionRate: classificationResult.legendData_InfectionRate,
-    });
-
-    return classificationResult.geoJsonData.features.length;
-  }
-
-  /**
-   * 處理僅載入 GeoJSON 的圖層
-   * 載入 GeoJSON 數據
+   * 處理載入 JSON 的圖層
+   * 載入 JSON 數據
    * @param {Object} layer - 圖層配置對象
    * @returns {number} - 處理的要素數量
    * @throws {Error} - 當載入過程中發生錯誤時
    */
-  async processGeoJsonOnlyLayer(layer) {
-    const geojsonResult = await layer.geojsonLoader(layer);
+  async processJsonLayer(layer) {
+    const jsonResult = await layer.jsonLoader(layer);
 
     // 準備要更新的資料
     const updateData = {
-      geoJsonData: geojsonResult.geoJsonData,
-      tableData: geojsonResult.tableData,
-      summaryData: geojsonResult.summaryData,
-      legendData: geojsonResult.legendData,
+      jsonData: jsonResult.jsonData,
+      tableData: jsonResult.tableData,
+      summaryData: jsonResult.summaryData,
+      legendData: jsonResult.legendData,
     };
 
     // 如果是人口分佈圖層，需要包含所有人口相關的圖例資料
     if (layer.isPopulationLayer) {
       // 包含所有人口屬性圖例
-      Object.keys(geojsonResult).forEach((key) => {
+      Object.keys(jsonResult).forEach((key) => {
         if (key.startsWith('legendData_')) {
-          updateData[key] = geojsonResult[key];
+          updateData[key] = jsonResult[key];
         }
       });
     }
 
     this.updateLayerData(layer, updateData);
 
-    // 對於示意圖數據，geoJsonData 可能為 null
-    if (geojsonResult.geoJsonData && geojsonResult.geoJsonData.features) {
-      return geojsonResult.geoJsonData.features.length;
+    // 對於示意圖數據，jsonData 可能為 null
+    if (jsonResult.jsonData && jsonResult.jsonData.features) {
+      return jsonResult.jsonData.features.length;
     } else {
       // 示意圖數據或其他非地圖數據
       return 0;
     }
-  }
-
-  /**
-   * 處理需要分析的 GeoJSON 圖層
-   * 載入 GeoJSON 數據並進行分類處理
-   * @param {Object} layer - 圖層配置對象
-   * @returns {number} - 處理的要素數量
-   * @throws {Error} - 當載入或分析過程中發生錯誤時
-   */
-  async processAnalysisGeoJsonLayer(layer) {
-    const geojsonResult = await layer.geojsonLoader(layer);
-
-    const classificationResult = layer.classificationFunction(geojsonResult.geoJsonData);
-
-    // 更新圖層資料
-    this.updateLayerData(layer, {
-      geoJsonData: classificationResult.geoJsonData,
-      tableData: classificationResult.geoJsonData.features.map((f) => f.properties.tableData),
-      summaryData: geojsonResult.summaryData,
-      legendData: classificationResult.legendData,
-      legendData_InfectionRate: classificationResult.legendData_InfectionRate,
-    });
-
-    return classificationResult.geoJsonData.features.length;
   }
 
   /**
@@ -245,13 +166,9 @@ class LayerProcessor {
    * @throws {Error} - 驗證失敗拋出錯誤
    */
   validateLayerConfig(layer) {
-    // 檢查 Excel 合併欄位
-    if (layer.excelSheetLoader && layer.mergeFunction) {
-      if (!layer.geojsonMergeField || !layer.excelMergeField) {
-        throw new Error(
-          `❌ 圖層 "${layer.layerName}" 缺少合併欄位定義: geojsonMergeField="${layer.geojsonMergeField}", excelMergeField="${layer.excelMergeField}"`
-        );
-      }
+    // 檢查 JSON 載入器
+    if (!layer.jsonLoader) {
+      throw new Error(`❌ 圖層 "${layer.layerName}" 缺少 JSON 載入器定義`);
     }
 
     return true;
@@ -270,7 +187,7 @@ export const useDataStore = defineStore(
 
     // ==================== 圖層狀態管理 ====================
 
-    // 存儲所有圖層的狀態 (visible, isLoaded, geoJsonData 等)
+    // 存儲所有圖層的狀態 (visible, isLoaded, jsonData 等)
     const layerStates = ref({});
 
     // 動態生成圖層配置，並與保存的狀態合併
@@ -327,10 +244,7 @@ export const useDataStore = defineStore(
                     ...layer,
                     ...savedState,
                     // 確保函數引用不被覆蓋
-                    geojsonLoader: layer.geojsonLoader,
-                    excelSheetLoader: layer.excelSheetLoader,
-                    mergeFunction: layer.mergeFunction,
-                    classificationFunction: layer.classificationFunction,
+                    jsonLoader: layer.jsonLoader,
                   };
                 }
                 return layer;
@@ -349,10 +263,7 @@ export const useDataStore = defineStore(
                   ...layer,
                   ...savedState,
                   // 確保函數引用不被覆蓋
-                  geojsonLoader: layer.geojsonLoader,
-                  excelSheetLoader: layer.excelSheetLoader,
-                  mergeFunction: layer.mergeFunction,
-                  classificationFunction: layer.classificationFunction,
+                  jsonLoader: layer.jsonLoader,
                 };
               }
               return layer;
@@ -437,11 +348,8 @@ export const useDataStore = defineStore(
         currentVisible: layer.visible,
         isLoaded: layer.isLoaded,
         isLoading: layer.isLoading,
-        isAnalysisLayer: layer.isAnalysisLayer,
-        isPopulationLayer: layer.isPopulationLayer,
-        hasGeojsonLoader: !!layer.geojsonLoader,
-        hasExcelSheetLoader: !!layer.excelSheetLoader,
-        hasClassificationFunction: !!layer.classificationFunction,
+        isDataLayer: layer.isDataLayer,
+        hasJsonLoader: !!layer.jsonLoader,
       });
 
       // 如果要開啟圖層且不是人口分佈圖層，則關閉其他非人口分佈圖層
@@ -523,16 +431,9 @@ export const useDataStore = defineStore(
 
           // 根據圖層類型選擇處理方法
           try {
-            if (layer.excelSheetLoader && layer.mergeFunction) {
-              dataCount = await layerProcessor.processExcelMergedLayer(layer);
-            } else if (
-              layer.geojsonLoader &&
-              !layer.excelSheetLoader &&
-              !layer.classificationFunction
-            ) {
-              dataCount = await layerProcessor.processGeoJsonOnlyLayer(layer);
-            } else if (layer.geojsonLoader && layer.classificationFunction) {
-              dataCount = await layerProcessor.processAnalysisGeoJsonLayer(layer);
+            if (layer.jsonLoader) {
+              // JSON 圖層
+              dataCount = await layerProcessor.processJsonLayer(layer);
             } else {
               console.warn(`❌ 圖層 "${layer.layerName}" 缺少必要的載入函數`);
               layer.visible = false;
@@ -552,15 +453,10 @@ export const useDataStore = defineStore(
           // 保存完整的圖層狀態
           saveLayerState(layerId, {
             isLoaded: layer.isLoaded,
-            geoJsonData: layer.geoJsonData,
+            jsonData: layer.jsonData,
             tableData: layer.tableData,
             summaryData: layer.summaryData,
             legendData: layer.legendData,
-            legendData_InfectionRate: layer.legendData_InfectionRate,
-            legendData_POPULATION_DENSITY: layer.legendData_POPULATION_DENSITY,
-            legendData_P_CNT: layer.legendData_P_CNT,
-            legendData_M_CNT: layer.legendData_M_CNT,
-            legendData_F_CNT: layer.legendData_F_CNT,
           });
         } catch (error) {
           console.error(`❌ 載入圖層 "${layer.layerName}" 失敗:`, error);

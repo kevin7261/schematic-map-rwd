@@ -2,18 +2,14 @@
  * 📊 數據處理核心模組 (Data Processing Core Module)
  *
  * 功能說明 (Features):
- * 1. 📁 通用檔案載入：支援 GeoJSON、Excel 等多種格式
- * 2. 🔗 數據合併：GeoJSON 與 Excel 的智能合併（基於鍵值對應）
- * 3. 🎨 值域分級與顏色指定：支援多種分類方法和顏色方案
- * 4. 📋 數據預處理：點/面資料的標準化處理
- * 5. 📊 表格/摘要資料建構：生成統計摘要和數據表格
- * 6. 🧮 數據預處理：為統計分析準備數據
+ * 1. 📁 通用檔案載入：支援 JSON 格式
+ * 2. 🎨 值域分級與顏色指定：支援多種分類方法和顏色方案
+ * 3. 📋 數據預處理：點/面資料的標準化處理
+ * 4. 📊 表格/摘要資料建構：生成統計摘要和數據表格
+ * 5. 🧮 數據預處理：為統計分析準備數據
  *
  * 支援的數據格式 (Supported Data Formats):
- * - GeoJSON：地理空間數據標準格式
- * - Excel (.xlsx)：統計數據和屬性信息
- * - CSV：表格數據（通過 Excel 載入）
- * - JSON：配置文件和元數據
+ * - JSON：數據格式（包含 GeoJSON 結構）
  *
  * 分類方法 (Classification Methods):
  * - Jenks Natural Breaks：自然斷點分類
@@ -41,14 +37,6 @@
  */
 // ==================== 📦 第三方庫引入 (Third-Party Library Imports) ====================
 
-/**
- * XLSX 庫引入
- * 用於處理 Excel 文件（.xlsx, .xls）的讀寫操作
- * 支援多工作表、數據類型檢測和格式轉換
- *
- * @see https://sheetjs.com/
- */
-import * as XLSX from 'xlsx';
 
 /**
  * D3.js 庫引入
@@ -94,12 +82,10 @@ const COLOR_CONFIG = {
  * - 備用路徑：提供降級方案
  */
 const PATH_CONFIG = {
-  /** GeoJSON 文件路徑 - 生產環境 */
-  GEOJSON: '/schematic-map-rwd/data/geojson',
-  /** Excel 文件路徑 - 生產環境 */
-  EXCEL: '/schematic-map-rwd/data/xlsx',
-  /** 備用 GeoJSON 路徑 - 開發環境 */
-  FALLBACK_GEOJSON: '/data/geojson',
+  /** JSON 文件路徑 - 生產環境 */
+  JSON: '/schematic-map-rwd/data',
+  /** 備用 JSON 路徑 - 開發環境 */
+  FALLBACK_JSON: '/data',
 };
 
 // ==================== 🔧 輔助函數 (Helper Functions) ====================
@@ -822,143 +808,56 @@ async function loadFile(primaryPath, fallbackPath = null) {
 // ==================== 主要載入函數 ====================
 
 /**
- * 載入原始 GeoJSON 資料（不包含 Excel 合併）
- * @param {{layerId:string,layerName:string,geojsonFileName:string,geojsonMergeField:string}} layer
+ * 載入原始 JSON 資料
+ * @param {{layerId:string,layerName:string,jsonFileName:string,jsonMergeField:string}} layer
  */
-export async function loadDistrictGeoJson(layer) {
+export async function loadDistrictJson(layer) {
   try {
-    console.log('🔄 載入原始 GeoJSON 資料...');
+    console.log('🔄 載入原始 JSON 資料...');
 
-    const filePath = `${PATH_CONFIG.GEOJSON}/${layer.geojsonFileName}`;
+    const filePath = `${PATH_CONFIG.JSON}/${layer.jsonFileName}`;
     const response = await loadFile(filePath);
-    const geoJsonData = await response.json();
+    const jsonData = await response.json();
 
     // 處理 features
-    geoJsonData.features.forEach((feature, index) => {
-      buildFeatureProperties(
-        feature,
-        index,
-        layer.layerId,
-        layer.layerName,
-        layer.geojsonMergeField
-      );
-    });
+    if (jsonData.features) {
+      jsonData.features.forEach((feature, index) => {
+        buildFeatureProperties(
+          feature,
+          index,
+          layer.layerId,
+          layer.layerName,
+          layer.jsonMergeField || 'name'
+        );
+      });
+    }
 
-    console.log('✅ 原始 GeoJSON 載入完成:', geoJsonData.features.length, '筆資料');
+    console.log('✅ 原始 JSON 載入完成:', jsonData.features?.length || 0, '筆資料');
 
     return {
-      geoJsonData,
-      tableData: geoJsonData.features.map((f) => ({ ...f.properties.tableData })),
-      summaryData: { totalCount: geoJsonData.features.length },
+      jsonData,
+      tableData: jsonData.features?.map((f) => ({ ...f.properties.tableData })) || [],
+      summaryData: { totalCount: jsonData.features?.length || 0 },
       legendData: null,
     };
   } catch (error) {
-    console.error('❌ GeoJSON 數據載入或處理失敗:', error);
+    console.error('❌ JSON 數據載入或處理失敗:', error);
     throw error;
   }
 }
 
-/**
- * 讀取 Excel 檔案的特定工作表
- * @param {{excelFileName:string,excelSheetName:string}} layer
- */
-export async function loadExcelSheet(layer) {
-  try {
-    console.log('🔄 載入 Excel 資料...');
 
-    const filePath = `${PATH_CONFIG.EXCEL}/${layer.excelFileName}`;
-    const response = await loadFile(filePath);
-    const arrayBuffer = await response.arrayBuffer();
-    const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-
-    if (!workbook.SheetNames.includes(layer.excelSheetName)) {
-      throw new Error(`Sheet "${layer.excelSheetName}" not found in workbook`);
-    }
-
-    const worksheet = workbook.Sheets[layer.excelSheetName];
-    const jsonData = XLSX.utils.sheet_to_json(worksheet);
-
-    console.log('✅ Excel 載入完成:', jsonData.length, '筆資料');
-    return jsonData;
-  } catch (error) {
-    console.error('❌ Excel 載入失敗:', error);
-    throw error;
-  }
-}
-
-/**
- * 合併 GeoJSON 與 Excel 數據（僅同步 count 欄位）
- * @param {Object} geojsonData
- * @param {Array<Object>} excelData
- * @param {string} geojsonKey
- * @param {string} excelKey
- */
-export function mergeGeoJSONWithExcel(
-  geojsonData,
-  excelData,
-  geojsonKey = 'TOWN',
-  excelKey = 'name'
-) {
-  try {
-    console.log('🔄 開始合併資料，只賦值 count...');
-
-    // 創建Excel數據的查找表
-    const excelLookup = {};
-    excelData.forEach((row) => {
-      if (row[excelKey]) {
-        excelLookup[row[excelKey].toUpperCase()] = row;
-      }
-    });
-
-    // 合併資料
-    const mergedGeoJSON = {
-      ...geojsonData,
-      features: geojsonData.features.map((feature) => {
-        const props = feature.properties;
-        const excelRow = excelLookup[props[geojsonKey]?.toUpperCase()];
-
-        return {
-          ...feature,
-          properties: {
-            ...props,
-            count: excelRow ? excelRow.count || 0 : 0,
-          },
-        };
-      }),
-    };
-
-    const mergedCount = geojsonData.features.filter((feature) => {
-      const props = feature.properties;
-      return !!excelLookup[props[geojsonKey]?.toUpperCase()];
-    }).length;
-
-    console.log('✅ 合併完成:', mergedCount, '/', geojsonData.features.length, '筆資料');
-
-    return {
-      mergedGeoJSON,
-      summary: {
-        totalFeatures: geojsonData.features.length,
-        mergedCount,
-        excelRows: excelData.length,
-        mergeRate: (mergedCount / geojsonData.features.length) * 100,
-      },
-    };
-  } catch (error) {
-    console.error('❌ 合併失敗:', error);
-    throw error;
-  }
-}
 
 // ==================== 分類和顏色處理函數 ====================
 
 /**
  * 計算圖例資料並分配顏色給 features
  */
-export function calculateClassification(geoJsonData) {
+export function calculateClassification(jsonData) {
   try {
     console.log('🎨 計算圖例並分配顏色...');
 
-    const values = geoJsonData.features
+    const values = jsonData.features
       .map((f) => parseFloat(f.properties.count || 0))
       .filter((v) => !isNaN(v) && v > 0);
 
@@ -969,7 +868,7 @@ export function calculateClassification(geoJsonData) {
     );
 
     // 分配顏色給 features
-    geoJsonData.features.forEach((feature) => {
+    jsonData.features.forEach((feature) => {
       const count = parseInt(feature.properties.count || 0);
       let fillColor, tableColor;
 
@@ -1008,14 +907,14 @@ export function calculateClassification(geoJsonData) {
     });
 
     // 計算每個分類的數量
-    const validFeatures = geoJsonData.features.filter((f) => {
+    const validFeatures = jsonData.features.filter((f) => {
       const value = parseFloat(f.properties.count || 0);
       return !isNaN(value) && value > 0;
     });
 
     // 計算缺值統計
-    const totalFeatureCount = geoJsonData.features.length;
-    const zeroOrMissingCount = geoJsonData.features.filter((f) => {
+    const totalFeatureCount = jsonData.features.length;
+    const zeroOrMissingCount = jsonData.features.filter((f) => {
       const value = parseFloat(f.properties.count || 0);
       return isNaN(value) || value <= 0;
     }).length;
@@ -1078,7 +977,7 @@ export function calculateClassification(geoJsonData) {
     });
 
     // 生成感染率專用圖例
-    const infectionRateValues = geoJsonData.features
+    const infectionRateValues = jsonData.features
       .map((f) => {
         // 直接從 properties 取得 P_CNT，因為 tableData 可能還沒有完全建立
         const population = parseFloat(f.properties.P_CNT || 0);
@@ -1116,7 +1015,7 @@ export function calculateClassification(geoJsonData) {
         .range(infectionColors);
 
       // 將每個有效數據點分配到正確的區間，並為每個 feature 分配感染率顏色
-      geoJsonData.features.forEach((feature) => {
+      jsonData.features.forEach((feature) => {
         // 直接從 properties 取得 P_CNT
         const population = parseFloat(feature.properties.P_CNT || 0);
         const count = parseFloat(feature.properties.count || 0);
@@ -1186,10 +1085,10 @@ export function calculateClassification(geoJsonData) {
       });
     }
 
-    const tableData = geoJsonData.features.map((f) => ({ ...f.properties.tableData }));
+    const tableData = jsonData.features.map((f) => ({ ...f.properties.tableData }));
 
     console.log('✅ 圖例和顏色分配完成');
-    return { geoJsonData, tableData, legendData, legendData_InfectionRate };
+    return { jsonData, tableData, legendData, legendData_InfectionRate };
   } catch (error) {
     console.error('❌ 圖例計算失敗:', error);
     throw error;
@@ -1199,49 +1098,45 @@ export function calculateClassification(geoJsonData) {
 // ==================== 特殊類型載入函數 ====================
 
 /**
- * 載入點 GeoJSON 資料（直接使用 geojson 中的數據，不需要合併 Excel）
+ * 載入數據圖層 JSON 資料
  */
-export async function loadDataLayerGeoJson(layer) {
+export async function loadDataLayerJson(layer) {
   try {
-    console.log('🔄 載入數據圖層 GeoJSON 資料...');
+    console.log('🔄 載入數據圖層 JSON 資料...');
 
-    const fileName = layer.geojsonFileName;
-    // 數據圖層直接從 /data/ 路徑載入，不使用 geojson 子目錄
-    const dataPath = `/schematic-map-rwd/data/${fileName}`;
-    const response = await fetch(dataPath);
+    const fileName = layer.jsonFileName;
+    // 數據圖層直接從 /data/ 路徑載入
+    const dataPath = `${PATH_CONFIG.JSON}/${fileName}`;
+    const response = await loadFile(dataPath);
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status} - ${dataPath}`);
-    }
-
-    const geoJsonData = await response.json();
+    const jsonData = await response.json();
 
     // 處理數據圖層的特殊邏輯
-    return await processDataLayerGeoJson(geoJsonData, layer);
+    return await processDataLayerJson(jsonData, layer);
   } catch (error) {
-    console.error('❌ 數據圖層 GeoJSON 數據載入或處理失敗:', error);
+    console.error('❌ 數據圖層 JSON 數據載入或處理失敗:', error);
     throw error;
   }
 }
 
 /**
- * 處理數據圖層 GeoJSON 數據
+ * 處理數據圖層 JSON 數據
  */
-async function processDataLayerGeoJson(geoJsonData, layer) {
+async function processDataLayerJson(jsonData, layer) {
   // 檢查是否為示意圖節點格式
-  if (Array.isArray(geoJsonData) && geoJsonData.length > 0 && geoJsonData[0].nodes) {
+  if (Array.isArray(jsonData) && jsonData.length > 0 && jsonData[0].nodes) {
     // 這是示意圖節點格式，不需要處理為地圖圖層
-    console.log('📊 載入示意圖節點數據，共', geoJsonData.length, '條路線');
+    console.log('📊 載入示意圖節點數據，共', jsonData.length, '條路線');
 
     // 建立摘要資料
     const summaryData = {
-      totalLines: geoJsonData.length,
-      totalNodes: geoJsonData.reduce((sum, line) => sum + line.nodes.length, 0),
-      lineNames: geoJsonData.map((line) => line.name),
+      totalLines: jsonData.length,
+      totalNodes: jsonData.reduce((sum, line) => sum + line.nodes.length, 0),
+      lineNames: jsonData.map((line) => line.name),
     };
 
     // 為示意圖數據建立 tableData，每個路線作為一個項目
-    const tableData = geoJsonData.map((line, index) => ({
+    const tableData = jsonData.map((line, index) => ({
       '#': index + 1,
       color: line.color,
       name: line.name,
@@ -1249,19 +1144,19 @@ async function processDataLayerGeoJson(geoJsonData, layer) {
     }));
 
     return {
-      geoJsonData: null, // 示意圖數據不需要地圖顯示
+      jsonData: null, // 示意圖數據不需要地圖顯示
       summaryData,
       tableData,
     };
   }
 
-  // 標準 GeoJSON 格式處理
-  if (!geoJsonData.features) {
-    throw new Error('無效的 GeoJSON 格式：缺少 features 屬性');
+  // 標準 JSON 格式處理
+  if (!jsonData.features) {
+    throw new Error('無效的 JSON 格式：缺少 features 屬性');
   }
 
   // 為每個特徵建立標準化的屬性結構
-  geoJsonData.features.forEach((feature, index) => {
+  jsonData.features.forEach((feature, index) => {
     // 使用 stationCount 作為 count 值，如果沒有則使用預設值 1
     const count = feature.properties.stationCount || 1;
     buildFeatureProperties(feature, index, layer.layerId, layer.layerName, 'name', count);
@@ -1269,32 +1164,32 @@ async function processDataLayerGeoJson(geoJsonData, layer) {
 
   // 建立摘要資料
   const summaryData = {
-    totalCount: geoJsonData.features.length,
-    districtCount: geoJsonData.features.map((feature) => ({
+    totalCount: jsonData.features.length,
+    districtCount: jsonData.features.map((feature) => ({
       name: feature.properties.name,
       count: Math.max(0, feature.properties.stationCount || 1), // 確保 count 不為負值
     })),
   };
 
   return {
-    geoJsonData,
+    jsonData,
     summaryData,
   };
 }
 
-export async function loadPointGeoJson(layer) {
+export async function loadPointJson(layer) {
   try {
-    console.log('🔄 載入點 GeoJSON 資料...');
+    console.log('🔄 載入點 JSON 資料...');
 
-    const fileName = layer.geojsonFileName;
-    const primaryPath = `${PATH_CONFIG.GEOJSON}/${fileName}`;
-    const fallbackPath = `${PATH_CONFIG.FALLBACK_GEOJSON}/${fileName}`;
+    const fileName = layer.jsonFileName;
+    const primaryPath = `${PATH_CONFIG.JSON}/${fileName}`;
+    const fallbackPath = `${PATH_CONFIG.FALLBACK_JSON}/${fileName}`;
     const response = await loadFile(primaryPath, fallbackPath);
-    const geoJsonData = await response.json();
+    const jsonData = await response.json();
 
     // 過濾只保留5月到8月的資料 (OnsetDay 月份過濾)
-    const originalCount = geoJsonData.features.length;
-    geoJsonData.features = geoJsonData.features.filter((feature) => {
+    const originalCount = jsonData.features.length;
+    jsonData.features = jsonData.features.filter((feature) => {
       const onsetDay = feature.properties['發病日'];
       if (!onsetDay) return false;
 
@@ -1307,11 +1202,11 @@ export async function loadPointGeoJson(layer) {
       return month >= 5 && month <= 8;
     });
 
-    const filteredCount = geoJsonData.features.length;
+    const filteredCount = jsonData.features.length;
     console.log(`📅 月份過濾: 原始資料 ${originalCount} 筆 → 5-8月資料 ${filteredCount} 筆`);
 
     // 處理點數據的特殊屬性
-    geoJsonData.features.forEach((feature, index) => {
+    jsonData.features.forEach((feature, index) => {
       const count = parseInt(feature.properties['確定病例數'] || 0);
 
       buildFeatureProperties(feature, index, layer.layerId, layer.layerName, 'name', count);
@@ -1341,41 +1236,41 @@ export async function loadPointGeoJson(layer) {
     });
 
     const summaryData = {
-      totalCount: geoJsonData.features.length,
-      totalCases: geoJsonData.features.reduce((sum, feature) => sum + feature.properties.count, 0),
+      totalCount: jsonData.features.length,
+      totalCases: jsonData.features.reduce((sum, feature) => sum + feature.properties.count, 0),
     };
 
-    console.log('✅ 點 GeoJSON 載入完成:', geoJsonData.features.length, '筆資料');
+    console.log('✅ 點 JSON 載入完成:', jsonData.features.length, '筆資料');
     console.log('📊 總案例數:', summaryData.totalCases);
 
     return {
-      geoJsonData,
-      tableData: geoJsonData.features.map((f) => ({ ...f.properties.tableData })),
+      jsonData,
+      tableData: jsonData.features.map((f) => ({ ...f.properties.tableData })),
       summaryData,
       legendData: null,
     };
   } catch (error) {
-    console.error('❌ 點 GeoJSON 數據載入或處理失敗:', error);
+    console.error('❌ 點 JSON 數據載入或處理失敗:', error);
     throw error;
   }
 }
 
 /**
- * 載入多邊形 GeoJSON 資料 (僅載入，不分析)
+ * 載入多邊形 JSON 資料 (僅載入，不分析)
  */
-export async function loadPolygonGeoJson(layer) {
+export async function loadPolygonJson(layer) {
   try {
-    console.log('🔄 載入多邊形 GeoJSON 資料 (僅載入，不分析)...');
+    console.log('🔄 載入多邊形 JSON 資料 (僅載入，不分析)...');
 
-    const fileName = layer.geojsonFileName;
-    const primaryPath = `${PATH_CONFIG.GEOJSON}/${fileName}`;
-    const fallbackPath = `${PATH_CONFIG.FALLBACK_GEOJSON}/${fileName}`;
+    const fileName = layer.jsonFileName;
+    const primaryPath = `${PATH_CONFIG.JSON}/${fileName}`;
+    const fallbackPath = `${PATH_CONFIG.FALLBACK_JSON}/${fileName}`;
 
     const response = await loadFile(primaryPath, fallbackPath);
-    const geoJsonData = await response.json();
+    const jsonData = await response.json();
 
     // 以 P_CNT (人口數) 為值來源進行分級
-    const rawValues = geoJsonData.features
+    const rawValues = jsonData.features
       .map((f) => parseFloat(f.properties?.P_CNT || 0))
       .filter((v) => !isNaN(v) && v > 0);
 
@@ -1384,7 +1279,7 @@ export async function loadPolygonGeoJson(layer) {
     // 推斷名稱欄位的輔助函數
     const inferName = (props) => {
       const candidates = [
-        layer.geojsonMergeField,
+        layer.jsonMergeField,
         'TOWNNAME',
         'VILLNAME',
         'VILLAGE',
@@ -1417,7 +1312,7 @@ export async function loadPolygonGeoJson(layer) {
     };
 
     // 處理人口分佈資料
-    geoJsonData.features.forEach((feature, index) => {
+    jsonData.features.forEach((feature, index) => {
       const props = feature.properties || {};
       feature.properties = props;
       feature.properties.id = index + 1;
@@ -1469,8 +1364,8 @@ export async function loadPolygonGeoJson(layer) {
     });
 
     const summaryData = {
-      totalCount: geoJsonData.features.length,
-      totalPopulation: geoJsonData.features.reduce(
+      totalCount: jsonData.features.length,
+      totalPopulation: jsonData.features.reduce(
         (sum, f) => sum + (parseFloat(f.properties?.P_CNT || 0) || 0),
         0
       ),
@@ -1510,7 +1405,7 @@ export async function loadPolygonGeoJson(layer) {
 
     populationAttributes.forEach((attribute) => {
       // 獲取該屬性的所有數值
-      const attributeValues = geoJsonData.features
+      const attributeValues = jsonData.features
         .map((f) => parseFloat(f.properties?.[attribute] || 0))
         .filter((v) => !isNaN(v) && v > 0);
 
@@ -1541,14 +1436,14 @@ export async function loadPolygonGeoJson(layer) {
 
         // 先計算所有有效的數據點
         // 將所有屬性值大於 0 的特徵視為有效數據
-        const validFeatures = geoJsonData.features.filter((f) => {
+        const validFeatures = jsonData.features.filter((f) => {
           const value = parseFloat(f.properties?.[attribute] || 0);
           return !isNaN(value) && value > 0;
         });
 
         // 計算總數
         const totalValidCount = validFeatures.length;
-        const totalFeatureCount = geoJsonData.features.length;
+        const totalFeatureCount = jsonData.features.length;
         const zeroOrMissingCount = totalFeatureCount - totalValidCount;
         console.log(`${attribute} 總有效數據數：${totalValidCount}`);
 
@@ -1632,7 +1527,7 @@ export async function loadPolygonGeoJson(layer) {
         populationLegends[`legendData_${attribute}`] = attributeLegend;
 
         // 為每個特徵添加該屬性的顏色信息
-        geoJsonData.features.forEach((feature) => {
+        jsonData.features.forEach((feature) => {
           const value = parseFloat(feature.properties?.[attribute] || 0);
           if (!isNaN(value) && value > 0) {
             const color = attrColorScale(value);
@@ -1648,7 +1543,7 @@ export async function loadPolygonGeoJson(layer) {
     });
 
     // 處理 POPULATION_DENSITY 屬性（人口密度 = P_CNT / AREA）
-    const populationDensityValues = geoJsonData.features
+    const populationDensityValues = jsonData.features
       .map((f) => {
         const population = parseFloat(f.properties?.P_CNT || 0);
         const area = parseFloat(f.properties?.AREA || 1); // 避免除以0
@@ -1658,7 +1553,7 @@ export async function loadPolygonGeoJson(layer) {
 
     if (populationDensityValues.length > 0) {
       // 為每個特徵計算並存儲人口密度
-      geoJsonData.features.forEach((feature) => {
+      jsonData.features.forEach((feature) => {
         const population = parseFloat(feature.properties?.P_CNT || 0);
         const area = parseFloat(feature.properties?.AREA || 1);
         feature.properties.POPULATION_DENSITY = area > 0 ? population / area : 0;
@@ -1677,7 +1572,7 @@ export async function loadPolygonGeoJson(layer) {
       const densityFormat = (d) => Math.round(d * 1000) / 1000; // 保留三位小數
 
       // 先計算所有有效的人口密度數據點
-      const validDensityFeatures = geoJsonData.features.filter((f) => {
+      const validDensityFeatures = jsonData.features.filter((f) => {
         const value = f.properties.POPULATION_DENSITY;
         return !isNaN(value) && value > 0;
       });
@@ -1761,7 +1656,7 @@ export async function loadPolygonGeoJson(layer) {
       });
 
       // 在圖例項目中加入缺值統計信息
-      const totalFeatureCount = geoJsonData.features.length;
+      const totalFeatureCount = jsonData.features.length;
       const zeroOrMissingDensityCount = totalFeatureCount - totalValidDensityCount;
 
       populationDensityLegend.forEach((item) => {
@@ -1782,7 +1677,7 @@ export async function loadPolygonGeoJson(layer) {
       populationLegends['legendData_POPULATION_DENSITY'] = populationDensityLegend;
 
       // 為每個特徵添加人口密度的顏色信息
-      geoJsonData.features.forEach((feature) => {
+      jsonData.features.forEach((feature) => {
         const densityValue = feature.properties.POPULATION_DENSITY;
         if (!isNaN(densityValue) && densityValue > 0) {
           const color = densityColorScale(densityValue);
@@ -1798,14 +1693,14 @@ export async function loadPolygonGeoJson(layer) {
 
     // 處理 INFO_TIME 屬性（統計時間）
     const infoTimeValues = [
-      ...new Set(geoJsonData.features.map((f) => f.properties?.INFO_TIME)),
+      ...new Set(jsonData.features.map((f) => f.properties?.INFO_TIME)),
     ].filter(Boolean);
     if (infoTimeValues.length > 1) {
       // 為不同的時間創建不同的顏色
       const timeColorScale = d3.scaleOrdinal(d3.schemeCategory10).domain(infoTimeValues);
 
       // 計算總有效時間數據數
-      const validTimeFeatures = geoJsonData.features.filter((f) => f.properties?.INFO_TIME);
+      const validTimeFeatures = jsonData.features.filter((f) => f.properties?.INFO_TIME);
       const totalValidTimeCount = validTimeFeatures.length;
       console.log(`INFO_TIME 總有效數據數：${totalValidTimeCount}`);
 
@@ -1824,7 +1719,7 @@ export async function loadPolygonGeoJson(layer) {
       });
 
       // 在圖例項目中加入缺值統計信息
-      const totalFeatureCount = geoJsonData.features.length;
+      const totalFeatureCount = jsonData.features.length;
       const missingTimeCount = totalFeatureCount - totalValidTimeCount;
 
       infoTimeLegend.forEach((item) => {
@@ -1842,7 +1737,7 @@ export async function loadPolygonGeoJson(layer) {
       populationLegends['legendData_INFO_TIME'] = infoTimeLegend;
 
       // 為每個特徵添加時間屬性的顏色信息
-      geoJsonData.features.forEach((feature) => {
+      jsonData.features.forEach((feature) => {
         const timeValue = feature.properties?.INFO_TIME;
         if (timeValue) {
           feature.properties['fillColor_INFO_TIME'] = d3
@@ -1855,18 +1750,18 @@ export async function loadPolygonGeoJson(layer) {
       });
     }
 
-    console.log('✅ 多邊形 GeoJSON 載入完成:', geoJsonData.features.length, '筆資料');
+    console.log('✅ 多邊形 JSON 載入完成:', jsonData.features.length, '筆資料');
     console.log('📊 人口屬性圖例生成完成:', Object.keys(populationLegends));
 
     return {
-      geoJsonData,
-      tableData: geoJsonData.features.map((f) => ({ ...f.properties.tableData })),
+      jsonData,
+      tableData: jsonData.features.map((f) => ({ ...f.properties.tableData })),
       summaryData,
       legendData,
       ...populationLegends, // 展開所有人口屬性圖例
     };
   } catch (error) {
-    console.error('❌ 多邊形 GeoJSON 載入或處理失敗:', error);
+    console.error('❌ 多邊形 JSON 載入或處理失敗:', error);
     throw error;
   }
 }

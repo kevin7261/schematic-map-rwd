@@ -160,7 +160,7 @@ SpatialAnalysisTab.vue * @version 2.0.0 * @author Kevin Cheng * @since 1.0.0 */
     (newLayerId) => {
       if (newLayerId) {
         const layer = dataStore.findLayerById(newLayerId);
-        if (layer && layer.geoJsonData) {
+        if (layer && layer.jsonData) {
           loadLayerInfo(layer);
         }
       } else {
@@ -175,7 +175,7 @@ SpatialAnalysisTab.vue * @version 2.0.0 * @author Kevin Cheng * @since 1.0.0 */
    * @param {Object} layer - 要載入的圖層
    */
   const loadLayerInfo = async (layer) => {
-    if (!layer || !layer.geoJsonData) {
+    if (!layer || !layer.jsonData) {
       console.warn('無法載入資訊：圖層數據不存在');
       return;
     }
@@ -186,7 +186,7 @@ SpatialAnalysisTab.vue * @version 2.0.0 * @author Kevin Cheng * @since 1.0.0 */
       // 模擬載入過程
       await new Promise((resolve) => setTimeout(resolve, 500));
 
-      const features = layer.geoJsonData.features;
+      const features = layer.jsonData.features;
 
       // 基本統計資訊
       const stats = {
