@@ -2,7 +2,7 @@
  * 🏭 圖層工廠模組 (Layer Factory Module)
  *
  * 功能說明 (Features):
- * 1. 🏗️ 動態圖層生成：根據年份和城市動態生成圖層群組配置
+ * 1. 🏗️ 動態圖層生成：動態生成圖層群組配置
  * 2. 📊 數據圖層支援：專門處理示意圖數據圖層的配置和載入
  * 3. 🎨 視覺化配置：為不同圖層類型提供適當的視覺化設定
  * 4. 🔧 模組化設計：使用小型建構器函數建立不同類型的圖層
@@ -147,18 +147,12 @@ export function createCityPopulationLayers() {
 // ==================== 動態圖層生成 ====================
 
 /**
- * 根據年份和城市動態生成所有圖層配置（只保留數據圖層）
+ * 動態生成所有圖層配置（只保留數據圖層）
  * 規則：
  * 1. 數據圖層群組：包含示意圖數據圖層
- * @param {number} year - 年份（已移除，保留參數以維持兼容性）
- * @param {string} city - 城市（已移除，保留參數以維持兼容性）
  * @returns {Array<{groupName:string, subGroups:Array<object>}>}
  */
-export function generateDynamicLayers(year, city = '台南市區') {
-  // eslint-disable-next-line no-unused-vars
-  const unusedYear = year;
-  // eslint-disable-next-line no-unused-vars
-  const unusedCity = city;
+export function generateDynamicLayers() {
   const layers = [];
 
   // 數據圖層群組
@@ -172,21 +166,3 @@ export function generateDynamicLayers(year, city = '台南市區') {
 }
 
 // ==================== 輔助函數 ====================
-
-/**
- * 檢查指定年份是否有對應的資料可用
- */
-export function isYearDataAvailable(year) {
-  return year >= 2014 && year <= 2024;
-}
-
-/**
- * 取得所有可用的年份列表
- */
-export function getAvailableYears() {
-  const years = [];
-  for (let year = 2014; year <= 2024; year++) {
-    years.push(year);
-  }
-  return years;
-}

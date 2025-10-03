@@ -2,7 +2,7 @@
  * 📦 數據存儲模組 (Data Store Module) - Pinia Store
  *
  * 功能說明 (Features):
- * 1. 🏙️ 使用者選擇的城市與年份管理
+ * 1. 🏙️ 使用者選擇的城市管理
  * 2. 🗺️ 動態生成圖層群組（委託 layerFactory）
  * 3. 👁️ 圖層顯示狀態與資料載入流程控制
  * 5. 📊 選中要素和圖層的狀態管理
@@ -65,8 +65,6 @@ import { ref, computed } from 'vue';
  */
 import {
   generateDynamicLayers, // 動態生成圖層配置
-  isYearDataAvailable, // 檢查年份數據可用性
-  getAvailableYears, // 獲取可用年份列表
 } from '../utils/layerFactory.js';
 
 // ==================== 🏭 圖層處理器類別 (Layer Processor Class) ====================
@@ -88,7 +86,7 @@ import {
  * 支援的圖層類型：
  * - 人口社會圖資：GeoJSON 地理數據
  * - 合併圖層：GeoJSON + Excel 統計數據
- * - 時序圖層：多年份數據
+ * - 時序圖層：時序數據
  *
  * @class LayerProcessor
  * @version 2.0.0
@@ -265,12 +263,10 @@ class LayerProcessor {
 export const useDataStore = defineStore(
   'data',
   () => {
-    // 位置和年份篩選功能已移除
+    // 位置篩選功能已移除
 
     // 初始化圖層處理器
     const layerProcessor = new LayerProcessor();
-
-    // ==================== 位置和年份處理函數 ====================
 
     // ==================== 圖層狀態管理 ====================
 
@@ -283,7 +279,7 @@ export const useDataStore = defineStore(
       layerStates.value; // 觸發響應式依賴
 
       return mergeLayersWithStates(
-        generateDynamicLayers(2024, '台南市區') // 使用固定年份和城市
+        generateDynamicLayers() // 生成圖層配置
       );
     });
 
@@ -689,8 +685,6 @@ export const useDataStore = defineStore(
       layerStates,
       saveLayerState,
       mergeLayersWithStates,
-      isYearDataAvailable,
-      getAvailableYears,
       getMapLayers,
     };
   },

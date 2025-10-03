@@ -45,10 +45,9 @@ epidemic analysis**
 
 ### 📖 專案簡介
 
-**登革熱空間分析視覺化系統**是一個專為登革熱疫情分析而設計的現代化 Web 應用程式。本系統以 2014 年台南市登革熱疫情為案例，整合了多種先進的空間統計方法，提供直觀的視覺化介面，讓研究人員能夠深入分析疾病傳播模式、識別疫情熱點，以及追蹤時空演化特徵。
+**登革熱空間分析視覺化系統**是一個專為登革熱疫情分析而設計的現代化 Web 應用程式。本系統整合了多種先進的空間統計方法，提供直觀的視覺化介面，讓研究人員能夠深入分析疾病傳播模式、識別疫情熱點，以及追蹤時空演化特徵。
 
-本專案採用 Vue.js 3 + Composition
-API 架構，結合 D3.js 數據視覺化、Bootstrap 5
+本專案採用 Vue.js 3 + Composition API 架構，結合 D3.js 數據視覺化、Bootstrap 5
 UI 框架，以及 Pinia 狀態管理，打造了一個功能完整、性能優異的地理空間分析平台。
 
 ### 🎯 應用場景
@@ -390,7 +389,7 @@ MSTDBSCAN 是 DBSCAN 算法的時空擴展版本，能夠在時空維度上識�
 
 #### **主要數據集**
 
-- **登革熱病例數據**：2014 年台南市登革熱疫情數據，包含 1,234 個確診病例
+- **登革熱病例數據**：台南市登革熱疫情數據，包含確診病例
 - **行政區劃數據**：台南市各級行政區邊界（村里、二級、鄉鎮市區）
 - **人口統計數據**：各區域人口密度和分布統計
 - **時間序列數據**：每日病例數統計和疫情發展趨勢
@@ -405,12 +404,12 @@ MSTDBSCAN 是 DBSCAN 算法的時空擴展版本，能夠在時空維度上識�
 
 #### **人口社會圖資**
 
-| 圖層名稱             | 類型    | 數據量     | 說明            |
-| -------------------- | ------- | ---------- | --------------- |
-| 台南市區\_村里       | Polygon | 37 個區域  | 村里邊界        |
-| 台南市區\_二級統計區 | Polygon | 156 個區域 | 二級統計區邊界  |
-| 台南市區\_鄉鎮市區   | Polygon | 694 個區域 | 鄉鎮市區邊界    |
-| 登革熱病例點         | Point   | 1,234 個點 | 2014 年病例位置 |
+| 圖層名稱             | 類型    | 數據量     | 說明           |
+| -------------------- | ------- | ---------- | -------------- |
+| 台南市區\_村里       | Polygon | 37 個區域  | 村里邊界       |
+| 台南市區\_二級統計區 | Polygon | 156 個區域 | 二級統計區邊界 |
+| 台南市區\_鄉鎮市區   | Polygon | 694 個區域 | 鄉鎮市區邊界   |
+| 登革熱病例點         | Point   | 1,234 個點 | 病例位置       |
 
 #### **分析圖層**
 
@@ -622,8 +621,8 @@ schematic-map-rwd/
 
 **`src/utils/layerFactory.js`** - 圖層工廠模組
 
-- **功能**：動態生成圖層配置、年份數據管理
-- **特色**：支援多城市、多年份數據切換
+- **功能**：動態生成圖層配置、數據管理
+- **特色**：支援多城市數據切換
 - **應用**：圖層列表生成和數據可用性檢查
 
 #### 🧪 空間分析層 (Spatial Analysis Layer)
@@ -1555,7 +1554,7 @@ A: 確保 SPA 路由配置正確：
 如果本專案對您的研究有幫助，請考慮引用：
 
 ```
-Cheng, K. (2024). Dengue Fever Spatial Analysis Visualization System.
+Cheng, K. Dengue Fever Spatial Analysis Visualization System.
 GitHub repository: https://github.com/kevin7261/schematic-map-rwd
 ```
 
@@ -1569,6 +1568,6 @@ GitHub repository: https://github.com/kevin7261/schematic-map-rwd
 [🐛 Report Bug](https://github.com/kevin7261/schematic-map-rwd/issues) |
 [💡 Request Feature](https://github.com/kevin7261/schematic-map-rwd/issues)
 
-**© 2024 Kevin Cheng. All rights reserved.**
+**© Kevin Cheng. All rights reserved.**
 
 </div>

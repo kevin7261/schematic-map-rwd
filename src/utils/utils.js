@@ -503,17 +503,3 @@ export function truncateString(str, maxLength, ellipsis = '...') {
   }
   return str.slice(0, maxLength) + ellipsis;
 }
-
-/**
- * 從一個字串中提取年份
- *
- * @param {string} str - 要搜索的字串
- * @returns {number|null} 提取的年份，如果未找到則返回 null
- * @example
- * // 從字串中提取年份
- * extractYear('2025年台南市資料'); // 2025
- */
-export function extractYear(str) {
-  const match = String(str).match(/\b(19\d{2}|20\d{2})\b/);
-  return match ? parseInt(match[1]) : null;
-}
