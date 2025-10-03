@@ -60,10 +60,6 @@ import { ref, computed } from 'vue';
  * 數據處理工具函數引入
  * 提供分類計算和顏色指定功能
  */
-import {
-  calculateClassification_SpatialLag, // 空間滯後分類計算
-  calculateClassification_JoinCounts, // Join Counts 分類計算
-} from '../utils/dataProcessor.js';
 
 /**
  * 圖層工廠工具函數引入
@@ -115,7 +111,7 @@ class LayerProcessor {
 
   /**
    * 處理需要合併 Excel 的圖層
-   * 載入 GeoJSON 和 Excel 數據，合併後進行空間分析處理
+   * 載入 GeoJSON 和 Excel 數據，合併後進行分類處理
    * @param {Object} layer - 圖層配置對象
    * @returns {number} - 處理的要素數量
    * @throws {Error} - 當載入或處理過程中發生錯誤時
@@ -130,11 +126,8 @@ class LayerProcessor {
       excelSheetLoader, // Excel 數據載入函數
       mergeFunction, // 數據合併函數
       classificationFunction, // 分類計算函數
-      spatialAnalysisFunction, // 空間分析函數
       geojsonMergeField, // GeoJSON 合併欄位名
       excelMergeField, // Excel 合併欄位名
-      binaryThreshold, // 二元分類閾值
-      valueField, // 數值欄位名
     } = layer;
 
     // ==================== 📁 步驟 2: 並行載入數據源 (Step 2: Load Data Sources in Parallel) ====================
@@ -157,37 +150,16 @@ class LayerProcessor {
 
     const classificationResult = classificationFunction(mergedResult.mergedGeoJSON);
 
-    const spatialResult = spatialAnalysisFunction(classificationResult.geoJsonData, {
-      k: 8,
-      transformation: 'R',
-      valueField: valueField || 'count',
-      binaryThreshold,
-    });
-
-    const spatialLagClassificationResult = calculateClassification_SpatialLag(
-      spatialResult.geoJsonData
-    );
-
-    const joinCountsClassificationResult = calculateClassification_JoinCounts(
-      spatialLagClassificationResult.geoJsonData,
-      binaryThreshold
-    );
-
     // 更新圖層資料
     this.updateLayerData(layer, {
-      geoJsonData: joinCountsClassificationResult.geoJsonData,
-      tableData: joinCountsClassificationResult.geoJsonData.features.map(
-        (f) => f.properties.tableData
-      ),
+      geoJsonData: classificationResult.geoJsonData,
+      tableData: classificationResult.geoJsonData.features.map((f) => f.properties.tableData),
       summaryData: geojsonResult.summaryData,
       legendData: classificationResult.legendData,
       legendData_InfectionRate: classificationResult.legendData_InfectionRate,
-      legendData_SpatialLag: spatialLagClassificationResult.legendData_SpatialLag,
-      legendData_JoinCounts: joinCountsClassificationResult.legendData_JoinCounts,
-      spatialAnalysisData: spatialResult.spatialAnalysisData,
     });
 
-    return joinCountsClassificationResult.geoJsonData.features.length;
+    return classificationResult.geoJsonData.features.length;
   }
 
   /**
@@ -273,7 +245,7 @@ class LayerProcessor {
 
   /**
    * 處理需要分析的 GeoJSON 圖層
-   * 載入 GeoJSON 數據並進行分類和空間分析處理
+   * 載入 GeoJSON 數據並進行分類處理
    * @param {Object} layer - 圖層配置對象
    * @returns {number} - 處理的要素數量
    * @throws {Error} - 當載入或分析過程中發生錯誤時
@@ -283,37 +255,16 @@ class LayerProcessor {
 
     const classificationResult = layer.classificationFunction(geojsonResult.geoJsonData);
 
-    const spatialResult = layer.spatialAnalysisFunction(classificationResult.geoJsonData, {
-      k: 8,
-      transformation: 'R',
-      valueField: layer.valueField || 'count',
-      binaryThreshold: layer.binaryThreshold,
-    });
-
-    const spatialLagClassificationResult = calculateClassification_SpatialLag(
-      spatialResult.geoJsonData
-    );
-
-    const joinCountsClassificationResult = calculateClassification_JoinCounts(
-      spatialLagClassificationResult.geoJsonData,
-      layer.binaryThreshold
-    );
-
     // 更新圖層資料
     this.updateLayerData(layer, {
-      geoJsonData: joinCountsClassificationResult.geoJsonData,
-      tableData: joinCountsClassificationResult.geoJsonData.features.map(
-        (f) => f.properties.tableData
-      ),
+      geoJsonData: classificationResult.geoJsonData,
+      tableData: classificationResult.geoJsonData.features.map((f) => f.properties.tableData),
       summaryData: geojsonResult.summaryData,
       legendData: classificationResult.legendData,
       legendData_InfectionRate: classificationResult.legendData_InfectionRate,
-      legendData_SpatialLag: spatialLagClassificationResult.legendData_SpatialLag,
-      legendData_JoinCounts: joinCountsClassificationResult.legendData_JoinCounts,
-      spatialAnalysisData: spatialResult.spatialAnalysisData,
     });
 
-    return joinCountsClassificationResult.geoJsonData.features.length;
+    return classificationResult.geoJsonData.features.length;
   }
 
   /**
@@ -348,25 +299,6 @@ class LayerProcessor {
           `❌ 圖層 "${layer.layerName}" 缺少合併欄位定義: geojsonMergeField="${layer.geojsonMergeField}", excelMergeField="${layer.excelMergeField}"`
         );
       }
-
-      // 注意：binaryThreshold 可以為 null（自動計算），只有 undefined 才是錯誤
-      if (layer.spatialAnalysisFunction && layer.binaryThreshold === undefined) {
-        throw new Error(
-          `❌ 圖層 "${layer.layerName}" 缺少二元分類閾值定義: binaryThreshold="${layer.binaryThreshold}"`
-        );
-      }
-    }
-
-    // 檢查分析圖層的二元分類閾值
-    // 注意：binaryThreshold 可以為 null（自動計算），只有 undefined 才是錯誤
-    if (
-      layer.classificationFunction &&
-      layer.spatialAnalysisFunction &&
-      layer.binaryThreshold === undefined
-    ) {
-      throw new Error(
-        `❌ 圖層 "${layer.layerName}" 缺少二元分類閾值定義: binaryThreshold="${layer.binaryThreshold}"`
-      );
     }
 
     return true;
@@ -532,7 +464,6 @@ export const useDataStore = defineStore(
                     excelSheetLoader: layer.excelSheetLoader,
                     mergeFunction: layer.mergeFunction,
                     classificationFunction: layer.classificationFunction,
-                    spatialAnalysisFunction: layer.spatialAnalysisFunction,
                     pysdaAnalysisFunction: layer.pysdaAnalysisFunction,
                     mstdbscanAnalysisFunction: layer.mstdbscanAnalysisFunction,
                   };
@@ -557,7 +488,6 @@ export const useDataStore = defineStore(
                   excelSheetLoader: layer.excelSheetLoader,
                   mergeFunction: layer.mergeFunction,
                   classificationFunction: layer.classificationFunction,
-                  spatialAnalysisFunction: layer.spatialAnalysisFunction,
                   pysdaAnalysisFunction: layer.pysdaAnalysisFunction,
                   mstdbscanAnalysisFunction: layer.mstdbscanAnalysisFunction,
                 };
@@ -649,7 +579,6 @@ export const useDataStore = defineStore(
         hasGeojsonLoader: !!layer.geojsonLoader,
         hasExcelSheetLoader: !!layer.excelSheetLoader,
         hasClassificationFunction: !!layer.classificationFunction,
-        hasSpatialAnalysisFunction: !!layer.spatialAnalysisFunction,
       });
 
       // 如果要開啟圖層且不是人口分佈圖層，則關閉其他非人口分佈圖層
@@ -743,15 +672,10 @@ export const useDataStore = defineStore(
             } else if (
               layer.geojsonLoader &&
               !layer.excelSheetLoader &&
-              !layer.classificationFunction &&
-              !layer.spatialAnalysisFunction
+              !layer.classificationFunction
             ) {
               dataCount = await layerProcessor.processGeoJsonOnlyLayer(layer);
-            } else if (
-              layer.geojsonLoader &&
-              layer.classificationFunction &&
-              layer.spatialAnalysisFunction
-            ) {
+            } else if (layer.geojsonLoader && layer.classificationFunction) {
               dataCount = await layerProcessor.processAnalysisGeoJsonLayer(layer);
             } else {
               console.warn(`❌ 圖層 "${layer.layerName}" 缺少必要的載入函數`);
@@ -776,14 +700,11 @@ export const useDataStore = defineStore(
             tableData: layer.tableData,
             summaryData: layer.summaryData,
             legendData: layer.legendData,
-            legendData_SpatialLag: layer.legendData_SpatialLag,
-            legendData_JoinCounts: layer.legendData_JoinCounts,
             legendData_InfectionRate: layer.legendData_InfectionRate,
             legendData_POPULATION_DENSITY: layer.legendData_POPULATION_DENSITY,
             legendData_P_CNT: layer.legendData_P_CNT,
             legendData_M_CNT: layer.legendData_M_CNT,
             legendData_F_CNT: layer.legendData_F_CNT,
-            spatialAnalysisData: layer.spatialAnalysisData,
             pysdaResults: layer.pysdaResults,
             pysdaSummary: layer.pysdaSummary,
             pysdaFigureData: layer.pysdaFigureData,
@@ -809,12 +730,6 @@ export const useDataStore = defineStore(
     // 基本數據顏色模式控制
     const useBasicDataColors = ref(true);
 
-    // 空間滯後值顏色模式控制
-    const useSpatialLagColors = ref(false);
-
-    // Join Counts 顏色模式控制
-    const useJoinCountsColors = ref(false);
-
     // 人口分析屬性顏色模式控制
     const usePopulationColors = ref(false);
     const selectedPopulationAttribute = ref('POPULATION_DENSITY'); // 預設選擇人口密度
@@ -826,30 +741,6 @@ export const useDataStore = defineStore(
     const setBasicDataColors = (enabled) => {
       useBasicDataColors.value = enabled;
       if (enabled) {
-        useSpatialLagColors.value = false;
-        useJoinCountsColors.value = false;
-        usePopulationColors.value = false;
-        useInfectionRateColors.value = false;
-      }
-    };
-
-    // 互斥切換 Spatial Lag 顏色模式
-    const setSpatialLagColors = (enabled) => {
-      useSpatialLagColors.value = enabled;
-      if (enabled) {
-        useBasicDataColors.value = false;
-        useJoinCountsColors.value = false;
-        usePopulationColors.value = false;
-        useInfectionRateColors.value = false;
-      }
-    };
-
-    // 互斥切換 Join Counts 顏色模式
-    const setJoinCountsColors = (enabled) => {
-      useJoinCountsColors.value = enabled;
-      if (enabled) {
-        useBasicDataColors.value = false;
-        useSpatialLagColors.value = false;
         usePopulationColors.value = false;
         useInfectionRateColors.value = false;
       }
@@ -860,8 +751,6 @@ export const useDataStore = defineStore(
       usePopulationColors.value = enabled;
       if (enabled) {
         useBasicDataColors.value = false;
-        useSpatialLagColors.value = false;
-        useJoinCountsColors.value = false;
         useInfectionRateColors.value = false;
         if (attribute) {
           selectedPopulationAttribute.value = attribute;
@@ -874,8 +763,6 @@ export const useDataStore = defineStore(
       useInfectionRateColors.value = enabled;
       if (enabled) {
         useBasicDataColors.value = false;
-        useSpatialLagColors.value = false;
-        useJoinCountsColors.value = false;
         usePopulationColors.value = false;
       }
     };
@@ -942,10 +829,6 @@ export const useDataStore = defineStore(
       clearSelectedFeature,
       useBasicDataColors, // 基本數據顏色模式狀態
       setBasicDataColors, // 互斥切換基本數據顏色模式
-      useSpatialLagColors, // 空間滯後值顏色模式狀態
-      setSpatialLagColors, // 互斥切換 Spatial Lag 顏色模式
-      useJoinCountsColors, // Join Counts 顏色模式狀態
-      setJoinCountsColors, // 互斥切換 Join Counts 顏色模式
       usePopulationColors, // 人口分析顏色模式狀態
       selectedPopulationAttribute, // 選中的人口分析屬性
       setPopulationColors, // 互斥切換人口分析顏色模式

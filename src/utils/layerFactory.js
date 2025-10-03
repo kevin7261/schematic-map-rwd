@@ -20,7 +20,6 @@ import {
   loadPolygonGeoJson,
 } from './dataProcessor.js';
 
-import { calculateSpatialAnalysis } from './spatialAnalysis/calculateSpatialAnalysis.js';
 import { calculatePysdaAnalysis, calculateMSTDBSCANAnalysis } from './pysda.js';
 
 // ==================== 配置常數 ====================
@@ -198,7 +197,6 @@ function createAnalysisLayer(layerId, layerConfig, cityConfig, level, yearShort)
     excelSheetLoader: loadExcelSheet,
     mergeFunction: mergeGeoJSONWithExcel,
     classificationFunction: calculateClassification,
-    spatialAnalysisFunction: calculateSpatialAnalysis,
     geojsonFileName: cityConfig.geojsonFiles[level],
     excelFileName: 'Dengue Daily_台南市區_高雄市區.xlsx',
     excelSheetName: cityConfig.excelSheetPatterns[level](yearShort),
