@@ -335,11 +335,13 @@
       const existingWidth = parseFloat(existingSvg.attr('width'));
       const existingHeight = parseFloat(existingSvg.attr('height'));
 
-      // 如果尺寸變化很小（小於 5px），則只更新尺寸而不重繪
+      // 如果尺寸變化很小（小於 2px），則只更新尺寸而不重繪
+      // 降低閾值以確保寬度變化時能正確重繪
       if (
-        Math.abs(existingWidth - (width + margin.left + margin.right)) < 5 &&
-        Math.abs(existingHeight - (height + margin.top + margin.bottom)) < 5
+        Math.abs(existingWidth - (width + margin.left + margin.right)) < 2 &&
+        Math.abs(existingHeight - (height + margin.top + margin.bottom)) < 2
       ) {
+        console.log('📏 示意圖尺寸變化太小，跳過重繪');
         return;
       }
     }
@@ -513,11 +515,13 @@
       const existingWidth = parseFloat(existingSvg.attr('width'));
       const existingHeight = parseFloat(existingSvg.attr('height'));
 
-      // 如果尺寸變化很小（小於 5px），則只更新尺寸而不重繪
+      // 如果尺寸變化很小（小於 2px），則只更新尺寸而不重繪
+      // 降低閾值以確保寬度變化時能正確重繪
       if (
-        Math.abs(existingWidth - (width + margin.left + margin.right)) < 5 &&
-        Math.abs(existingHeight - (height + margin.top + margin.bottom)) < 5
+        Math.abs(existingWidth - (width + margin.left + margin.right)) < 2 &&
+        Math.abs(existingHeight - (height + margin.top + margin.bottom)) < 2
       ) {
+        console.log('📏 示意圖尺寸變化太小，跳過重繪');
         return;
       }
     }
@@ -912,6 +916,7 @@
    * 響應容器尺寸變化，重新繪製示意圖
    */
   const resize = () => {
+    console.log('📏 D3jsTab: 觸發 resize，重新繪製示意圖');
     drawSchematic();
   };
 
@@ -1045,6 +1050,11 @@
       resizeObserver.disconnect();
       resizeObserver = null;
     }
+  });
+
+  // 暴露方法給父組件使用
+  defineExpose({
+    resize, // 調整尺寸方法
   });
 </script>
 

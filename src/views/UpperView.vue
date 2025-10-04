@@ -157,7 +157,10 @@ Features): * - 使用 Vue 2 Options API 進行組件管理 * - 整合多個分�
        */
       watch([() => props.mainPanelWidth, () => props.contentHeight], () => {
         nextTick(() => {
-          // Dashboard現在是純文字統計，不需要重新計算圖表大小
+          // 觸發 D3jsTab 重新繪製以適應新的容器尺寸
+          if (D3jsTab.value && D3jsTab.value.resize) {
+            D3jsTab.value.resize();
+          }
         });
       });
 
@@ -197,11 +200,14 @@ Features): * - 使用 Vue 2 Options API 進行組件管理 * - 整合多個分�
       /**
        * 📏 手動刷新地圖尺寸 (Manually Refresh Map Size)
        * 當容器大小變化但自動偵測失效時使用
-       * 注意：地圖功能已移除，此函數現在為空函數
+       * 現在用於觸發 D3jsTab 重新繪製
        */
       const invalidateMapSize = () => {
-        // 地圖功能已移除，不需要刷新地圖尺寸
-        console.log('🔄 invalidateMapSize: 地圖功能已移除，無需刷新尺寸');
+        console.log('🔄 invalidateMapSize: 觸發 D3jsTab 重新繪製');
+        // 觸發 D3jsTab 重新繪製以適應新的容器尺寸
+        if (D3jsTab.value && D3jsTab.value.resize) {
+          D3jsTab.value.resize();
+        }
       };
 
       return {
