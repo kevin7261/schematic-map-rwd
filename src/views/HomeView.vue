@@ -799,7 +799,7 @@
               :key="mobileMapKey"
               :activeUpperTab="activeUpperTab"
               :mainPanelWidth="100"
-              :contentHeight="(100 - mobileBottomViewHeight) * windowHeight * 0.01"
+              :contentHeight="Math.max(400, (100 - mobileBottomViewHeight) * windowHeight * 0.01)"
               :showTainanLayer="showTainanLayer"
               :selectedFilter="selectedFilter"
               :zoomLevel="zoomLevel"

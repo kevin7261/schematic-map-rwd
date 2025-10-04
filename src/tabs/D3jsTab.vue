@@ -56,9 +56,20 @@
    * 📊 當前圖層摘要 (Current Layer Summary)
    */
   const currentLayerSummary = computed(() => {
-    if (!activeLayerTab.value) return null;
+    console.log('currentLayerSummary computed - activeLayerTab:', activeLayerTab.value);
+    console.log('currentLayerSummary computed - visibleLayers:', visibleLayers.value);
+
+    if (!activeLayerTab.value) {
+      console.log('currentLayerSummary - no activeLayerTab, returning null');
+      return null;
+    }
+
     const layer = visibleLayers.value.find((l) => l.layerId === activeLayerTab.value);
-    return layer ? layer.summaryData || null : null;
+    console.log('currentLayerSummary - found layer:', layer);
+
+    const result = layer ? layer.summaryData || null : null;
+    console.log('currentLayerSummary - returning:', result);
+    return result;
   });
 
   /**
@@ -131,9 +142,12 @@
    * 🚀 組件掛載事件 (Component Mounted Event)
    */
   onMounted(() => {
+    console.log('D3jsTab mounted - visibleLayers:', visibleLayers.value);
+    console.log('D3jsTab mounted - activeLayerTab:', activeLayerTab.value);
     // 初始化第一個可見圖層為作用中分頁
     if (visibleLayers.value.length > 0 && !activeLayerTab.value) {
       activeLayerTab.value = visibleLayers.value[0].layerId;
+      console.log('D3jsTab - Set initial activeLayerTab to:', activeLayerTab.value);
     }
   });
 </script>

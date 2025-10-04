@@ -161,6 +161,9 @@
         clientHeight: container.clientHeight,
         rectWidth: rect.width,
         rectHeight: rect.height,
+        isMobile: window.innerWidth < 1200,
+        windowWidth: window.innerWidth,
+        windowHeight: window.innerHeight,
       });
 
       return {
