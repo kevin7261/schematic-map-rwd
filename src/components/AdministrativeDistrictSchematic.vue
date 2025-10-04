@@ -13,7 +13,7 @@
    * 📊 AdministrativeDistrictSchematic.vue - 行政區分布示意圖組件
    *
    * 功能說明 (Features):
-   * 1. 📊 示意圖數據載入：從 data.json 載入行政區分布數據
+   * 1. 📊 示意圖數據載入：從 taipei_schematic.json 載入行政區分布數據
    * 2. 🎨 網格系統繪製：繪製主要和次要網格線，提供空間參考
    * 3. 🔗 節點連接渲染：根據節點類型繪製不同的連接線和圓弧
    * 4. 📝 數值標籤顯示：在節點位置顯示對應的數值標籤
@@ -91,8 +91,8 @@
    */
   const loadData = async () => {
     try {
-      // 使用 fetch 載入 data.json
-      const response = await fetch('/schematic-map-rwd/data/data.json');
+      // 使用 fetch 載入 taipei_schematic.json
+      const response = await fetch('/schematic-map-rwd/data/taipei/taipei_schematic.json');
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -116,7 +116,7 @@
     } catch (error) {
       console.log(error);
       // 如果載入失敗，顯示錯誤訊息
-      console.error('無法載入 data.json 文件');
+      console.error('無法載入 taipei_schematic.json 文件');
     }
   };
 

@@ -26,7 +26,7 @@
       }
 
       // 載入並處理數據
-      fetch('/schematic-map-rwd/data/data.json')
+      fetch('/schematic-map-rwd/data/taipei/taipei_schematic.json')
         .then((response) => response.json())
         .then((data) => {
           console.log('原始數據前3個節點:', data[0].nodes.slice(0, 3));

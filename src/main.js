@@ -174,7 +174,7 @@ app.mount('#app');
  * 在開發環境中提供詳細的啟動狀態確認
  * 幫助開發者確認所有系統組件正確初始化
  */
-console.log('🚀 登革熱分析平台已啟動');
+console.log('🚀 Schematic Map平台已啟動');
 console.log('📦 Pinia 狀態管理已初始化');
 console.log('🗺️ Vue Router 路由系統已就緒');
 console.log('🎨 Bootstrap 5 UI 框架已載入');

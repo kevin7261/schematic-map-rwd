@@ -67,7 +67,7 @@ const routes = [
     component: HomeView, // 對應的 Vue 組件
     meta: {
       title: '示意圖響應式網站', // 頁面標題
-      description: '登革熱分析系統的示意圖展示平台', // 頁面描述
+      description: 'Schematic Map系統的示意圖展示平台', // 頁面描述
       requiresAuth: false, // 是否需要身份驗證
     },
   },

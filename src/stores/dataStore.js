@@ -66,10 +66,34 @@ export const useDataStore = defineStore(
     // 靜態定義的圖層配置
     const layers = ref([
       {
+        groupName: '測試圖層',
+        groupLayers: [
+          {
+            layerId: 'test_layer',
+            layerName: '測試圖層',
+            visible: false,
+            isLoading: false,
+            isLoaded: false,
+            type: 'point',
+            shape: null,
+            colorName: 'orange',
+            jsonData: null,
+            summaryData: null,
+            tableData: null,
+            legendData: null,
+            jsonLoader: loadDataLayerJson,
+            jsonFileName: 'test/test.json',
+            isDataLayer: true,
+            hideFromMap: true,
+            display: true,
+          },
+        ],
+      },
+      {
         groupName: '數據圖層',
         groupLayers: [
           {
-            layerId: 'data_layer',
+            layerId: 'taipei_metro',
             layerName: 'Taipei Metro',
             visible: false,
             isLoading: false,
@@ -82,7 +106,7 @@ export const useDataStore = defineStore(
             tableData: null,
             legendData: null,
             jsonLoader: loadDataLayerJson,
-            jsonFileName: 'data.json',
+            jsonFileName: 'taipei/taipei_schematic.json',
             isDataLayer: true,
             hideFromMap: true,
             display: true,

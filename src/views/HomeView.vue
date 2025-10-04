@@ -1,6 +1,6 @@
 <script>
   /**
-   * 🏠 HomeView.vue - 登革熱分析系統主頁面
+   * 🏠 HomeView.vue - Schematic Map系統主頁面
    *
    * 功能說明：
    * 1. 🗺️ 提供地圖視覺化和資料分析的主要介面
@@ -338,7 +338,7 @@
        * 初始化組件和事件監聽器
        */
       onMounted(() => {
-        console.log('🚀 登革熱分析平台已初始化');
+        console.log('🚀 Schematic Map平台已初始化');
 
         // 添加視窗調整事件監聽
         window.addEventListener('resize', handleResize);
@@ -704,7 +704,7 @@
       </div>
 
       <!-- 🏠 首頁內容區域 (Home Page Content Area) -->
-      <!-- 登革熱分析系統的主要功能界面，使用響應式三面板佈局 -->
+      <!-- Schematic Map系統的主要功能界面，使用響應式三面板佈局 -->
       <div v-if="$route.path === '/'" class="h-100 d-flex flex-column overflow-hidden">
         <!-- 🖥️ 桌面版佈局 (Desktop Layout - xl and above) -->
         <div class="d-none d-xl-flex flex-row overflow-hidden h-100">
