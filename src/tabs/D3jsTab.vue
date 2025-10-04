@@ -89,7 +89,27 @@
    * @param {string} layerId - 圖層 ID
    */
   const setActiveLayerTab = (layerId) => {
+    console.log('🔄 圖層切換按鈕點擊:', activeLayerTab.value, '->', layerId);
+
+    // 如果切換到相同圖層，不需要重新處理
+    if (activeLayerTab.value === layerId) {
+      console.log('🔄 相同圖層，跳過切換');
+      return;
+    }
+
+    // 立即清除 SVG 內容，避免重疊
+    d3.select('#schematic-container').selectAll('svg').remove();
+    console.log('🗑️ 已清除 SVG 內容');
+
+    // 清除數據狀態
+    gridData.value = null;
+    nodeData.value = null;
+    linkData.value = null;
+    console.log('🗑️ 已清除數據狀態');
+
+    // 設置新的活動圖層
     activeLayerTab.value = layerId;
+    console.log('✅ 已設置新圖層:', layerId);
   };
 
   /**
@@ -979,19 +999,27 @@
     () => activeLayerTab.value,
     async (newLayerId, oldLayerId) => {
       if (newLayerId && newLayerId !== oldLayerId) {
-        console.log('🔄 圖層切換:', oldLayerId, '->', newLayerId);
+        console.log('🔄 監聽器觸發圖層切換:', oldLayerId, '->', newLayerId);
 
-        // 清除舊數據
+        // 確保 SVG 內容已清除（雙重保險）
+        d3.select('#schematic-container').selectAll('svg').remove();
+        console.log('🗑️ 監聽器：已清除 SVG 內容');
+
+        // 清除舊數據（雙重保險）
         gridData.value = null;
         nodeData.value = null;
         linkData.value = null;
+        console.log('🗑️ 監聽器：已清除數據狀態');
 
         // 載入新圖層數據
+        console.log('📊 開始載入新圖層數據:', newLayerId);
         await loadLayerData(newLayerId);
 
         // 等待 DOM 更新後繪製
         await nextTick();
+        console.log('🎨 開始繪製新圖層示意圖');
         drawSchematic();
+        console.log('✅ 圖層切換完成');
       }
     }
   );

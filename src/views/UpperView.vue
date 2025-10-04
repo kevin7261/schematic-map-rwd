@@ -35,6 +35,22 @@ Features): * - 使用 Vue 2 Options API 進行組件管理 * - 整合多個分�
    * @see ../tabs/D3jsTab.vue
    */
   import D3jsTab from '../tabs/D3jsTab.vue';
+
+  /**
+   * 處理後 JSON 數據分頁組件引入
+   * 顯示圖層的處理後 JSON 數據
+   *
+   * @see ../tabs/processedJsonDataTab.vue
+   */
+  import ProcessedJsonDataTab from '../tabs/processedJsonDataTab.vue';
+
+  /**
+   * 原始 JSON 數據分頁組件引入
+   * 顯示圖層的原始 JSON 數據
+   *
+   * @see ../tabs/jsonDataTab.vue
+   */
+  import JsonDataTab from '../tabs/jsonDataTab.vue';
   import { getIcon } from '../utils/utils.js';
 
   export default {
@@ -47,6 +63,8 @@ Features): * - 使用 Vue 2 Options API 進行組件管理 * - 整合多個分�
     components: {
       DashboardTab,
       D3jsTab,
+      ProcessedJsonDataTab,
+      JsonDataTab,
     },
 
     /**
@@ -89,6 +107,14 @@ Features): * - 使用 Vue 2 Options API 進行組件管理 * - 整合多個分�
       const D3jsTab = ref(null);
       /** 📊 D3.js 容器引用 (用於控制滑鼠事件) */
       const d3jsContainerRef = ref(null);
+      /** 📊 處理後 JSON 數據組件引用 */
+      const ProcessedJsonDataTab = ref(null);
+      /** 📊 處理後 JSON 數據容器引用 */
+      const processedJsonDataContainerRef = ref(null);
+      /** 📊 原始 JSON 數據組件引用 */
+      const JsonDataTab = ref(null);
+      /** 📊 原始 JSON 數據容器引用 */
+      const jsonDataContainerRef = ref(null);
 
       /**
        * 👀 監聽拖曳狀態和分頁變化 (Watch Dragging State and Tab Changes)
@@ -128,6 +154,40 @@ Features): * - 使用 Vue 2 Options API 進行組件管理 * - 整合多個分�
                 d3jsContainerRef.value.style.pointerEvents = 'auto';
                 console.log(
                   'MainContent: D3.js container pointer-events set to auto (dragging:',
+                  dragging,
+                  ', tab:',
+                  tab,
+                  ')'
+                );
+              }
+            }
+
+            // 處理處理後 JSON 數據容器
+            if (processedJsonDataContainerRef.value) {
+              if (dragging && tab === 'processed-json-data') {
+                processedJsonDataContainerRef.value.style.pointerEvents = 'none';
+                console.log('MainContent: ProcessedJsonData container pointer-events set to none');
+              } else {
+                processedJsonDataContainerRef.value.style.pointerEvents = 'auto';
+                console.log(
+                  'MainContent: ProcessedJsonData container pointer-events set to auto (dragging:',
+                  dragging,
+                  ', tab:',
+                  tab,
+                  ')'
+                );
+              }
+            }
+
+            // 處理原始 JSON 數據容器
+            if (jsonDataContainerRef.value) {
+              if (dragging && tab === 'json-data') {
+                jsonDataContainerRef.value.style.pointerEvents = 'none';
+                console.log('MainContent: JsonData container pointer-events set to none');
+              } else {
+                jsonDataContainerRef.value.style.pointerEvents = 'auto';
+                console.log(
+                  'MainContent: JsonData container pointer-events set to auto (dragging:',
                   dragging,
                   ', tab:',
                   tab,
@@ -213,8 +273,12 @@ Features): * - 使用 Vue 2 Options API 進行組件管理 * - 整合多個分�
       return {
         DashboardTab, // 儀表板組件引用
         D3jsTab, // D3.js 組件引用
+        ProcessedJsonDataTab, // 處理後 JSON 數據組件引用
+        JsonDataTab, // 原始 JSON 數據組件引用
         dashboardContainerRef, // 儀表板容器引用
         d3jsContainerRef, // D3.js 容器引用
+        processedJsonDataContainerRef, // 處理後 JSON 數據容器引用
+        jsonDataContainerRef, // 原始 JSON 數據容器引用
         highlightFeature, // 高亮顯示功能
         resetView, // 重設視圖功能
         fitToTainanBounds, // 適應邊界功能
@@ -257,6 +321,30 @@ Features): * - 使用 Vue 2 Options API 進行組件管理 * - 整合多個分�
           >
             <i :class="getIcon('chart_bar').icon"></i>
           </button>
+          <!-- 📄 處理後 JSON 數據按鈕 (Processed JSON Data Button) -->
+          <button
+            class="btn rounded-circle border-0 d-flex align-items-center justify-content-center my-btn-transparent my-font-size-xs"
+            :class="{
+              'my-btn-blue': activeUpperTab === 'processed-json-data',
+            }"
+            @click="$emit('update:activeUpperTab', 'processed-json-data')"
+            style="width: 30px; height: 30px"
+            title="處理後 JSON 數據"
+          >
+            <i class="fas fa-code"></i>
+          </button>
+          <!-- 📄 原始 JSON 數據按鈕 (Original JSON Data Button) -->
+          <button
+            class="btn rounded-circle border-0 d-flex align-items-center justify-content-center my-btn-transparent my-font-size-xs"
+            :class="{
+              'my-btn-blue': activeUpperTab === 'json-data',
+            }"
+            @click="$emit('update:activeUpperTab', 'json-data')"
+            style="width: 30px; height: 30px"
+            title="原始 JSON 數據"
+          >
+            <i class="fas fa-file-code"></i>
+          </button>
         </div>
       </div>
 
@@ -286,6 +374,38 @@ Features): * - 使用 Vue 2 Options API 進行組件管理 * - 整合多個分�
         <div style="height: 40px"></div>
         <DashboardTab
           ref="DashboardTab"
+          :containerHeight="contentHeight"
+          :isPanelDragging="isPanelDragging"
+          :activeMarkers="activeMarkers"
+        />
+      </div>
+
+      <!-- 處理後 JSON 數據分頁內容 -->
+      <div
+        v-show="activeUpperTab === 'processed-json-data'"
+        ref="processedJsonDataContainerRef"
+        class="h-100 overflow-hidden pt-5"
+      >
+        <!-- 🎛️ 為導航按鈕組預留空間 (Reserve Space for Navigation Buttons) -->
+        <div style="height: 40px"></div>
+        <ProcessedJsonDataTab
+          ref="ProcessedJsonDataTab"
+          :containerHeight="contentHeight"
+          :isPanelDragging="isPanelDragging"
+          :activeMarkers="activeMarkers"
+        />
+      </div>
+
+      <!-- 原始 JSON 數據分頁內容 -->
+      <div
+        v-show="activeUpperTab === 'json-data'"
+        ref="jsonDataContainerRef"
+        class="h-100 overflow-hidden pt-5"
+      >
+        <!-- 🎛️ 為導航按鈕組預留空間 (Reserve Space for Navigation Buttons) -->
+        <div style="height: 40px"></div>
+        <JsonDataTab
+          ref="JsonDataTab"
           :containerHeight="contentHeight"
           :isPanelDragging="isPanelDragging"
           :activeMarkers="activeMarkers"
