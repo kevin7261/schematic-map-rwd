@@ -149,7 +149,6 @@ export const useDataStore = defineStore(
      * - jsonData: 圖層的 JSON 數據
      * - summaryData: 圖層的統計摘要數據
      * - tableData: 圖層的表格數據
-     * - legendData: 圖層的圖例數據
      *
      * @type {Ref<Object>} 圖層狀態響應式對象
      * @since 1.0.0
@@ -178,7 +177,6 @@ export const useDataStore = defineStore(
      * - jsonData: 圖層 JSON 數據
      * - summaryData: 圖層統計摘要
      * - tableData: 圖層表格數據
-     * - legendData: 圖層圖例數據
      * - jsonLoader: 圖層數據載入函數
      * - jsonFileName: 圖層 JSON 文件名稱
      * - isDataLayer: 是否為數據圖層
@@ -205,7 +203,6 @@ export const useDataStore = defineStore(
             jsonData: null,
             summaryData: null,
             tableData: null,
-            legendData: null,
             jsonLoader: loadGridSchematicJson,
             jsonFileName: 'test/test.json',
             isDataLayer: true,
@@ -230,7 +227,6 @@ export const useDataStore = defineStore(
             jsonData: null,
             summaryData: null,
             tableData: null,
-            legendData: null,
             jsonLoader: loadDataLayerJson,
             jsonFileName: 'taipei/taipei_schematic.json',
             isDataLayer: true,
@@ -249,7 +245,6 @@ export const useDataStore = defineStore(
             jsonData: null,
             summaryData: null,
             tableData: null,
-            legendData: null,
             jsonLoader: loadDataLayerJson,
             jsonFileName: 'taipei/taipei_schematic_2.json',
             isDataLayer: true,
@@ -301,7 +296,6 @@ export const useDataStore = defineStore(
      * @param {Object} [stateData.jsonData] - 圖層 JSON 數據
      * @param {Object} [stateData.summaryData] - 圖層統計摘要
      * @param {Array} [stateData.tableData] - 圖層表格數據
-     * @param {Object} [stateData.legendData] - 圖層圖例數據
      *
      * @example
      * // 基本用法
@@ -433,7 +427,6 @@ export const useDataStore = defineStore(
      *     jsonData: Object,       // 圖層 JSON 數據
      *     summaryData: Object,    // 圖層統計摘要
      *     tableData: Array,       // 圖層表格數據
-     *     legendData: Object,     // 圖層圖例數據
      *     jsonLoader: Function,   // 圖層數據載入函數
      *     jsonFileName: string,   // 圖層 JSON 文件名稱
      *     isDataLayer: boolean,   // 是否為數據圖層
@@ -593,7 +586,6 @@ export const useDataStore = defineStore(
           layer.jsonData = result.jsonData;
           layer.tableData = result.tableData;
           layer.summaryData = result.summaryData;
-          layer.legendData = result.legendData || null;
           layer.isLoaded = true;
 
           console.log(`✅ 圖層 "${layer.layerName}" 載入完成`);
@@ -605,7 +597,6 @@ export const useDataStore = defineStore(
             jsonData: layer.jsonData,
             tableData: layer.tableData,
             summaryData: layer.summaryData,
-            legendData: layer.legendData,
           });
         } catch (error) {
           console.error(`❌ 載入圖層 "${layer.layerName}" 失敗:`, error);

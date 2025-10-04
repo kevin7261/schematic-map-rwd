@@ -165,22 +165,6 @@
                     <label :for="'switch-' + layer.layerId"></label>
                   </div>
                 </div>
-                <!-- 顯示圖層的 legend -->
-                <div v-if="layer.legendData && layer.visible" class="px-3 pb-2">
-                  <div
-                    v-for="data in layer.legendData"
-                    :key="data.color"
-                    class="d-flex align-items-center"
-                  >
-                    <div
-                      style="min-width: 6px; min-height: 18px"
-                      :style="{
-                        backgroundColor: data.color,
-                      }"
-                    ></div>
-                    <div class="my-content-xs-black text-nowrap ms-2">{{ data.label }}</div>
-                  </div>
-                </div>
               </div>
             </div>
           </div>

@@ -316,7 +316,6 @@ async function loadFile(primaryPath, fallbackPath = null) {
  *   jsonData: Object | null,     // 原始 JSON 數據（如果是標準格式）
  *   summaryData: Object,         // 統計摘要數據
  *   tableData: Array,           // 表格顯示數據
- *   legendData: Object | null   // 圖例數據（如果有）
  * }
  * ```
  *
@@ -534,7 +533,6 @@ function randomizeNodeValues(nodes) {
  *     nodeCount: number     // 節點總數
  *   },
  *   tableData: Array,       // 表格顯示數據
- *   legendData: null        // 圖例數據（網格示意圖通常為 null）
  * }
  * ```
  *
@@ -670,7 +668,6 @@ export async function loadGridSchematicJson(layer) {
  *       nodes: Array        // 節點陣列
  *     }
  *   ],
- *   legendData: null        // 圖例數據（網格示意圖通常為 null）
  * }
  * ```
  *
@@ -754,7 +751,6 @@ async function processGridSchematicJson(jsonData) {
     },
     summaryData,
     tableData,
-    legendData: null,
   };
 }
 
