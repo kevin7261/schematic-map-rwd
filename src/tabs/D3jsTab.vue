@@ -6,18 +6,17 @@
    * 1. 📑 圖層分頁導航 - 顯示所有可見圖層的標籤頁
    * 2. 📊 當前圖層資訊 - 顯示選中圖層的名稱和詳細信息
    * 3. 📈 圖層摘要資料 - 顯示總數量、行政區數量等統計信息
-   * 4. 🎨 D3.js 圖表 - 使用 D3.js 繪製各種類型的圖表
+   * 4. 🎨 D3.js 圖表 - 使用 D3.js 繪製各種類型的圖表（網格示意圖、行政區示意圖）
    * 5. 🔄 自動切換功能 - 當新圖層開啟時自動切換到該圖層的分頁
    *
    * @component D3jsTab
-   * @version 1.0.0
+   * @version 2.0.0
    * @author Kevin Cheng
    */
 
-  import { ref, computed, watch, onMounted, nextTick } from 'vue';
+  import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
   import { useDataStore } from '@/stores/dataStore.js';
-  import AdministrativeDistrictSchematic from '@/components/AdministrativeDistrictSchematic.vue';
-  import GridSchematic from '@/components/GridSchematic.vue';
+  import * as d3 from 'd3';
 
   // Props
   const props = defineProps({
@@ -38,6 +37,46 @@
   const dataStore = useDataStore();
 
   const activeLayerTab = ref(null); /** 📑 當前作用中的圖層分頁 */
+
+  // ==================== 📊 示意圖繪製相關狀態 (Schematic Drawing State) ====================
+
+  /** 📊 網格數據狀態 (Grid Data State) */
+  const gridData = ref(null);
+  const gridDimensions = ref({ x: 10, y: 10 });
+
+  /** 📊 行政區數據狀態 (Administrative District Data State) */
+  const nodeData = ref(null);
+  const linkData = ref(null);
+
+  // ==================== 🎨 視覺化常數 (Visualization Constants) ====================
+
+  /** 🎨 顏色配置 (Color Configuration) */
+  const COLOR_CONFIG = {
+    BACKGROUND: '#212121',
+    GRID_LINE: '#666666',
+    GRID_LINE_SECONDARY: '#333333',
+    NODE_FILL: '#4CAF50',
+    NODE_STROKE: '#2E7D32',
+    TEXT_FILL: '#FFFFFF',
+  };
+
+  /** 🎨 顏色映射 (Color Mapping) */
+  const colorMap = {
+    red: '#ff0000',
+    lightpink: '#ffb3ba',
+    blue: '#0066cc',
+    green: '#00aa44',
+    lightgreen: '#90ee90',
+    orange: '#ff8800',
+    brown: '#8b4513',
+    yellow: '#ffcc00',
+    purple: '#800080',
+    paleturquoise: '#afeeee',
+    limegreen: '#32cd32',
+  };
+
+  // ResizeObserver 實例
+  let resizeObserver = null;
 
   // 獲取所有開啟且有資料的圖層
   const visibleLayers = computed(() => {
@@ -96,6 +135,786 @@
     return layer && layer.isGridSchematic === true;
   };
 
+  // ==================== 📊 數據載入和處理函數 (Data Loading and Processing Functions) ====================
+
+  /**
+   * 🎲 為節點隨機分配 1-5 的數值 (Randomize Node Values)
+   * @param {Array} nodes - 節點陣列
+   * @returns {Array} - 處理後的節點陣列
+   */
+  const randomizeNodeValues = (nodes) => {
+    console.log('🎲 開始隨機化節點數值，原始節點數量:', nodes.length);
+    const randomizedNodes = nodes.map((node) => {
+      const newValue = Math.floor(Math.random() * 5) + 1; // 生成 1-5 的隨機數
+      console.log(`🎲 節點 ${node.coord?.x},${node.coord?.y} 從 ${node.value} 變為 ${newValue}`);
+      return {
+        ...node,
+        value: newValue,
+      };
+    });
+    console.log('🎲 隨機化完成，前3個節點:', randomizedNodes.slice(0, 3));
+    return randomizedNodes;
+  };
+
+  /**
+   * 📊 載入圖層數據 (Load Layer Data)
+   * @param {string} layerId - 圖層 ID
+   */
+  const loadLayerData = async (layerId) => {
+    try {
+      // 找到指定的圖層
+      const targetLayer = dataStore.findLayerById(layerId);
+      if (!targetLayer) {
+        throw new Error(`找不到圖層配置: ${layerId}`);
+      }
+
+      console.log('🔄 使用圖層配置載入數據:', targetLayer.jsonFileName);
+
+      // 使用圖層的 jsonLoader 載入數據
+      const result = await targetLayer.jsonLoader(targetLayer);
+
+      // 檢查數據類型並載入相應數據
+      if (result.jsonData) {
+        if (result.jsonData.type === 'grid') {
+          // 網格數據
+          gridData.value = result.jsonData;
+          gridDimensions.value = {
+            x: result.jsonData.gridX,
+            y: result.jsonData.gridY,
+          };
+          console.log('✅ 網格數據載入成功:', gridData.value);
+        } else {
+          // 行政區示意圖數據
+          nodeData.value = result.jsonData;
+          console.log('✅ 行政區數據載入成功:', nodeData.value);
+          setLinkData();
+        }
+      } else if (result.tableData && result.tableData.length > 0) {
+        // 表格數據格式，轉換為示意圖格式
+        const schematicData = result.tableData.map((item) => ({
+          color: item.color,
+          name: item.name,
+          nodes: item.nodes || [],
+        }));
+
+        // 為每個路線的節點隨機分配 1-5 的數值
+        const processedData = schematicData.map((line) => ({
+          ...line,
+          nodes: randomizeNodeValues(line.nodes),
+        }));
+
+        nodeData.value = processedData;
+        console.log('✅ 表格數據轉換成功:', nodeData.value);
+        setLinkData();
+      } else {
+        throw new Error('無法從圖層數據中提取示意圖數據');
+      }
+    } catch (error) {
+      console.error('❌ 無法載入圖層數據:', error.message);
+    }
+  };
+
+  /**
+   * 📊 設定連接數據 (Set Link Data)
+   */
+  const setLinkData = () => {
+    if (!nodeData.value) return;
+
+    linkData.value = [];
+
+    nodeData.value.forEach((path) => {
+      let thisX, thisY;
+      let nodes = [];
+
+      path.nodes.slice(0, path.nodes.length - 1).forEach((node) => {
+        thisX = node.coord.x;
+        thisY = node.coord.y;
+
+        switch (node.type) {
+          case 1:
+          case 6:
+          case 21:
+          case 41:
+            thisX = node.coord.x + 0.5;
+            thisY = node.coord.y;
+            break;
+          case 2:
+          case 8:
+          case 12:
+          case 32:
+            thisX = node.coord.x;
+            thisY = node.coord.y - 0.5;
+            break;
+          case 3:
+          case 5:
+          case 23:
+          case 43:
+            thisX = node.coord.x - 0.5;
+            thisY = node.coord.y;
+            break;
+          case 4:
+          case 7:
+          case 14:
+          case 34:
+            thisX = node.coord.x;
+            thisY = node.coord.y + 0.5;
+            break;
+        }
+
+        nodes.push({
+          value: node.value,
+          type: node.type,
+          coord: { x: thisX, y: thisY },
+        });
+      });
+
+      let data = {
+        color: colorMap[path.color] || path.color,
+        name: path.name,
+        nodes: nodes,
+      };
+
+      linkData.value.push(data);
+    });
+
+    console.log('linkData', linkData.value);
+  };
+
+  // ==================== 📏 容器尺寸和繪製函數 (Container Dimensions and Drawing Functions) ====================
+
+  /**
+   * 📏 獲取容器尺寸 (Get Container Dimensions)
+   * @returns {Object} 包含 width 和 height 的尺寸物件
+   */
+  const getDimensions = () => {
+    const container = document.getElementById('schematic-container');
+    if (container) {
+      // 獲取容器的實際可用尺寸
+      const rect = container.getBoundingClientRect();
+      const width = container.clientWidth || rect.width;
+      const height = container.clientHeight || rect.height;
+
+      console.log('📏 容器尺寸:', {
+        width,
+        height,
+        clientWidth: container.clientWidth,
+        clientHeight: container.clientHeight,
+        rectWidth: rect.width,
+        rectHeight: rect.height,
+      });
+
+      return {
+        width: Math.max(width, 400),
+        height: Math.max(height, 300),
+      };
+    }
+    // 如果找不到容器，使用預設尺寸
+    return {
+      width: 800,
+      height: 600,
+    };
+  };
+
+  /**
+   * 🎨 繪製網格示意圖 (Draw Grid Schematic)
+   */
+  const drawGridSchematic = () => {
+    if (!gridData.value) return;
+
+    // 獲取容器尺寸
+    const dimensions = getDimensions();
+
+    // 添加適當的邊距
+    const margin = { top: 20, right: 20, bottom: 20, left: 20 };
+    const width = dimensions.width - margin.left - margin.right;
+    const height = dimensions.height - margin.top - margin.bottom;
+
+    // 檢查是否已存在 SVG，如果存在且尺寸相同則不需要重繪
+    const existingSvg = d3.select('#schematic-container').select('svg');
+    if (existingSvg.size() > 0) {
+      const existingWidth = parseFloat(existingSvg.attr('width'));
+      const existingHeight = parseFloat(existingSvg.attr('height'));
+
+      // 如果尺寸變化很小（小於 5px），則只更新尺寸而不重繪
+      if (
+        Math.abs(existingWidth - (width + margin.left + margin.right)) < 5 &&
+        Math.abs(existingHeight - (height + margin.top + margin.bottom)) < 5
+      ) {
+        return;
+      }
+    }
+
+    // 清除之前的圖表
+    d3.select('#schematic-container').selectAll('svg').remove();
+
+    // 創建 SVG 元素
+    const svg = d3
+      .select('#schematic-container')
+      .append('svg')
+      .attr('width', width + margin.left + margin.right)
+      .attr('height', height + margin.top + margin.bottom)
+      .style('background-color', COLOR_CONFIG.BACKGROUND)
+      .style('transition', 'all 0.2s ease-in-out');
+
+    // 計算網格單元格尺寸
+    const cellWidth = width / gridDimensions.value.x;
+    const cellHeight = height / gridDimensions.value.y;
+
+    console.log('📊 網格單元格尺寸:', { cellWidth, cellHeight });
+
+    // 繪製網格線
+    drawGridLines(svg, width, height, cellWidth, cellHeight, margin);
+
+    // 繪製網格節點
+    drawGridNodes(svg, cellWidth, cellHeight, margin);
+  };
+
+  /**
+   * 📏 繪製網格線 (Draw Grid Lines)
+   * @param {Object} svg - D3 SVG 選擇器
+   * @param {number} width - 繪圖區域寬度
+   * @param {number} height - 繪圖區域高度
+   * @param {number} cellWidth - 單元格寬度
+   * @param {number} cellHeight - 單元格高度
+   * @param {Object} margin - 邊距配置
+   */
+  const drawGridLines = (svg, width, height, cellWidth, cellHeight, margin) => {
+    // 繪製垂直網格線
+    for (let i = 0; i <= gridDimensions.value.x; i++) {
+      svg
+        .append('line')
+        .style('stroke', COLOR_CONFIG.GRID_LINE)
+        .style('stroke-width', 1)
+        .attr('x1', margin.left + i * cellWidth)
+        .attr('y1', margin.top)
+        .attr('x2', margin.left + i * cellWidth)
+        .attr('y2', margin.top + height);
+    }
+
+    // 繪製水平網格線
+    for (let i = 0; i <= gridDimensions.value.y; i++) {
+      svg
+        .append('line')
+        .style('stroke', COLOR_CONFIG.GRID_LINE)
+        .style('stroke-width', 1)
+        .attr('x1', margin.left)
+        .attr('y1', margin.top + i * cellHeight)
+        .attr('x2', margin.left + width)
+        .attr('y2', margin.top + i * cellHeight);
+    }
+
+    // 繪製次要網格線（網格中心線）
+    for (let i = 0; i < gridDimensions.value.x; i++) {
+      svg
+        .append('line')
+        .style('stroke', COLOR_CONFIG.GRID_LINE_SECONDARY)
+        .style('stroke-width', 0.5)
+        .attr('x1', margin.left + (i + 0.5) * cellWidth)
+        .attr('y1', margin.top)
+        .attr('x2', margin.left + (i + 0.5) * cellWidth)
+        .attr('y2', margin.top + height);
+    }
+
+    for (let i = 0; i < gridDimensions.value.y; i++) {
+      svg
+        .append('line')
+        .style('stroke', COLOR_CONFIG.GRID_LINE_SECONDARY)
+        .style('stroke-width', 0.5)
+        .attr('x1', margin.left)
+        .attr('y1', margin.top + (i + 0.5) * cellHeight)
+        .attr('x2', margin.left + width)
+        .attr('y2', margin.top + (i + 0.5) * cellHeight);
+    }
+  };
+
+  /**
+   * 🔢 繪製網格節點 (Draw Grid Nodes)
+   * @param {Object} svg - D3 SVG 選擇器
+   * @param {number} cellWidth - 單元格寬度
+   * @param {number} cellHeight - 單元格高度
+   * @param {Object} margin - 邊距配置
+   */
+  const drawGridNodes = (svg, cellWidth, cellHeight, margin) => {
+    if (!gridData.value || !gridData.value.nodes) return;
+
+    // 創建節點群組
+    const nodeGroup = svg.append('g').attr('class', 'grid-nodes');
+
+    // 繪製每個節點
+    gridData.value.nodes.forEach((node) => {
+      const x = margin.left + (node.x + 0.5) * cellWidth;
+      const y = margin.top + (node.y + 0.5) * cellHeight;
+
+      // 繪製節點圓圈
+      nodeGroup
+        .append('circle')
+        .attr('cx', x)
+        .attr('cy', y)
+        .attr('r', Math.min(cellWidth, cellHeight) * 0.3)
+        .style('fill', COLOR_CONFIG.NODE_FILL)
+        .style('stroke', COLOR_CONFIG.NODE_STROKE)
+        .style('stroke-width', 2)
+        .style('opacity', 0.8)
+        .on('mouseover', function () {
+          d3.select(this).style('opacity', 1).style('stroke-width', 3);
+        })
+        .on('mouseout', function () {
+          d3.select(this).style('opacity', 0.8).style('stroke-width', 2);
+        });
+
+      // 繪製節點數值文字
+      nodeGroup
+        .append('text')
+        .attr('x', x)
+        .attr('y', y)
+        .attr('text-anchor', 'middle')
+        .attr('dominant-baseline', 'middle')
+        .attr('font-size', Math.min(cellWidth, cellHeight) * 0.2)
+        .attr('font-weight', 'bold')
+        .attr('fill', COLOR_CONFIG.TEXT_FILL)
+        .text(node.value);
+    });
+  };
+
+  /**
+   * 🎨 繪製行政區示意圖 (Draw Administrative District Schematic)
+   */
+  const drawAdministrativeSchematic = () => {
+    if (!nodeData.value) return;
+
+    // 畫布長寬px
+    let dimensions = getDimensions();
+
+    // 添加適當的邊距，確保內容不被截斷
+    const margin = { top: 20, right: 20, bottom: 20, left: 20 };
+    const width = dimensions.width - margin.left - margin.right;
+    const height = dimensions.height - margin.top - margin.bottom;
+
+    // 獲取所有節點座標
+    const allPoints = nodeData.value.flatMap((d) =>
+      d.nodes.map((node) => ({
+        x: node.coord.x,
+        y: node.coord.y,
+      }))
+    );
+
+    console.log('allPoints', allPoints);
+
+    // 找到點的最大最小值
+    let xMax = d3.max(allPoints, (d) => d.x);
+    let yMax = d3.max(allPoints, (d) => d.y);
+
+    console.log('Maximum x: ', xMax);
+    console.log('Maximum y: ', yMax);
+
+    // 檢查是否已存在 SVG，如果存在且尺寸相同則不需要重繪
+    const existingSvg = d3.select('#schematic-container').select('svg');
+    if (existingSvg.size() > 0) {
+      const existingWidth = parseFloat(existingSvg.attr('width'));
+      const existingHeight = parseFloat(existingSvg.attr('height'));
+
+      // 如果尺寸變化很小（小於 5px），則只更新尺寸而不重繪
+      if (
+        Math.abs(existingWidth - (width + margin.left + margin.right)) < 5 &&
+        Math.abs(existingHeight - (height + margin.top + margin.bottom)) < 5
+      ) {
+        return;
+      }
+    }
+
+    // 清除之前的圖表
+    d3.select('#schematic-container').selectAll('svg').remove();
+
+    // 創建 SVG 元素
+    const svg = d3
+      .select('#schematic-container')
+      .append('svg')
+      .attr('width', width + margin.left + margin.right)
+      .attr('height', height + margin.top + margin.bottom)
+      .style('background-color', COLOR_CONFIG.BACKGROUND)
+      .style('transition', 'all 0.2s ease-in-out'); // 添加平滑過渡效果
+
+    // 直接使用容器的完整尺寸，允許形狀變形以完全填滿容器
+    const actualWidth = width;
+    const actualHeight = height;
+
+    // 繪製參數已準備就緒
+
+    // 設定比例尺，使用實際繪圖區域
+    const x = d3
+      .scaleLinear()
+      .domain([0, xMax])
+      .range([margin.left, margin.left + actualWidth]);
+    const y = d3
+      .scaleLinear()
+      .domain([yMax, 0])
+      .range([margin.top, margin.top + actualHeight]);
+
+    // 繪製主要網格線
+    for (let i = 0; i <= xMax; i++) {
+      svg
+        .append('line')
+        .style('stroke', COLOR_CONFIG.GRID_LINE)
+        .attr('x1', x(i))
+        .attr('y1', margin.top)
+        .attr('x2', x(i))
+        .attr('y2', margin.top + actualHeight);
+    }
+
+    for (let i = 0; i <= yMax; i++) {
+      svg
+        .append('line')
+        .style('stroke', COLOR_CONFIG.GRID_LINE)
+        .attr('x1', margin.left)
+        .attr('y1', y(i))
+        .attr('x2', margin.left + actualWidth)
+        .attr('y2', y(i));
+    }
+
+    // 繪製次要網格線
+    for (let i = 0; i < xMax; i++) {
+      svg
+        .append('line')
+        .style('stroke', COLOR_CONFIG.GRID_LINE_SECONDARY)
+        .attr('x1', (x(i) + x(i + 1)) / 2)
+        .attr('y1', margin.top)
+        .attr('x2', (x(i) + x(i + 1)) / 2)
+        .attr('y2', margin.top + actualHeight);
+    }
+
+    for (let i = 0; i < yMax; i++) {
+      svg
+        .append('line')
+        .style('stroke', COLOR_CONFIG.GRID_LINE_SECONDARY)
+        .attr('x1', margin.left)
+        .attr('y1', (y(i) + y(i + 1)) / 2)
+        .attr('x2', margin.left + actualWidth)
+        .attr('y2', (y(i) + y(i + 1)) / 2);
+    }
+
+    // 創建線條生成器
+    const lineGenerator = d3
+      .line()
+      .x((d) => x(d.x))
+      .y((d) => y(d.y))
+      .curve(d3.curveNatural);
+
+    // 繪製每個路徑的節點連接
+    nodeData.value.forEach((path) => {
+      path.nodes.forEach((node) => {
+        let dString = '';
+        let nodes = [];
+
+        console.log('node.coord.type', node.type);
+
+        switch (node.type) {
+          case 1:
+            nodes = [
+              { x: node.coord.x - 0.5, y: node.coord.y },
+              { x: node.coord.x + 0.5, y: node.coord.y },
+            ];
+            dString = lineGenerator(nodes);
+            break;
+          case 2:
+            nodes = [
+              { x: node.coord.x, y: node.coord.y - 0.5 },
+              { x: node.coord.x, y: node.coord.y + 0.5 },
+            ];
+            dString = lineGenerator(nodes);
+            break;
+          case 3:
+            nodes = [
+              { x: node.coord.x + 0.5, y: node.coord.y },
+              { x: node.coord.x - 0.5, y: node.coord.y },
+            ];
+            dString = lineGenerator(nodes);
+            break;
+          case 4:
+            nodes = [
+              { x: node.coord.x, y: node.coord.y + 0.5 },
+              { x: node.coord.x, y: node.coord.y - 0.5 },
+            ];
+            dString = lineGenerator(nodes);
+            break;
+          case 5:
+            nodes = [
+              { x: node.coord.x, y: node.coord.y },
+              { x: node.coord.x - 0.5, y: node.coord.y },
+            ];
+            dString = lineGenerator(nodes);
+            break;
+          case 6:
+            nodes = [
+              { x: node.coord.x + 0.5, y: node.coord.y },
+              { x: node.coord.x, y: node.coord.y },
+            ];
+            dString = lineGenerator(nodes);
+            break;
+          case 7:
+            nodes = [
+              { x: node.coord.x, y: node.coord.y + 0.5 },
+              { x: node.coord.x, y: node.coord.y },
+            ];
+            dString = lineGenerator(nodes);
+            break;
+          case 8:
+            nodes = [
+              { x: node.coord.x, y: node.coord.y },
+              { x: node.coord.x, y: node.coord.y - 0.5 },
+            ];
+            dString = lineGenerator(nodes);
+            break;
+          case 12:
+          case 43: {
+            let xWidth = Math.abs(x(node.coord.x - 0.5) - x(node.coord.x));
+            let yHeight = Math.abs(y(node.coord.y) - y(node.coord.y - 0.5));
+
+            let arcWidth = 0;
+
+            if (xWidth < yHeight) {
+              arcWidth = xWidth;
+
+              nodes = [
+                { x: node.coord.x, y: y.invert(y(node.coord.y) + arcWidth) },
+                { x: node.coord.x, y: node.coord.y - 0.5 },
+              ];
+            } else {
+              arcWidth = yHeight;
+
+              nodes = [
+                { x: node.coord.x - 0.5, y: node.coord.y },
+                { x: x.invert(x(node.coord.x) - arcWidth), y: node.coord.y },
+              ];
+            }
+
+            console.log('xWidth yHeight arcWidth', xWidth, yHeight, arcWidth);
+
+            console.log('nodes', nodes);
+
+            dString = lineGenerator(nodes);
+
+            console.log('dString', dString);
+
+            const arc = d3
+              .arc()
+              .innerRadius(arcWidth - 3)
+              .outerRadius(arcWidth + 3)
+              .startAngle(0)
+              .endAngle(Math.PI / 2);
+
+            svg
+              .append('path')
+              .attr('d', arc)
+              .attr(
+                'transform',
+                `translate(${x(node.coord.x) - arcWidth}, ${y(node.coord.y) + arcWidth})`
+              )
+              .attr('fill', path.color);
+            break;
+          }
+          case 21:
+          case 34: {
+            let xWidth = Math.abs(x(node.coord.x - 0.5) - x(node.coord.x));
+            let yHeight = Math.abs(y(node.coord.y) - y(node.coord.y - 0.5));
+
+            let arcWidth = 0;
+
+            if (xWidth < yHeight) {
+              arcWidth = xWidth;
+
+              nodes = [
+                { x: node.coord.x, y: y.invert(y(node.coord.y) - arcWidth) },
+                { x: node.coord.x, y: node.coord.y + 0.5 },
+              ];
+            } else {
+              arcWidth = yHeight;
+
+              nodes = [
+                { x: node.coord.x + 0.5, y: node.coord.y },
+                { x: x.invert(x(node.coord.x) + arcWidth), y: node.coord.y },
+              ];
+            }
+
+            console.log('xWidth yHeight arcWidth', xWidth, yHeight, arcWidth);
+
+            console.log('nodes', nodes);
+
+            dString = lineGenerator(nodes);
+
+            console.log('dString', dString);
+
+            const arc = d3
+              .arc()
+              .innerRadius(arcWidth - 3)
+              .outerRadius(arcWidth + 3)
+              .startAngle(-Math.PI / 2)
+              .endAngle(-Math.PI);
+
+            svg
+              .append('path')
+              .attr('d', arc)
+              .attr(
+                'transform',
+                `translate(${x(node.coord.x) + arcWidth}, ${y(node.coord.y) - arcWidth})`
+              )
+              .attr('fill', path.color);
+            break;
+          }
+          case 14:
+          case 23: {
+            let xWidth = Math.abs(x(node.coord.x - 0.5) - x(node.coord.x));
+            let yHeight = Math.abs(y(node.coord.y) - y(node.coord.y - 0.5));
+
+            let arcWidth = 0;
+
+            if (xWidth < yHeight) {
+              arcWidth = xWidth;
+
+              nodes = [
+                { x: node.coord.x, y: y.invert(y(node.coord.y) - arcWidth) },
+                { x: node.coord.x, y: node.coord.y + 0.5 },
+              ];
+            } else {
+              arcWidth = yHeight;
+
+              nodes = [
+                { x: node.coord.x - 0.5, y: node.coord.y },
+                { x: x.invert(x(node.coord.x) - arcWidth), y: node.coord.y },
+              ];
+            }
+
+            console.log('xWidth yHeight arcWidth', xWidth, yHeight, arcWidth);
+
+            console.log('nodes', nodes);
+
+            dString = lineGenerator(nodes);
+
+            console.log('dString', dString);
+
+            const arc = d3
+              .arc()
+              .innerRadius(arcWidth - 3)
+              .outerRadius(arcWidth + 3)
+              .startAngle(Math.PI / 2)
+              .endAngle(Math.PI);
+
+            svg
+              .append('path')
+              .attr('d', arc)
+              .attr(
+                'transform',
+                `translate(${x(node.coord.x) - arcWidth}, ${y(node.coord.y) - arcWidth})`
+              )
+              .attr('fill', path.color);
+            break;
+          }
+          case 32:
+          case 41: {
+            let xWidth = Math.abs(x(node.coord.x - 0.5) - x(node.coord.x));
+            let yHeight = Math.abs(y(node.coord.y) - y(node.coord.y - 0.5));
+
+            let arcWidth = 0;
+
+            if (xWidth < yHeight) {
+              arcWidth = xWidth;
+
+              nodes = [
+                { x: node.coord.x, y: y.invert(y(node.coord.y) + arcWidth) },
+                { x: node.coord.x, y: node.coord.y - 0.5 },
+              ];
+            } else {
+              arcWidth = yHeight;
+
+              nodes = [
+                { x: node.coord.x + 0.5, y: node.coord.y },
+                { x: x.invert(x(node.coord.x) + arcWidth), y: node.coord.y },
+              ];
+            }
+
+            console.log('xWidth yHeight arcWidth', xWidth, yHeight, arcWidth);
+
+            console.log('nodes', nodes);
+
+            dString = lineGenerator(nodes);
+
+            console.log('dString', dString);
+
+            const arc = d3
+              .arc()
+              .innerRadius(arcWidth - 3)
+              .outerRadius(arcWidth + 3)
+              .startAngle(0)
+              .endAngle(-Math.PI / 2);
+
+            svg
+              .append('path')
+              .attr('d', arc)
+              .attr(
+                'transform',
+                `translate(${x(node.coord.x) + arcWidth}, ${y(node.coord.y) + arcWidth})`
+              )
+              .attr('fill', path.color);
+            break;
+          }
+          default:
+            break;
+        }
+
+        if (dString !== '') {
+          svg
+            .append('path')
+            .attr('d', dString)
+            .attr('stroke', path.color)
+            .attr('fill', 'none')
+            .attr('stroke-width', 6);
+        }
+      });
+    });
+
+    // 繪製節點數值標籤
+    if (linkData.value) {
+      const allLinks = linkData.value.flatMap((line) =>
+        line.nodes.map((node) => ({
+          ...node,
+        }))
+      );
+
+      console.log('allLinks', allLinks);
+
+      allLinks.forEach((node) => {
+        svg
+          .append('text')
+          .attr('x', x(node.coord.x))
+          .attr('y', y(node.coord.y))
+          .attr('text-anchor', 'middle')
+          .attr('dominant-baseline', 'middle')
+          .attr('font-size', '10px')
+          .attr('fill', 'white')
+          .text(`${node.value}`);
+      });
+    }
+  };
+
+  /**
+   * 🎨 統一繪製函數 (Unified Drawing Function)
+   * 根據圖層類型選擇相應的繪製方法
+   */
+  const drawSchematic = () => {
+    if (isGridSchematicLayer(activeLayerTab.value)) {
+      drawGridSchematic();
+    } else {
+      drawAdministrativeSchematic();
+    }
+  };
+
+  /**
+   * 📏 調整尺寸 (Resize)
+   * 響應容器尺寸變化，重新繪製示意圖
+   */
+  const resize = () => {
+    drawSchematic();
+  };
+
   // 記錄上一次的圖層列表用於比較
   const previousLayers = ref([]);
 
@@ -137,6 +956,30 @@
   );
 
   /**
+   * 👀 監聽活動圖層變化，載入數據並繪製示意圖
+   */
+  watch(
+    () => activeLayerTab.value,
+    async (newLayerId, oldLayerId) => {
+      if (newLayerId && newLayerId !== oldLayerId) {
+        console.log('🔄 圖層切換:', oldLayerId, '->', newLayerId);
+
+        // 清除舊數據
+        gridData.value = null;
+        nodeData.value = null;
+        linkData.value = null;
+
+        // 載入新圖層數據
+        await loadLayerData(newLayerId);
+
+        // 等待 DOM 更新後繪製
+        await nextTick();
+        drawSchematic();
+      }
+    }
+  );
+
+  /**
    * 👀 監聽容器高度變化，觸發示意圖重繪
    */
   watch(
@@ -144,8 +987,7 @@
     () => {
       // 觸發示意圖重繪以適應新高度
       nextTick(() => {
-        // 可以通過事件或直接調用示意圖組件的方法來觸發重繪
-        // 這裡依賴示意圖組件內部的 ResizeObserver 來自動重繪
+        resize();
       });
     }
   );
@@ -153,13 +995,55 @@
   /**
    * 🚀 組件掛載事件 (Component Mounted Event)
    */
-  onMounted(() => {
+  onMounted(async () => {
     console.log('D3jsTab mounted - visibleLayers:', visibleLayers.value);
     console.log('D3jsTab mounted - activeLayerTab:', activeLayerTab.value);
+
     // 初始化第一個可見圖層為作用中分頁
     if (visibleLayers.value.length > 0 && !activeLayerTab.value) {
       activeLayerTab.value = visibleLayers.value[0].layerId;
       console.log('D3jsTab - Set initial activeLayerTab to:', activeLayerTab.value);
+
+      // 載入初始數據
+      await loadLayerData(activeLayerTab.value);
+      await nextTick();
+      drawSchematic();
+    }
+
+    // 監聽窗口大小變化
+    window.addEventListener('resize', resize);
+
+    // 監聽容器尺寸變化
+    const container = document.getElementById('schematic-container');
+    if (container && window.ResizeObserver) {
+      resizeObserver = new ResizeObserver((entries) => {
+        for (let entry of entries) {
+          const { width, height } = entry.contentRect;
+          if (width > 0 && height > 0) {
+            resize();
+          }
+        }
+      });
+      resizeObserver.observe(container);
+
+      // 同時監聽父容器
+      const parentContainer = container.parentElement;
+      if (parentContainer) {
+        resizeObserver.observe(parentContainer);
+      }
+    }
+  });
+
+  /**
+   * 🚀 組件卸載事件 (Component Unmounted Event)
+   */
+  onUnmounted(() => {
+    window.removeEventListener('resize', resize);
+
+    // 清理 ResizeObserver
+    if (resizeObserver) {
+      resizeObserver.disconnect();
+      resizeObserver = null;
     }
   });
 </script>
@@ -208,18 +1092,12 @@
               minHeight: '300px',
             }"
           >
-            <!-- 🎨 網格示意圖組件 (Grid Schematic Component) -->
-            <GridSchematic
-              v-if="isGridSchematicLayer(activeLayerTab)"
-              :key="`grid-${Math.floor(props.containerHeight / 50)}`"
-              :layer-id="activeLayerTab"
-            />
-            <!-- 📊 行政區示意圖組件 (Administrative District Schematic Component) -->
-            <AdministrativeDistrictSchematic
-              v-else
-              :key="`diagram-${Math.floor(props.containerHeight / 50)}`"
-              :layer-id="activeLayerTab"
-            />
+            <!-- 🎨 統一示意圖容器 (Unified Schematic Container) -->
+            <div
+              id="schematic-container"
+              class="w-100 h-100"
+              style="min-height: 300px; overflow: hidden"
+            ></div>
           </div>
         </div>
       </div>
@@ -240,7 +1118,36 @@
 </template>
 
 <style scoped>
-  /* D3.js 圖表樣式 */
+  /**
+   * 🎨 D3jsTab 組件樣式 (D3jsTab Component Styles)
+   *
+   * 定義組件內部元素的樣式規則，使用 scoped 避免樣式污染
+   * 主要樣式規則已在 common.css 中定義，此處僅包含組件特定調整
+   */
+
+  /* 📊 示意圖容器樣式 (Schematic Container Styles) */
+  #schematic-container {
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* 🎨 網格節點懸停效果 (Grid Node Hover Effects) */
+  :deep(.grid-nodes circle) {
+    transition: all 0.2s ease-in-out;
+    cursor: pointer;
+  }
+
+  :deep(.grid-nodes circle:hover) {
+    filter: brightness(1.2);
+  }
+
+  /* 📝 網格文字樣式 (Grid Text Styles) */
+  :deep(.grid-nodes text) {
+    pointer-events: none;
+    user-select: none;
+  }
+
+  /* 🎯 D3.js 圖表互動樣式 (D3.js Chart Interaction Styles) */
   :deep(.bar:hover) {
     cursor: pointer;
   }
