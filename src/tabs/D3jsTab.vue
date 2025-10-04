@@ -303,16 +303,26 @@
         rectHeight: rect.height,
       });
 
-      return {
+      const dimensions = {
         width: Math.max(width, 400),
         height: Math.max(height, 300),
       };
+
+      // 更新 dataStore 中的尺寸狀態
+      dataStore.updateD3jsDimensions(dimensions.width, dimensions.height);
+
+      return dimensions;
     }
     // 如果找不到容器，使用預設尺寸
-    return {
+    const defaultDimensions = {
       width: 800,
       height: 600,
     };
+
+    // 更新 dataStore 中的尺寸狀態
+    dataStore.updateD3jsDimensions(defaultDimensions.width, defaultDimensions.height);
+
+    return defaultDimensions;
   };
 
   /**
@@ -917,6 +927,8 @@
    */
   const resize = () => {
     console.log('📏 D3jsTab: 觸發 resize，重新繪製示意圖');
+    // 先更新尺寸狀態，再重新繪製
+    getDimensions();
     drawSchematic();
   };
 

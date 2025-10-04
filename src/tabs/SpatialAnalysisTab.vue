@@ -25,6 +25,7 @@ SpatialAnalysisTab.vue * @version 2.0.0 * @author Kevin Cheng * @since 1.0.0 */
    */
   import { useDataStore } from '@/stores/dataStore.js';
   import { getIconHtml } from '../utils/utils.js';
+  import DetailItem from '../components/DetailItem.vue';
 
   // ==================== 🏪 狀態管理初始化 (State Management Initialization) ====================
 
@@ -285,6 +286,10 @@ SpatialAnalysisTab.vue * @version 2.0.0 * @author Kevin Cheng * @since 1.0.0 */
                 {{ getCurrentLayerItemCount() }}
               </div>
             </div>
+
+            <!-- D3jsTab 繪製範圍尺寸 -->
+            <DetailItem label="D3js Width" :value="dataStore.d3jsDimensions.width + 'px'" />
+            <DetailItem label="D3js Height" :value="dataStore.d3jsDimensions.height + 'px'" />
           </template>
 
           <!-- 錯誤顯示 -->

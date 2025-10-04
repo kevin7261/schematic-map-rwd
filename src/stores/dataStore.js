@@ -285,6 +285,23 @@ export const useDataStore = defineStore(
     // 選中的地圖物件
     const selectedFeature = ref(null);
 
+    // ==================== D3jsTab 尺寸管理 ====================
+
+    // D3jsTab 繪製範圍尺寸
+    const d3jsDimensions = ref({
+      width: 0,
+      height: 0,
+    });
+
+    // 更新 D3jsTab 尺寸
+    const updateD3jsDimensions = (width, height) => {
+      d3jsDimensions.value = {
+        width: Math.round(width),
+        height: Math.round(height),
+      };
+      console.log('📏 D3jsTab 尺寸更新:', d3jsDimensions.value);
+    };
+
     const setSelectedFeature = (feature) => {
       // 記錄選取變化的log
       if (feature) {
@@ -334,6 +351,9 @@ export const useDataStore = defineStore(
       saveLayerState,
       mergeLayersWithStates,
       getMapLayers,
+      // D3jsTab 尺寸管理
+      d3jsDimensions,
+      updateD3jsDimensions,
     };
   },
   {
