@@ -255,7 +255,7 @@ Features): * - 使用 Vue 2 Options API 進行組件管理 * - 整合多個分�
       <div
         v-show="activeUpperTab === 'd3js'"
         ref="d3jsContainerRef"
-        class="h-100 overflow-auto pt-5"
+        class="h-100 overflow-hidden pt-5"
       >
         <!-- 🎛️ 為導航按鈕組預留空間 (Reserve Space for Navigation Buttons) -->
         <div style="height: 40px"></div>
@@ -271,7 +271,7 @@ Features): * - 使用 Vue 2 Options API 進行組件管理 * - 整合多個分�
       <div
         v-show="activeUpperTab === 'dashboard'"
         ref="dashboardContainerRef"
-        class="h-100 overflow-auto pt-5"
+        class="h-100 overflow-hidden pt-5"
       >
         <!-- 🎛️ 為導航按鈕組預留空間 (Reserve Space for Navigation Buttons) -->
         <div style="height: 40px"></div>

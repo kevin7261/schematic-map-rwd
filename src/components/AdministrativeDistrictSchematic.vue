@@ -1,6 +1,6 @@
 <template>
-  <div class="administrative-district-schematic">
-    <div id="diagram" class="w-100 h-100" style="min-height: 400px"></div>
+  <div class="administrative-district-schematic w-100 h-100">
+    <div id="diagram" class="w-100 h-100" style="min-height: 300px"></div>
   </div>
 </template>
 
@@ -151,14 +151,23 @@
     if (container) {
       // 獲取容器的實際可用尺寸
       const rect = container.getBoundingClientRect();
-      const width = Math.max(container.clientWidth, rect.width);
-      const height = Math.max(container.clientHeight, rect.height);
 
-      console.log('Container dimensions:', { width, height });
+      // 優先使用 clientWidth/Height，因為它們更準確地反映可用空間
+      const width = container.clientWidth || rect.width;
+      const height = container.clientHeight || rect.height;
+
+      console.log('Container dimensions:', {
+        width,
+        height,
+        clientWidth: container.clientWidth,
+        clientHeight: container.clientHeight,
+        rectWidth: rect.width,
+        rectHeight: rect.height,
+      });
 
       return {
-        width: width || 800,
-        height: height || 600,
+        width: Math.max(width, 400),
+        height: Math.max(height, 300),
       };
     }
     // 如果找不到容器，使用預設尺寸
@@ -617,12 +626,20 @@
       resizeObserver = new ResizeObserver((entries) => {
         // 檢查尺寸是否真的改變了
         for (let entry of entries) {
-          if (entry.contentRect.width > 0 && entry.contentRect.height > 0) {
+          const { width, height } = entry.contentRect;
+          if (width > 0 && height > 0) {
+            console.log('ResizeObserver detected size change:', { width, height });
             debouncedResize();
           }
         }
       });
       resizeObserver.observe(container);
+
+      // 同時監聽父容器
+      const parentContainer = container.parentElement;
+      if (parentContainer) {
+        resizeObserver.observe(parentContainer);
+      }
     }
   });
 

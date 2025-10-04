@@ -14,9 +14,25 @@
    * @author Kevin Cheng
    */
 
-  import { ref, computed, watch, onMounted } from 'vue';
+  import { ref, computed, watch, onMounted, nextTick } from 'vue';
   import { useDataStore } from '@/stores/dataStore.js';
   import AdministrativeDistrictSchematic from '@/components/AdministrativeDistrictSchematic.vue';
+
+  // Props
+  const props = defineProps({
+    containerHeight: {
+      type: Number,
+      default: 600,
+    },
+    isPanelDragging: {
+      type: Boolean,
+      default: false,
+    },
+    activeMarkers: {
+      type: Array,
+      default: () => [],
+    },
+  });
 
   const dataStore = useDataStore();
 
@@ -98,6 +114,20 @@
   );
 
   /**
+   * 👀 監聽容器高度變化，觸發示意圖重繪
+   */
+  watch(
+    () => props.containerHeight,
+    () => {
+      // 觸發示意圖重繪以適應新高度
+      nextTick(() => {
+        // 可以通過事件或直接調用示意圖組件的方法來觸發重繪
+        // 這裡依賴示意圖組件內部的 ResizeObserver 來自動重繪
+      });
+    }
+  );
+
+  /**
    * 🚀 組件掛載事件 (Component Mounted Event)
    */
   onMounted(() => {
@@ -143,10 +173,16 @@
     <div v-if="visibleLayers.length > 0" class="flex-grow-1 d-flex flex-column my-bgcolor-white">
       <!-- 📊 圖層摘要資料 -->
       <div v-if="currentLayerSummary" class="flex-grow-1 d-flex flex-column">
-        <!-- D3.js 示意圖 - 填滿整個可用空間 -->
+        <!-- D3.js 示意圖 - 根據容器高度動態調整 -->
         <div class="flex-grow-1 d-flex flex-column">
-          <div class="flex-grow-1" style="min-height: 400px">
-            <AdministrativeDistrictSchematic />
+          <div
+            class="flex-grow-1"
+            :style="{
+              height: Math.max(props.containerHeight - 100, 300) + 'px',
+              minHeight: '300px',
+            }"
+          >
+            <AdministrativeDistrictSchematic :key="props.containerHeight" />
           </div>
         </div>
       </div>
