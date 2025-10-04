@@ -1,12 +1,10 @@
 <script setup>
-  import { ref, computed, watch, onMounted, nextTick, onUnmounted } from 'vue';
+  import { ref, computed, watch, onMounted } from 'vue';
   import { useDataStore } from '@/stores/dataStore.js';
-  import * as d3 from 'd3';
 
   const dataStore = useDataStore();
 
   const activeLayerTab = ref(null); /** 📑 當前作用中的圖層分頁 */
-  const chartContainer = ref(null); /** 📊 圖表容器參考 */
 
   // 獲取所有開啟且有資料的圖層
   const visibleLayers = computed(() => {
@@ -28,7 +26,7 @@
   const currentLayerSummary = computed(() => {
     if (!activeLayerTab.value) return null;
     const layer = visibleLayers.value.find((l) => l.layerId === activeLayerTab.value);
-    return layer ? layer.summaryData || null : null;
+    return layer ? layer.dashboardData || null : null;
   });
 
   /**
@@ -50,152 +48,6 @@
       groupName: groupName,
       layerName: layer.layerName,
     };
-  };
-
-  /**
-   * 📊 繪製橫向長條圖 (Draw Horizontal Bar Chart)
-   * @param {Array} districtCount - 行政區統計數據
-   */
-  const drawHorizontalBarChart = (districtCount) => {
-    if (!chartContainer.value || !districtCount || districtCount.length === 0) {
-      return;
-    }
-
-    // 清除之前的圖表
-    d3.select(chartContainer.value).selectAll('*').remove();
-
-    // 設定圖表尺寸和邊距
-    const margin = { top: 0, right: 48, bottom: 16, left: 48 };
-    const containerWidth = chartContainer.value.clientWidth;
-    const width = containerWidth - margin.left - margin.right;
-    const barHeight = 8;
-    const barSpacing = 24;
-    const height = districtCount.length * barSpacing;
-
-    // 創建 SVG
-    const svg = d3
-      .select(chartContainer.value)
-      .append('svg')
-      .attr('width', containerWidth)
-      .attr('height', height + margin.top + margin.bottom);
-
-    const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
-
-    // 設定比例尺
-    const maxCount = d3.max(districtCount, (d) => Math.max(0, d.count || 0));
-    const xScale = d3.scaleLinear().domain([0, maxCount]).range([0, width]);
-
-    /**
-     * 計算刻度系統 - 所有刻度都是5的倍數，且等間隔分布，最多5個刻度
-     */
-    const calculateTickSystem = (dataMaxValue) => {
-      // Step 1: 決定刻度間隔（必須是5的倍數），確保刻度數量不超過5個
-      let interval;
-
-      // 計算需要的間隔，使刻度數量不超過5個（包含0）
-      const maxTicks = 5;
-      const minInterval = Math.ceil(dataMaxValue / (maxTicks - 1));
-
-      // 找到最小的5的倍數間隔
-      if (minInterval <= 5) {
-        interval = 5;
-      } else if (minInterval <= 10) {
-        interval = 10;
-      } else if (minInterval <= 20) {
-        interval = 20;
-      } else if (minInterval <= 50) {
-        interval = 50;
-      } else if (minInterval <= 100) {
-        interval = 100;
-      } else {
-        // 對於更大的數值，找到最接近的5的倍數
-        interval = Math.ceil(minInterval / 5) * 5;
-      }
-
-      // Step 2: 計算圖表的最大刻度值
-      const chartMaxValue = Math.ceil(dataMaxValue / interval) * interval;
-
-      // Step 3: 生成刻度點，確保不超過5個
-      const ticks = [];
-      for (let i = 0; i <= chartMaxValue && ticks.length < maxTicks; i += interval) {
-        ticks.push(i);
-      }
-
-      return {
-        ticks: ticks, // 刻度陣列 [0, 5, 10, 15...]，最多5個
-        maxValue: chartMaxValue, // 圖表最大值
-        interval: interval, // 刻度間隔
-      };
-    };
-
-    // 計算刻度系統
-    const tickSystem = calculateTickSystem(maxCount);
-    const tickValues = tickSystem.ticks;
-
-    // 更新 X 軸比例尺的範圍
-    xScale.domain([0, tickSystem.maxValue]);
-
-    g.selectAll('.grid-line')
-      .data(tickValues)
-      .enter()
-      .append('line')
-      .attr('class', 'grid-line')
-      .attr('x1', (d) => xScale(d))
-      .attr('x2', (d) => xScale(d))
-      .attr('y1', 0)
-      .attr('y2', height)
-      .attr('stroke', 'var(--my-color-gray-400)')
-      .attr('stroke-dasharray', '2,2')
-      .attr('stroke-width', 1);
-
-    // 添加長條
-    g.selectAll('.bar')
-      .data(districtCount)
-      .enter()
-      .append('rect')
-      .attr('class', 'bar')
-      .attr('x', 0)
-      .attr('y', (d, i) => i * barSpacing + (barSpacing - barHeight) / 2)
-      .attr('width', (d) => Math.max(0, xScale(Math.max(0, d.count || 0))))
-      .attr('height', barHeight)
-      .attr('fill', 'var(--my-color-blue)');
-
-    // 添加數值標籤
-    g.selectAll('.label')
-      .data(districtCount)
-      .enter()
-      .append('text')
-      .attr('class', 'label my-font-size-xs')
-      .attr('x', (d) => Math.max(0, xScale(Math.max(0, d.count || 0))) + 5)
-      .attr('y', (d, i) => i * barSpacing + barSpacing / 2)
-      .attr('dy', '0.35em')
-      .attr('fill', 'var(--my-color-black)')
-      .text((d) => Math.max(0, d.count || 0));
-
-    // 添加區域名稱標籤
-    g.selectAll('.district-label')
-      .data(districtCount)
-      .enter()
-      .append('text')
-      .attr('class', 'district-label my-font-size-xs')
-      .attr('x', -5)
-      .attr('y', (d, i) => i * barSpacing + barSpacing / 2)
-      .attr('dy', '0.35em')
-      .attr('fill', 'var(--my-color-black)')
-      .style('text-anchor', 'end')
-      .text((d) => d.name);
-
-    // 添加 X 軸數字標籤
-    g.selectAll('.x-axis-label')
-      .data(tickValues)
-      .enter()
-      .append('text')
-      .attr('class', 'x-axis-label my-font-size-xs')
-      .attr('x', (d) => xScale(d))
-      .attr('y', height + 15)
-      .attr('fill', 'var(--my-color-gray-600)')
-      .style('text-anchor', 'middle')
-      .text((d) => d);
   };
 
   // 記錄上一次的圖層列表用於比較
@@ -242,21 +94,6 @@
   );
 
   /**
-   * 👀 監聽當前圖層摘要變化，更新圖表
-   */
-  watch(
-    () => currentLayerSummary.value,
-    (newSummary) => {
-      if (newSummary && newSummary.districtCount) {
-        nextTick(() => {
-          drawHorizontalBarChart(newSummary.districtCount);
-        });
-      }
-    },
-    { immediate: true }
-  );
-
-  /**
    * 🚀 組件掛載事件 (Component Mounted Event)
    */
   onMounted(() => {
@@ -266,24 +103,6 @@
     if (visibleLayers.value.length > 0 && !activeLayerTab.value) {
       activeLayerTab.value = visibleLayers.value[0].layerId;
     }
-  });
-
-  // 監聽窗口大小變化，重新繪製圖表
-  const handleResize = () => {
-    if (currentLayerSummary.value && currentLayerSummary.value.districtCount) {
-      nextTick(() => {
-        drawHorizontalBarChart(currentLayerSummary.value.districtCount);
-      });
-    }
-  };
-
-  onMounted(() => {
-    window.addEventListener('resize', handleResize);
-  });
-
-  // 組件卸載時移除事件監聽
-  onUnmounted(() => {
-    window.removeEventListener('resize', handleResize);
   });
 </script>
 
@@ -325,46 +144,24 @@
         <h5 class="my-title-md-black">{{ currentLayerName }}</h5>
       </div>
 
-      <!-- 📊 圖層摘要資料 -->
+      <!-- 📊 圖層儀表板資料 -->
       <div v-if="currentLayerSummary">
-        <div class="row">
-          <!-- 基本統計信息 -->
-          <div class="col-12 col-xl-6">
-            <div class="rounded-4 my-bgcolor-gray-100 p-4 mb-3">
-              <h6 class="mb-3">基本統計</h6>
-              <div class="row">
-                <div class="col-6">
-                  <div class="text-center">
-                    <div class="my-title-xl-black">{{ currentLayerSummary.totalCount }}</div>
-                    <div class="my-title-sm-gray">總數量</div>
-                  </div>
-                </div>
-                <div class="col-6" v-if="currentLayerSummary.districtCount">
-                  <div class="text-center">
-                    <div class="my-title-xl-black">
-                      {{ currentLayerSummary.districtCount.length }}
-                    </div>
-                    <div class="my-title-sm-gray">行政區數量</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 行政區分布圖表 -->
-          <div
-            class="col-12 col-xl-6"
-            v-if="currentLayerSummary.districtCount && currentLayerSummary.districtCount.length > 0"
+        <div class="rounded-4 my-bgcolor-gray-100 p-4 mb-3">
+          <h6 class="mb-3">完整儀表板資料</h6>
+          <pre
+            class="my-font-size-sm"
+            style="
+              white-space: pre-wrap;
+              word-wrap: break-word;
+              max-height: 500px;
+              overflow-y: auto;
+            "
+            >{{ JSON.stringify(currentLayerSummary, null, 2) }}</pre
           >
-            <div class="rounded-4 my-bgcolor-gray-100 p-4 mb-3">
-              <h6 class="mb-3">行政區分布</h6>
-              <div ref="chartContainer" class="w-100"></div>
-            </div>
-          </div>
         </div>
       </div>
       <div v-else class="text-center py-5">
-        <div class="my-title-md-gray">此圖層沒有可用的摘要資訊</div>
+        <div class="my-title-md-gray">此圖層沒有可用的儀表板資訊</div>
       </div>
     </div>
 

@@ -303,8 +303,8 @@ async function loadFile(primaryPath, fallbackPath = null) {
  *
  * try {
  *   const result = await loadDataLayerJson(layer);
- *   console.log('數據載入成功:', result.summaryData);
- *   console.log('表格數據:', result.tableData);
+ *   console.log('數據載入成功:', result.dashboardData);
+ *   console.log('表格數據:', result.dataTableData);
  * } catch (error) {
  *   console.error('載入失敗:', error.message);
  * }
@@ -315,8 +315,9 @@ async function loadFile(primaryPath, fallbackPath = null) {
  * {
  *   jsonData: Object | null,     // 原始 JSON 數據（不可修改）
  *   processedJsonData: Object | null, // 處理後的 JSON 數據（用於顯示和計算）
- *   summaryData: Object,         // 統計摘要數據
- *   tableData: Array,           // 表格顯示數據
+ *   dashboardData: Object,         // 統計摘要數據
+ *   dataTableData: Array,           // 表格顯示數據
+ *   layerInfoData: Object,          // 圖層資訊數據
  * }
  * ```
  *
@@ -502,8 +503,8 @@ function randomizeNodeValues(nodes) {
  * try {
  *   const result = await loadGridSchematicJson(layer);
  *   console.log('網格數據:', result.jsonData);
- *   console.log('摘要數據:', result.summaryData);
- *   console.log('表格數據:', result.tableData);
+ *   console.log('摘要數據:', result.dashboardData);
+ *   console.log('表格數據:', result.dataTableData);
  * } catch (error) {
  *   console.error('載入失敗:', error.message);
  * }
@@ -526,14 +527,14 @@ function randomizeNodeValues(nodes) {
  *     nodes: Array,         // 網格節點陣列
  *     type: 'grid'          // 數據類型標識
  *   },
- *   summaryData: {
+ *   dashboardData: {
  *     totalNodes: number,   // 總節點數量
  *     gridSize: string,     // 網格尺寸描述
  *     gridX: number,        // X 方向節點數量
  *     gridY: number,        // Y 方向節點數量
  *     nodeCount: number     // 節點總數
  *   },
- *   tableData: Array,       // 表格顯示數據
+ *   dataTableData: Array,       // 表格顯示數據
  * }
  * ```
  *
@@ -564,7 +565,7 @@ function randomizeNodeValues(nodes) {
  * const layer = { jsonFileName: 'test/test.json' };
  * const result = await loadGridSchematicJson(layer);
  * console.log(result.gridData); // 網格數據
- * console.log(result.summaryData); // 摘要數據
+ * console.log(result.dashboardData); // 摘要數據
  *
  * @since 1.0.0
  * @see {@link loadFile} 通用檔案載入函數
@@ -624,8 +625,8 @@ export async function loadGridSchematicJson(layer) {
  * const result = await processGridSchematicJson(jsonData);
  *
  * console.log('網格節點數量:', result.jsonData.nodes.length);
- * console.log('網格尺寸:', result.summaryData.gridSize);
- * console.log('表格數據:', result.tableData);
+ * console.log('網格尺寸:', result.dashboardData.gridSize);
+ * console.log('表格數據:', result.dataTableData);
  * ```
  *
  * 📈 輸入數據格式 (Input Data Format):
@@ -653,14 +654,14 @@ export async function loadGridSchematicJson(layer) {
  *     ],
  *     type: 'grid'          // 數據類型標識
  *   },
- *   summaryData: {
+ *   dashboardData: {
  *     totalNodes: number,   // 總節點數量
  *     gridSize: string,     // 網格尺寸描述
  *     gridX: number,        // X 方向節點數量
  *     gridY: number,        // Y 方向節點數量
  *     nodeCount: number     // 節點總數
  *   },
- *   tableData: [            // 表格顯示數據
+ *   dataTableData: [            // 表格顯示數據
  *     {
  *       '#': number,        // 行號
  *       name: string,       // 網格名稱
@@ -724,7 +725,7 @@ async function processGridSchematicJson(jsonData) {
   }
 
   // 建立摘要資料
-  const summaryData = {
+  const dashboardData = {
     totalNodes: gridX * gridY,
     gridSize: `${gridX} x ${gridY}`,
     gridX: gridX,
@@ -732,8 +733,16 @@ async function processGridSchematicJson(jsonData) {
     nodeCount: gridNodes.length,
   };
 
+  // 建立圖層資訊數據
+  const layerInfoData = {
+    totalNodes: gridX * gridY,
+    gridSize: `${gridX} x ${gridY}`,
+    gridX: gridX,
+    gridY: gridY,
+  };
+
   // 建立表格資料
-  const tableData = [
+  const dataTableData = [
     {
       '#': 1,
       name: `網格示意圖 (${gridX}x${gridY})`,
@@ -751,8 +760,9 @@ async function processGridSchematicJson(jsonData) {
       nodes: gridNodes,
       type: 'grid',
     },
-    summaryData,
-    tableData,
+    dashboardData,
+    dataTableData,
+    layerInfoData,
   };
 }
 
@@ -841,14 +851,14 @@ async function processGridSchematicJson(jsonData) {
  * ```javascript
  * {
  *   jsonData: Object | null,  // 原始 JSON 數據（標準格式）或 null（示意圖格式）
- *   summaryData: {            // 統計摘要數據
+ *   dashboardData: {            // 統計摘要數據
  *     totalLines?: number,    // 總路線數量（示意圖格式）
  *     totalNodes?: number,    // 總節點數量（示意圖格式）
  *     lineNames?: string[],   // 路線名稱陣列（示意圖格式）
  *     totalCount?: number,    // 總項目數量（標準格式）
  *     itemNames?: string[]    // 項目名稱陣列（標準格式）
  *   },
- *   tableData: Array          // 表格顯示數據
+ *   dataTableData: Array          // 表格顯示數據
  * }
  * ```
  *
@@ -897,14 +907,21 @@ async function processDataLayerJson(jsonData) {
     }));
 
     // 建立摘要資料
-    const summaryData = {
+    const dashboardData = {
       totalLines: processedJsonData.length,
       totalNodes: processedJsonData.reduce((sum, line) => sum + line.nodes.length, 0),
       lineNames: processedJsonData.map((line) => line.name),
     };
 
-    // 為示意圖數據建立 tableData，每個路線作為一個項目
-    const tableData = processedJsonData.map((line, index) => ({
+    // 建立圖層資訊數據
+    const layerInfoData = {
+      totalLines: processedJsonData.length,
+      totalNodes: processedJsonData.reduce((sum, line) => sum + line.nodes.length, 0),
+      lineNames: processedJsonData.map((line) => line.name),
+    };
+
+    // 為示意圖數據建立 dataTableData，每個路線作為一個項目
+    const dataTableData = processedJsonData.map((line, index) => ({
       '#': index + 1,
       color: line.color,
       name: line.name,
@@ -914,8 +931,9 @@ async function processDataLayerJson(jsonData) {
     return {
       jsonData: jsonData, // 保持原始數據不變
       processedJsonData: null, // 示意圖數據不需要地圖顯示
-      summaryData,
-      tableData,
+      dashboardData,
+      dataTableData,
+      layerInfoData,
     };
   }
 
@@ -923,16 +941,25 @@ async function processDataLayerJson(jsonData) {
   console.log('📊 載入標準 JSON 數據，共', jsonData.length, '個項目');
 
   // 建立摘要資料
-  const summaryData = {
+  const dashboardData = {
     totalCount: jsonData.length,
     itemNames: jsonData.map((item) => item.name || item.id || '未命名項目'),
+  };
+
+  // 建立圖層資訊數據
+  const layerInfoData = {
+    totalItems: jsonData.length,
+    itemNames: jsonData.map((item) => item.name || item.id || '未命名項目'),
+    hasFeatures: jsonData.some((item) => item.features),
+    hasProperties: jsonData.some((item) => item.properties),
   };
 
   return {
     jsonData: jsonData, // 保持原始數據不變
     processedJsonData: jsonData, // 標準格式數據直接使用原始數據
-    summaryData,
-    tableData: jsonData.map((item, index) => ({
+    dashboardData,
+    layerInfoData,
+    dataTableData: jsonData.map((item, index) => ({
       '#': index + 1,
       name: item.name || item.id || '未命名項目',
       ...item,

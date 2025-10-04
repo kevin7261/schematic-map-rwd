@@ -22,9 +22,9 @@ Kevin Cheng * @since 1.0.0 */
    * 空間分析分頁組件引入
    * 提供圖層資訊和統計數據顯示功能
    *
-   * @see ../tabs/LayerInfo.vue
+   * @see ../tabs/layerInfoTab.vue
    */
-  import LayerInfo from '../tabs/LayerInfo.vue';
+  import LayerInfo from '../tabs/layerInfoTab.vue';
 
   /**
    * Pinia 狀態管理庫引入

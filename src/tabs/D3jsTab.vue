@@ -107,7 +107,7 @@
     const layer = visibleLayers.value.find((l) => l.layerId === activeLayerTab.value);
     console.log('currentLayerSummary - found layer:', layer);
 
-    const result = layer ? layer.summaryData || null : null;
+    const result = layer ? layer.dashboardData || null : null;
     console.log('currentLayerSummary - returning:', result);
     return result;
   });
@@ -189,9 +189,9 @@
           console.log('✅ 行政區數據載入成功:', nodeData.value);
           setLinkData();
         }
-      } else if (result.tableData && result.tableData.length > 0) {
+      } else if (result.dataTableData && result.dataTableData.length > 0) {
         // 表格數據格式，轉換為示意圖格式
-        const schematicData = result.tableData.map((item) => ({
+        const schematicData = result.dataTableData.map((item) => ({
           color: item.color,
           name: item.name,
           nodes: item.nodes || [],

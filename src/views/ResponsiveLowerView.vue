@@ -4,7 +4,7 @@
   import LayersTab from '../tabs/LayersTab.vue';
   import DataTableTab from '../tabs/DataTableTab.vue';
   import PropertiesTab from '../tabs/PropertiesTab.vue';
-  import LayerInfo from '../tabs/LayerInfo.vue';
+  import LayerInfo from '../tabs/layerInfoTab.vue';
 
   export default {
     name: 'ResponsiveLowerView',

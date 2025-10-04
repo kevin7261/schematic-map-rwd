@@ -76,7 +76,7 @@ Cheng * @since 1.0.0 */
    *
    * @type {ComputedRef<Array>}
    * @description 返回包含所有可見圖層的陣列，用於生成分頁導航
-   * @returns {Array<Object>} 可見圖層陣列，每個圖層包含 layerId, layerName, tableData 等屬性
+   * @returns {Array<Object>} 可見圖層陣列，每個圖層包含 layerId, layerName, dataTableData 等屬性
    */
   const visibleLayers = computed(() => {
     // 從數據存儲中獲取所有圖層
@@ -137,7 +137,7 @@ Cheng * @since 1.0.0 */
    * - 支援動態資料結構，適應不同類型的圖層資料
    *
    * @param {Object} layer - 圖層物件
-   * @param {Array} layer.tableData - 圖層的表格資料陣列
+   * @param {Array} layer.dataTableData - 圖層的表格資料陣列
    * @returns {string[]} 適合顯示的欄位名稱陣列
    * @description 用於動態生成表格標題行，確保只顯示有意義的欄位
    * @example getLayerColumns(layer) // ['#', 'color', 'name', 'nodes', 'count']
@@ -145,7 +145,7 @@ Cheng * @since 1.0.0 */
   const getLayerColumns = (layer) => {
     // 使用原始資料而不是排序後的資料，避免因排序影響欄位偵測
     // 確保欄位偵測的穩定性和一致性
-    const data = layer.tableData;
+    const data = layer.dataTableData;
 
     // 如果沒有資料或資料為空，返回一個空陣列
     // 避免在空資料情況下進行無意義的處理
@@ -187,22 +187,22 @@ Cheng * @since 1.0.0 */
    * @param {Object} layer - 圖層物件
    * @param {string} layer.layerId - 圖層唯一識別碼
    * @param {string} layer.layerName - 圖層名稱
-   * @param {Array} layer.tableData - 圖層的表格資料陣列
+   * @param {Array} layer.dataTableData - 圖層的表格資料陣列
    * @returns {number} 資料項目數量，如果沒有資料則返回 0
    * @description 用於在分頁標籤中顯示資料數量，提供使用者即時的資料統計資訊
    * @example getLayerDataCount(layer) // 15 (表示該圖層有 15 筆資料)
    */
   const getLayerDataCount = (layer) => {
     // 使用可選鏈運算符安全地獲取資料長度，避免 undefined 錯誤
-    const count = layer.tableData?.length || 0;
+    const count = layer.dataTableData?.length || 0;
 
     // 記錄詳細的除錯資訊，用於開發和問題排查
     console.log('DataTable - Layer data count:', {
       layerId: layer.layerId,
       layerName: layer.layerName,
-      hasTableData: !!layer.tableData,
+      hasTableData: !!layer.dataTableData,
       dataCount: count,
-      sampleData: layer.tableData?.[0] || null,
+      sampleData: layer.dataTableData?.[0] || null,
     });
 
     return count;
@@ -220,25 +220,25 @@ Cheng * @since 1.0.0 */
    *
    * @param {Object} layer - 圖層物件
    * @param {string} layer.layerId - 圖層唯一識別碼
-   * @param {Array} layer.tableData - 圖層的表格資料陣列
+   * @param {Array} layer.dataTableData - 圖層的表格資料陣列
    * @returns {Array} 排序後的資料陣列副本
    * @description 用於在表格中顯示按指定欄位和方向排序的資料
    * @example getSortedData(layer) // 返回按指定欄位排序的資料陣列
    */
   const getSortedData = (layer) => {
     // 如果圖層沒有資料，返回空陣列
-    if (!layer.tableData) return [];
+    if (!layer.dataTableData) return [];
 
     // 獲取當前圖層的排序狀態
     const sortState = layerSortStates.value[layer.layerId];
 
     // 如果沒有排序狀態或沒有指定排序欄位，返回原始資料
     if (!sortState || !sortState.key) {
-      return layer.tableData;
+      return layer.dataTableData;
     }
 
     // 使用展開運算符創建資料副本，避免修改原始資料
-    return [...layer.tableData].sort((a, b) => {
+    return [...layer.dataTableData].sort((a, b) => {
       // 獲取要比較的兩個值
       const aValue = a[sortState.key];
       const bValue = b[sortState.key];

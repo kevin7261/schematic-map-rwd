@@ -65,7 +65,7 @@
 
       // 📊 本地資料狀態 (Local Data State)
       /** 📋 表格資料暫存 */
-      const tableData = ref([]);
+      const dataTableData = ref([]);
 
       // 📚 組件引用 (Component References)
       /** 🌟 中間面板組件引用 */
@@ -652,7 +652,7 @@
         mainPanelWidth, // 中間面板寬度百分比
         mainPanelWidthPx, // 中間面板像素寬度
 
-        tableData, // 表格資料
+        dataTableData, // 表格資料
 
         // 📥 數據管理功能
         resetView, // 重設視圖

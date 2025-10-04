@@ -146,7 +146,7 @@
                     <span class="my-content-sm-black">
                       {{ layer.layerName }}
                       <span class="my-content-xs-gray ms-2">
-                        {{ layer.summaryData?.totalCount }}
+                        {{ layer.dashboardData?.totalCount }}
                       </span>
                     </span>
                   </div>

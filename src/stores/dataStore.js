@@ -148,8 +148,9 @@ export const useDataStore = defineStore(
      * - isLoaded: 圖層是否已載入完成
      * - jsonData: 圖層的原始 JSON 數據（不可修改）
      * - processedJsonData: 圖層的處理後 JSON 數據（用於顯示和計算）
-     * - summaryData: 圖層的統計摘要數據
-     * - tableData: 圖層的表格數據
+     * - dashboardData: 圖層的儀表板數據
+     * - dataTableData: 圖層的表格數據
+     * - layerInfoData: 圖層的資訊數據
      *
      * @type {Ref<Object>} 圖層狀態響應式對象
      * @since 1.0.0
@@ -177,8 +178,9 @@ export const useDataStore = defineStore(
      * - colorName: 圖層顏色名稱
      * - jsonData: 圖層原始 JSON 數據（不可修改）
      * - processedJsonData: 圖層處理後 JSON 數據（用於顯示和計算）
-     * - summaryData: 圖層統計摘要
-     * - tableData: 圖層表格數據
+     * - dashboardData: 圖層儀表板數據
+     * - dataTableData: 圖層表格數據
+     * - layerInfoData: 圖層資訊數據
      * - jsonLoader: 圖層數據載入函數
      * - jsonFileName: 圖層 JSON 文件名稱
      * - isDataLayer: 是否為數據圖層
@@ -204,8 +206,9 @@ export const useDataStore = defineStore(
             colorName: 'green',
             jsonData: null,
             processedJsonData: null,
-            summaryData: null,
-            tableData: null,
+            dashboardData: null,
+            dataTableData: null,
+            layerInfoData: null,
             jsonLoader: loadGridSchematicJson,
             jsonFileName: 'test/test.json',
             isDataLayer: true,
@@ -229,8 +232,9 @@ export const useDataStore = defineStore(
             colorName: 'orange',
             jsonData: null,
             processedJsonData: null,
-            summaryData: null,
-            tableData: null,
+            dashboardData: null,
+            dataTableData: null,
+            layerInfoData: null,
             jsonLoader: loadDataLayerJson,
             jsonFileName: 'taipei/taipei_schematic.json',
             isDataLayer: true,
@@ -248,8 +252,9 @@ export const useDataStore = defineStore(
             colorName: 'orange',
             jsonData: null,
             processedJsonData: null,
-            summaryData: null,
-            tableData: null,
+            dashboardData: null,
+            dataTableData: null,
+            layerInfoData: null,
             jsonLoader: loadDataLayerJson,
             jsonFileName: 'taipei/taipei_schematic_2.json',
             isDataLayer: true,
@@ -288,8 +293,9 @@ export const useDataStore = defineStore(
      * // 更新圖層數據
      * saveLayerState('taipei_metro', {
      *   jsonData: data,
-     *   summaryData: summary,
-     *   tableData: table
+     *   dashboardData: summary,
+     *   dataTableData: table,
+     *   layerInfoData: info
      * });
      * ```
      *
@@ -300,8 +306,9 @@ export const useDataStore = defineStore(
      * @param {boolean} [stateData.isLoaded] - 圖層載入完成狀態
      * @param {Object} [stateData.jsonData] - 圖層原始 JSON 數據
      * @param {Object} [stateData.processedJsonData] - 圖層處理後 JSON 數據
-     * @param {Object} [stateData.summaryData] - 圖層統計摘要
-     * @param {Array} [stateData.tableData] - 圖層表格數據
+     * @param {Object} [stateData.dashboardData] - 圖層儀表板數據
+     * @param {Array} [stateData.dataTableData] - 圖層表格數據
+     * @param {Object} [stateData.layerInfoData] - 圖層資訊數據
      *
      * @example
      * // 基本用法
@@ -432,8 +439,9 @@ export const useDataStore = defineStore(
      *     colorName: string,      // 圖層顏色名稱
      *     jsonData: Object,       // 圖層原始 JSON 數據
      *     processedJsonData: Object, // 圖層處理後 JSON 數據
-     *     summaryData: Object,    // 圖層統計摘要
-     *     tableData: Array,       // 圖層表格數據
+     *     dashboardData: Object,    // 圖層儀表板數據
+     *     dataTableData: Array,       // 圖層表格數據
+     *     layerInfoData: Object,      // 圖層資訊數據
      *     jsonLoader: Function,   // 圖層數據載入函數
      *     jsonFileName: string,   // 圖層 JSON 文件名稱
      *     isDataLayer: boolean,   // 是否為數據圖層
@@ -592,20 +600,22 @@ export const useDataStore = defineStore(
           // 更新圖層資料
           layer.jsonData = result.jsonData;
           layer.processedJsonData = result.processedJsonData;
-          layer.tableData = result.tableData;
-          layer.summaryData = result.summaryData;
+          layer.dataTableData = result.dataTableData;
+          layer.dashboardData = result.dashboardData;
+          layer.layerInfoData = result.layerInfoData;
           layer.isLoaded = true;
 
           console.log(`✅ 圖層 "${layer.layerName}" 載入完成`);
-          console.log(`📊 圖層摘要資料:`, layer.summaryData);
+          console.log(`📊 圖層儀表板資料:`, layer.dashboardData);
 
           // 保存完整的圖層狀態
           saveLayerState(layerId, {
             isLoaded: layer.isLoaded,
             jsonData: layer.jsonData,
             processedJsonData: layer.processedJsonData,
-            tableData: layer.tableData,
-            summaryData: layer.summaryData,
+            dataTableData: layer.dataTableData,
+            dashboardData: layer.dashboardData,
+            layerInfoData: layer.layerInfoData,
           });
         } catch (error) {
           console.error(`❌ 載入圖層 "${layer.layerName}" 失敗:`, error);

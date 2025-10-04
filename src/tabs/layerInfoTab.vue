@@ -10,7 +10,7 @@
 * - 具備載入狀態指示和錯誤處理機制 * * 顯示內容 (Display Content): * -
 項目數量：當前圖層包含的資料項目總數 * - 圖層標題：包含群組名稱和圖層名稱的完整標題 * -
 分頁導航：支援多圖層的分頁切換功能 * - 技術參數：D3.js 繪圖區域的寬度和高度資訊 * -
-載入狀態：顯示資料載入進度和狀態 * * @file LayerInfo.vue * @version 2.1.0 * @author Kevin Cheng *
+載入狀態：顯示資料載入進度和狀態 * * @file layerInfoTab.vue * @version 2.1.0 * @author Kevin Cheng *
 @since 1.0.0 * @updated 2024 - 重構為圖層資訊顯示組件 */
 <script setup>
   // ==================== 📦 第三方庫引入 (Third-Party Library Imports) ====================
@@ -108,7 +108,7 @@
    * @description
    * - 返回包含所有可見圖層的陣列
    * - 用於生成分頁導航和圖層切換功能
-   * - 每個圖層包含 layerId, layerName, tableData 等屬性
+   * - 每個圖層包含 layerId, layerName, dataTableData 等屬性
    * - 自動響應全域狀態變化
    *
    * @returns {Array<Object>} 可見圖層陣列
@@ -154,22 +154,21 @@
   };
 
   /**
-   * 📊 取得當前圖層的項目數量 (Get Current Layer Item Count)
-   * 計算當前選中圖層中包含的資料項目總數
+   * 📊 取得當前圖層資訊數據 (Get Current Layer Info Data)
+   * 獲取當前選中圖層的 layerInfoData
    *
-   * @returns {number} 當前圖層的項目數量
+   * @returns {Object|null} 當前圖層的資訊數據
    * @description
    * - 查找當前選中的圖層
-   * - 返回 tableData 陣列的長度
+   * - 返回 layerInfoData 對象
    * - 處理圖層不存在或無資料的情況
    */
-  const getCurrentLayerItemCount = () => {
-    if (!activeLayerTab.value) return 0;
+  const getCurrentLayerInfoData = () => {
+    if (!activeLayerTab.value) return null;
     const currentLayer = visibleLayers.value.find(
       (layer) => layer.layerId === activeLayerTab.value
     );
-    if (!currentLayer || !currentLayer.tableData) return 0;
-    return currentLayer.tableData.length;
+    return currentLayer ? currentLayer.layerInfoData || null : null;
   };
 
   // ==================== 👀 響應式監聽器 (Reactive Watchers) ====================
@@ -374,11 +373,13 @@
           </div>
 
           <!-- 圖層資訊顯示區域 -->
-          <template v-if="visibleLayers.length > 0">
-            <div class="pb-2">
-              <div class="my-title-xs-gray pb-1">項目數量</div>
+          <template v-if="visibleLayers.length > 0 && getCurrentLayerInfoData()">
+            <!-- 顯示 layerInfoData 的所有內容 -->
+            <div v-for="(value, key) in getCurrentLayerInfoData()" :key="key" class="pb-2">
+              <div class="my-title-xs-gray pb-1">{{ key }}</div>
               <div class="my-content-sm-black pb-1">
-                {{ getCurrentLayerItemCount() }}
+                <span v-if="Array.isArray(value)">{{ value.join(', ') }}</span>
+                <span v-else>{{ value }}</span>
               </div>
             </div>
 
