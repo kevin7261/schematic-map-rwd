@@ -89,7 +89,6 @@
           layerName: layer.layerName,
           currentVisible: layer.visible,
           targetChecked: event.target.checked,
-          isPopulationLayer: layer.isPopulationLayer,
           isLoaded: layer.isLoaded,
           isLoading: layer.isLoading,
         });
@@ -166,18 +165,8 @@
                     <label :for="'switch-' + layer.layerId"></label>
                   </div>
                 </div>
-                <!-- 左側面板不顯示人口圖層、面域分析圖層和點位分析圖層的 legend -->
-                <div
-                  v-if="
-                    layer.legendData &&
-                    layer.visible &&
-                    !layer.isPopulationLayer &&
-                    !layer.isAnalysisLayer &&
-                    !layer.isPointCombinedLayer &&
-                    !(layer.layerName && layer.layerName.includes('人口分佈'))
-                  "
-                  class="px-3 pb-2"
-                >
+                <!-- 顯示圖層的 legend -->
+                <div v-if="layer.legendData && layer.visible" class="px-3 pb-2">
                   <div
                     v-for="data in layer.legendData"
                     :key="data.color"
