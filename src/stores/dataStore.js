@@ -135,42 +135,6 @@ export const useDataStore = defineStore(
       },
     ]);
 
-    // 將靜態圖層配置與保存的狀態合併
-    const mergeLayersWithStates = () => {
-      // 收集當前所有圖層 ID
-      const currentLayerIds = new Set();
-      layers.value.forEach((mainGroup) => {
-        mainGroup.groupLayers.forEach((layer) => {
-          currentLayerIds.add(layer.layerId);
-        });
-      });
-
-      // 清理不再存在的圖層狀態
-      const newLayerStates = {};
-      Object.keys(layerStates.value).forEach((layerId) => {
-        if (currentLayerIds.has(layerId)) {
-          newLayerStates[layerId] = layerStates.value[layerId];
-        }
-      });
-      layerStates.value = newLayerStates;
-
-      // 合併保存的狀態與靜態配置
-      layers.value.forEach((mainGroup) => {
-        mainGroup.groupLayers.forEach((layer) => {
-          const savedState = layerStates.value[layer.layerId];
-          if (savedState) {
-            // 合併保存的狀態與靜態配置
-            Object.assign(layer, savedState);
-            // 確保函數引用不被覆蓋
-            if (layer.jsonLoader) layer.jsonLoader = loadDataLayerJson;
-          }
-        });
-      });
-    };
-
-    // 初始化時合併圖層狀態
-    mergeLayersWithStates();
-
     // 保存圖層狀態到 layerStates
     const saveLayerState = (layerId, stateData) => {
       if (!layerStates.value[layerId]) {
@@ -200,14 +164,6 @@ export const useDataStore = defineStore(
         allLayers.push(...mainGroup.groupLayers);
       }
       return allLayers;
-    };
-
-    /**
-     * 獲取可用於地圖顯示的圖層（過濾掉 hideFromMap 的圖層）
-     * @returns {Array} 可用於地圖顯示的圖層列表
-     */
-    const getMapLayers = () => {
-      return getAllLayers().filter((layer) => !layer.hideFromMap);
     };
 
     // ==================== 主要圖層處理函數 ====================
@@ -349,8 +305,6 @@ export const useDataStore = defineStore(
       // 狀態管理相關函數
       layerStates,
       saveLayerState,
-      mergeLayersWithStates,
-      getMapLayers,
       // D3jsTab 尺寸管理
       d3jsDimensions,
       updateD3jsDimensions,
