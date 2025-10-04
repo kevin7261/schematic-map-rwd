@@ -4,7 +4,7 @@
   import LayersTab from '../tabs/LayersTab.vue';
   import DataTableTab from '../tabs/DataTableTab.vue';
   import PropertiesTab from '../tabs/PropertiesTab.vue';
-  import SpatialAnalysisTab from '../tabs/SpatialAnalysisTab.vue';
+  import LayerInfo from '../tabs/LayerInfo.vue';
 
   export default {
     name: 'ResponsiveLowerView',
@@ -17,7 +17,7 @@
       LayersTab, // 圖層列表分頁組件
       DataTableTab, // 資料表格分頁組件
       PropertiesTab, // 物件屬性分頁組件
-      SpatialAnalysisTab, // 圖層資訊分頁組件
+      LayerInfo, // 圖層資訊分頁組件
     },
 
     /**
@@ -176,7 +176,7 @@
 
       <!-- 📊 圖層資訊分頁內容 -->
       <div v-show="activeTab === 'layer-info'" class="h-100">
-        <SpatialAnalysisTab />
+        <LayerInfo />
       </div>
     </div>
 

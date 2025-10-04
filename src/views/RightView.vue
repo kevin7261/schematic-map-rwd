@@ -5,8 +5,8 @@
 技術特點 (Technical Features): * - 使用 Vue 2 Options API 進行組件管理 * - 整合 Pinia 狀態管理系統 *
 - 支援響應式佈局和動態尺寸調整 * - 提供完整的事件處理和狀態同步 * - 整合多個分頁組件的協調工作 * *
 包含分頁 (Included Tabs): * - PropertiesTab：屬性分頁，顯示選中要素的詳細屬性 * -
-SpatialAnalysisTab：圖層資訊分頁，顯示圖層統計和項目數量 * * @file RightView.vue * @version 2.0.0 *
-@author Kevin Cheng * @since 1.0.0 */
+LayerInfo：圖層資訊分頁，顯示圖層統計和項目數量 * * @file RightView.vue * @version 2.0.0 * @author
+Kevin Cheng * @since 1.0.0 */
 <script>
   // ==================== 📦 第三方庫引入 (Third-Party Library Imports) ====================
 
@@ -22,9 +22,9 @@ SpatialAnalysisTab：圖層資訊分頁，顯示圖層統計和項目數量 * * 
    * 空間分析分頁組件引入
    * 提供圖層資訊和統計數據顯示功能
    *
-   * @see ../tabs/SpatialAnalysisTab.vue
+   * @see ../tabs/LayerInfo.vue
    */
-  import SpatialAnalysisTab from '../tabs/SpatialAnalysisTab.vue';
+  import LayerInfo from '../tabs/LayerInfo.vue';
 
   /**
    * Pinia 狀態管理庫引入
@@ -47,7 +47,7 @@ SpatialAnalysisTab：圖層資訊分頁，顯示圖層統計和項目數量 * * 
     name: 'RightView',
     components: {
       PropertiesTab, // 物件屬性分頁組件
-      SpatialAnalysisTab, // 圖層資訊分頁組件
+      LayerInfo, // 圖層資訊分頁組件
     },
     props: {
       /** 🔗 當前作用中的右側分頁標籤 */
@@ -186,7 +186,7 @@ SpatialAnalysisTab：圖層資訊分頁，顯示圖層統計和項目數量 * * 
 
       <!-- 📊 圖層資訊分頁內容 -->
       <div v-show="$props.activeRightTab === 'layer-info'" class="h-100">
-        <SpatialAnalysisTab />
+        <LayerInfo />
       </div>
     </div>
   </div>

@@ -1,29 +1,52 @@
-/** * 📊 空間分析分頁組件 (Spatial Analysis Tab Component) * * 功能說明 (Features): * 1. 📋
-圖層資訊顯示：顯示當前選中圖層的基本資訊和統計數據 * 2. 📊 項目數量統計：計算並顯示圖層中的項目數量
-* 3. 🔄 多圖層支援：支援多個圖層的分頁切換和資訊顯示 * 4. 📱 響應式設計：適配不同螢幕尺寸的顯示需求
-* 5. 🎯 即時更新：當圖層狀態變化時自動更新顯示內容 * * 技術特點 (Technical Features): * - 使用 Vue 3
-Composition API 進行狀態管理 * - 整合 Pinia 狀態管理系統 * - 支援動態圖層切換和資訊更新 * -
-提供簡潔的圖層資訊展示介面 * * 顯示內容 (Display Content): * - 項目數量：當前圖層包含的資料項目總數
-* - 圖層標題：包含群組名稱和圖層名稱的完整標題 * - 分頁導航：支援多圖層的分頁切換功能 * * @file
-SpatialAnalysisTab.vue * @version 2.0.0 * @author Kevin Cheng * @since 1.0.0 */
+/** * 📊 圖層資訊顯示組件 (Layer Information Display Component) * * 功能概述 (Function Overview): *
+本組件負責顯示當前選中圖層的詳細資訊，包括基本統計數據、項目數量、 *
+以及相關的技術參數。提供直觀的圖層資訊查看介面。 * * 主要功能 (Main Features): * 1. 📋
+圖層資訊展示：顯示當前選中圖層的基本資訊和統計數據 * 2. 📊
+項目數量統計：計算並顯示圖層中包含的資料項目總數 * 3. 🔄
+多圖層支援：支援多個圖層的分頁切換和資訊顯示 * 4. 📱 響應式設計：適配不同螢幕尺寸的顯示需求 * 5. 🎯
+即時更新：當圖層狀態變化時自動更新顯示內容 * 6. 📐 技術參數顯示：顯示 D3.js 繪圖區域的尺寸資訊 * *
+技術特點 (Technical Features): * - 使用 Vue 3 Composition API 進行現代化狀態管理 * - 整合 Pinia
+狀態管理系統實現跨組件數據共享 * - 支援動態圖層切換和資訊即時更新 * - 提供簡潔直觀的圖層資訊展示介面
+* - 具備載入狀態指示和錯誤處理機制 * * 顯示內容 (Display Content): * -
+項目數量：當前圖層包含的資料項目總數 * - 圖層標題：包含群組名稱和圖層名稱的完整標題 * -
+分頁導航：支援多圖層的分頁切換功能 * - 技術參數：D3.js 繪圖區域的寬度和高度資訊 * -
+載入狀態：顯示資料載入進度和狀態 * * @file LayerInfo.vue * @version 2.1.0 * @author Kevin Cheng *
+@since 1.0.0 * @updated 2024 - 重構為圖層資訊顯示組件 */
 <script setup>
   // ==================== 📦 第三方庫引入 (Third-Party Library Imports) ====================
 
   /**
    * Vue 3 Composition API 核心功能引入
-   * 提供響應式數據、計算屬性、生命週期鉤子等功能
+   * 提供響應式數據管理、計算屬性、生命週期鉤子等現代化 Vue 開發功能
    *
-   * @see https://vuejs.org/
+   * @description 包含：
+   * - ref: 創建響應式基本類型數據
+   * - computed: 創建計算屬性，自動追蹤依賴變化
+   * - watch: 監聽響應式數據變化
+   * - onMounted: 組件掛載完成後的生命週期鉤子
+   *
+   * @see https://vuejs.org/guide/extras/composition-api-faq.html
    */
   import { ref, computed, watch, onMounted } from 'vue';
 
   /**
    * Pinia 狀態管理庫引入
-   * 提供集中式狀態管理和跨組件數據共享
+   * 提供集中式狀態管理和跨組件數據共享能力
    *
-   * @see https://pinia.vuejs.org/
+   * @description 主要功能：
+   * - 集中管理應用程式全域狀態
+   * - 提供響應式狀態更新機制
+   * - 支援跨組件狀態共享
+   * - 整合開發者工具支援
+   *
+   * @see https://pinia.vuejs.org/introduction.html
    */
   import { useDataStore } from '@/stores/dataStore.js';
+
+  /**
+   * 工具函數引入
+   * 提供圖示 HTML 生成和組件引入功能
+   */
   import { getIconHtml } from '../utils/utils.js';
   import DetailItem from '../components/DetailItem.vue';
 
@@ -31,7 +54,10 @@ SpatialAnalysisTab.vue * @version 2.0.0 * @author Kevin Cheng * @since 1.0.0 */
 
   /**
    * 獲取 Pinia 數據存儲實例
-   * 用於訪問全域狀態和圖層數據
+   * 用於訪問全域狀態和圖層數據，實現組件間的數據共享
+   *
+   * @type {Object} Pinia store 實例
+   * @description 提供對全域圖層數據、設定狀態等的訪問權限
    */
   const dataStore = useDataStore();
 
@@ -42,7 +68,10 @@ SpatialAnalysisTab.vue * @version 2.0.0 * @author Kevin Cheng * @since 1.0.0 */
    * 追蹤使用者當前選中的圖層分頁，用於控制資訊內容顯示
    *
    * @type {Ref<string|null>}
-   * @description 存儲當前選中圖層的 layerId，null 表示沒有選中任何圖層
+   * @description
+   * - 存儲當前選中圖層的 layerId
+   * - null 表示沒有選中任何圖層
+   * - 用於控制哪個圖層的資訊需要顯示
    */
   const activeLayerTab = ref(null);
 
@@ -51,7 +80,10 @@ SpatialAnalysisTab.vue * @version 2.0.0 * @author Kevin Cheng * @since 1.0.0 */
    * 存儲圖層分析的結果數據，用於顯示統計資訊
    *
    * @type {Ref<Object|null>}
-   * @description 包含圖層統計數據的物件，null 表示尚未載入分析結果
+   * @description
+   * - 包含圖層統計數據的物件
+   * - null 表示尚未載入分析結果
+   * - 結構包含 layerName, timestamp, statistics 等欄位
    */
   const analysisResults = ref(null);
 
@@ -60,19 +92,26 @@ SpatialAnalysisTab.vue * @version 2.0.0 * @author Kevin Cheng * @since 1.0.0 */
    * 追蹤分析過程的載入狀態，用於顯示載入指示器
    *
    * @type {Ref<boolean>}
-   * @description true 表示正在載入分析結果，false 表示載入完成
+   * @description
+   * - true: 正在載入分析結果，顯示載入動畫
+   * - false: 載入完成，顯示分析結果或錯誤訊息
    */
   const isLoadingAnalysis = ref(false);
 
   // ==================== 📊 計算屬性定義 (Computed Properties Definition) ====================
 
   /**
-   * 獲取所有開啟且有資料的圖層 (Get All Visible Layers with Data)
+   * 獲取所有可見且有資料的圖層 (Get All Visible Layers with Data)
    * 從全域狀態中篩選出可見且已載入資料的圖層
    *
    * @type {ComputedRef<Array>}
-   * @description 返回包含所有可見圖層的陣列，用於生成分頁導航
-   * @returns {Array<Object>} 可見圖層陣列，每個圖層包含 layerId, layerName, tableData 等屬性
+   * @description
+   * - 返回包含所有可見圖層的陣列
+   * - 用於生成分頁導航和圖層切換功能
+   * - 每個圖層包含 layerId, layerName, tableData 等屬性
+   * - 自動響應全域狀態變化
+   *
+   * @returns {Array<Object>} 可見圖層陣列
    */
   const visibleLayers = computed(() => {
     // 從數據存儲中獲取所有圖層
@@ -81,9 +120,14 @@ SpatialAnalysisTab.vue * @version 2.0.0 * @author Kevin Cheng * @since 1.0.0 */
     return allLayers.filter((layer) => layer.visible);
   });
 
+  // ==================== 🎯 核心功能函數 (Core Function Functions) ====================
+
   /**
    * 📑 設定作用中圖層分頁 (Set Active Layer Tab)
-   * @param {string} layerId - 圖層 ID
+   * 切換到指定的圖層分頁並觸發相關的資訊載入
+   *
+   * @param {string} layerId - 要切換到的圖層 ID
+   * @description 更新 activeLayerTab 狀態，觸發圖層資訊載入
    */
   const setActiveLayerTab = (layerId) => {
     activeLayerTab.value = layerId;
@@ -91,6 +135,14 @@ SpatialAnalysisTab.vue * @version 2.0.0 * @author Kevin Cheng * @since 1.0.0 */
 
   /**
    * 📊 取得圖層完整標題 (包含群組名稱) (Get Layer Full Title with Group Name)
+   * 組合群組名稱和圖層名稱，形成完整的圖層標題
+   *
+   * @param {Object} layer - 圖層物件
+   * @returns {Object} 包含 groupName 和 layerName 的物件
+   * @description
+   * - 從 dataStore 中查找對應的群組名稱
+   * - 返回結構化的標題資訊
+   * - 處理圖層不存在的情況
    */
   const getLayerFullTitle = (layer) => {
     if (!layer) return { groupName: null, layerName: '未知圖層' };
@@ -103,6 +155,13 @@ SpatialAnalysisTab.vue * @version 2.0.0 * @author Kevin Cheng * @since 1.0.0 */
 
   /**
    * 📊 取得當前圖層的項目數量 (Get Current Layer Item Count)
+   * 計算當前選中圖層中包含的資料項目總數
+   *
+   * @returns {number} 當前圖層的項目數量
+   * @description
+   * - 查找當前選中的圖層
+   * - 返回 tableData 陣列的長度
+   * - 處理圖層不存在或無資料的情況
    */
   const getCurrentLayerItemCount = () => {
     if (!activeLayerTab.value) return 0;
@@ -113,11 +172,23 @@ SpatialAnalysisTab.vue * @version 2.0.0 * @author Kevin Cheng * @since 1.0.0 */
     return currentLayer.tableData.length;
   };
 
-  // 記錄上一次的圖層列表用於比較
+  // ==================== 👀 響應式監聽器 (Reactive Watchers) ====================
+
+  /**
+   * 記錄上一次的圖層列表用於比較變化
+   * 用於偵測新增的圖層並自動切換到最新圖層
+   */
   const previousLayers = ref([]);
 
   /**
-   * 👀 監聽可見圖層變化，自動切換到新開啟的圖層分頁並執行分析
+   * 👀 監聽可見圖層變化，自動切換到新開啟的圖層分頁
+   * 當圖層可見性發生變化時，自動調整當前選中的分頁
+   *
+   * @description 主要邏輯：
+   * - 偵測新增的圖層並自動切換到最新圖層
+   * - 處理圖層被隱藏時的分頁切換
+   * - 當沒有可見圖層時清除選中狀態
+   * - 維護圖層列表的歷史記錄
    */
   watch(
     () => visibleLayers.value,
@@ -155,7 +226,13 @@ SpatialAnalysisTab.vue * @version 2.0.0 * @author Kevin Cheng * @since 1.0.0 */
   );
 
   /**
-   * 👀 監聽當前選中的圖層變化，自動執行分析
+   * 👀 監聽當前選中的圖層變化，自動執行資訊載入
+   * 當 activeLayerTab 發生變化時，自動載入對應圖層的資訊
+   *
+   * @description 主要邏輯：
+   * - 當切換到新圖層時，自動載入該圖層的資訊
+   * - 當清除選中狀態時，清除分析結果
+   * - 確保圖層資訊與當前選中狀態保持同步
    */
   watch(
     () => activeLayerTab.value,
@@ -172,9 +249,18 @@ SpatialAnalysisTab.vue * @version 2.0.0 * @author Kevin Cheng * @since 1.0.0 */
     { immediate: true }
   );
 
+  // ==================== 📊 資料處理函數 (Data Processing Functions) ====================
+
   /**
    * 📊 載入圖層基本資訊 (Load Layer Basic Information)
-   * @param {Object} layer - 要載入的圖層
+   * 分析指定圖層的資料並計算統計資訊
+   *
+   * @param {Object} layer - 要載入資訊的圖層物件
+   * @description 主要功能：
+   * - 分析圖層中的 features 資料
+   * - 計算總數量、總人口數、平均值等統計指標
+   * - 提供載入狀態指示和錯誤處理
+   * - 將結果存儲到 analysisResults 中
    */
   const loadLayerInfo = async (layer) => {
     if (!layer || !layer.jsonData) {
@@ -185,12 +271,12 @@ SpatialAnalysisTab.vue * @version 2.0.0 * @author Kevin Cheng * @since 1.0.0 */
     isLoadingAnalysis.value = true;
 
     try {
-      // 模擬載入過程
+      // 模擬載入過程，提供視覺反饋
       await new Promise((resolve) => setTimeout(resolve, 500));
 
       const features = layer.jsonData.features;
 
-      // 基本統計資訊
+      // 計算基本統計資訊
       const stats = {
         totalFeatures: features.length,
         totalPopulation: features.reduce((sum, f) => sum + (f.properties.P_CNT || 0), 0),
@@ -199,12 +285,13 @@ SpatialAnalysisTab.vue * @version 2.0.0 * @author Kevin Cheng * @since 1.0.0 */
         avgCount: 0,
       };
 
-      // 計算平均值
+      // 計算平均值（避免除零錯誤）
       if (stats.totalFeatures > 0) {
         stats.avgPopulation = stats.totalPopulation / stats.totalFeatures;
         stats.avgCount = stats.totalCount / stats.totalFeatures;
       }
 
+      // 儲存分析結果
       analysisResults.value = {
         layerName: layer.layerName,
         timestamp: new Date().toLocaleString(),
@@ -214,6 +301,7 @@ SpatialAnalysisTab.vue * @version 2.0.0 * @author Kevin Cheng * @since 1.0.0 */
       console.log('圖層資訊載入完成:', analysisResults.value);
     } catch (error) {
       console.error('載入圖層資訊失敗:', error);
+      // 儲存錯誤資訊以供顯示
       analysisResults.value = {
         error: '載入過程中發生錯誤',
         details: error.message,
@@ -223,8 +311,15 @@ SpatialAnalysisTab.vue * @version 2.0.0 * @author Kevin Cheng * @since 1.0.0 */
     }
   };
 
+  // ==================== 🚀 生命週期鉤子 (Lifecycle Hooks) ====================
+
   /**
    * 🚀 組件掛載事件 (Component Mounted Event)
+   * 組件初始化完成後的設定工作
+   *
+   * @description 主要工作：
+   * - 初始化第一個可見圖層為作用中分頁
+   * - 確保組件載入後有正確的初始狀態
    */
   onMounted(() => {
     // 初始化第一個可見圖層為作用中分頁
