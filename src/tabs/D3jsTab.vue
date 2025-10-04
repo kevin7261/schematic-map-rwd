@@ -174,18 +174,18 @@
       const result = await targetLayer.jsonLoader(targetLayer);
 
       // 檢查數據類型並載入相應數據
-      if (result.jsonData) {
-        if (result.jsonData.type === 'grid') {
+      if (result.processedJsonData) {
+        if (result.processedJsonData.type === 'grid') {
           // 網格數據
-          gridData.value = result.jsonData;
+          gridData.value = result.processedJsonData;
           gridDimensions.value = {
-            x: result.jsonData.gridX,
-            y: result.jsonData.gridY,
+            x: result.processedJsonData.gridX,
+            y: result.processedJsonData.gridY,
           };
           console.log('✅ 網格數據載入成功:', gridData.value);
         } else {
           // 行政區示意圖數據
-          nodeData.value = result.jsonData;
+          nodeData.value = result.processedJsonData;
           console.log('✅ 行政區數據載入成功:', nodeData.value);
           setLinkData();
         }

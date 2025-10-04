@@ -146,7 +146,8 @@ export const useDataStore = defineStore(
      * - visible: 圖層是否可見
      * - isLoading: 圖層是否正在載入
      * - isLoaded: 圖層是否已載入完成
-     * - jsonData: 圖層的 JSON 數據
+     * - jsonData: 圖層的原始 JSON 數據（不可修改）
+     * - processedJsonData: 圖層的處理後 JSON 數據（用於顯示和計算）
      * - summaryData: 圖層的統計摘要數據
      * - tableData: 圖層的表格數據
      *
@@ -174,7 +175,8 @@ export const useDataStore = defineStore(
      * - type: 圖層類型（grid, point, line 等）
      * - shape: 圖層形狀（目前為 null）
      * - colorName: 圖層顏色名稱
-     * - jsonData: 圖層 JSON 數據
+     * - jsonData: 圖層原始 JSON 數據（不可修改）
+     * - processedJsonData: 圖層處理後 JSON 數據（用於顯示和計算）
      * - summaryData: 圖層統計摘要
      * - tableData: 圖層表格數據
      * - jsonLoader: 圖層數據載入函數
@@ -201,6 +203,7 @@ export const useDataStore = defineStore(
             shape: null,
             colorName: 'green',
             jsonData: null,
+            processedJsonData: null,
             summaryData: null,
             tableData: null,
             jsonLoader: loadGridSchematicJson,
@@ -225,6 +228,7 @@ export const useDataStore = defineStore(
             shape: null,
             colorName: 'orange',
             jsonData: null,
+            processedJsonData: null,
             summaryData: null,
             tableData: null,
             jsonLoader: loadDataLayerJson,
@@ -243,6 +247,7 @@ export const useDataStore = defineStore(
             shape: null,
             colorName: 'orange',
             jsonData: null,
+            processedJsonData: null,
             summaryData: null,
             tableData: null,
             jsonLoader: loadDataLayerJson,
@@ -293,7 +298,8 @@ export const useDataStore = defineStore(
      * @param {boolean} [stateData.visible] - 圖層可見性
      * @param {boolean} [stateData.isLoading] - 圖層載入狀態
      * @param {boolean} [stateData.isLoaded] - 圖層載入完成狀態
-     * @param {Object} [stateData.jsonData] - 圖層 JSON 數據
+     * @param {Object} [stateData.jsonData] - 圖層原始 JSON 數據
+     * @param {Object} [stateData.processedJsonData] - 圖層處理後 JSON 數據
      * @param {Object} [stateData.summaryData] - 圖層統計摘要
      * @param {Array} [stateData.tableData] - 圖層表格數據
      *
@@ -424,7 +430,8 @@ export const useDataStore = defineStore(
      *     isLoaded: boolean,      // 圖層載入完成狀態
      *     type: string,           // 圖層類型
      *     colorName: string,      // 圖層顏色名稱
-     *     jsonData: Object,       // 圖層 JSON 數據
+     *     jsonData: Object,       // 圖層原始 JSON 數據
+     *     processedJsonData: Object, // 圖層處理後 JSON 數據
      *     summaryData: Object,    // 圖層統計摘要
      *     tableData: Array,       // 圖層表格數據
      *     jsonLoader: Function,   // 圖層數據載入函數
@@ -584,6 +591,7 @@ export const useDataStore = defineStore(
 
           // 更新圖層資料
           layer.jsonData = result.jsonData;
+          layer.processedJsonData = result.processedJsonData;
           layer.tableData = result.tableData;
           layer.summaryData = result.summaryData;
           layer.isLoaded = true;
@@ -595,6 +603,7 @@ export const useDataStore = defineStore(
           saveLayerState(layerId, {
             isLoaded: layer.isLoaded,
             jsonData: layer.jsonData,
+            processedJsonData: layer.processedJsonData,
             tableData: layer.tableData,
             summaryData: layer.summaryData,
           });

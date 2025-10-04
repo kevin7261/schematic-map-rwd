@@ -313,7 +313,8 @@ async function loadFile(primaryPath, fallbackPath = null) {
  * 📈 返回數據結構 (Return Data Structure):
  * ```javascript
  * {
- *   jsonData: Object | null,     // 原始 JSON 數據（如果是標準格式）
+ *   jsonData: Object | null,     // 原始 JSON 數據（不可修改）
+ *   processedJsonData: Object | null, // 處理後的 JSON 數據（用於顯示和計算）
  *   summaryData: Object,         // 統計摘要數據
  *   tableData: Array,           // 表格顯示數據
  * }
@@ -743,7 +744,8 @@ async function processGridSchematicJson(jsonData) {
   ];
 
   return {
-    jsonData: {
+    jsonData: jsonData, // 保持原始數據不變
+    processedJsonData: {
       gridX: gridX,
       gridY: gridY,
       nodes: gridNodes,
@@ -910,7 +912,8 @@ async function processDataLayerJson(jsonData) {
     }));
 
     return {
-      jsonData: null, // 示意圖數據不需要地圖顯示
+      jsonData: jsonData, // 保持原始數據不變
+      processedJsonData: null, // 示意圖數據不需要地圖顯示
       summaryData,
       tableData,
     };
@@ -926,7 +929,8 @@ async function processDataLayerJson(jsonData) {
   };
 
   return {
-    jsonData: jsonData,
+    jsonData: jsonData, // 保持原始數據不變
+    processedJsonData: jsonData, // 標準格式數據直接使用原始數據
     summaryData,
     tableData: jsonData.map((item, index) => ({
       '#': index + 1,

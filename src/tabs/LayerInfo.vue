@@ -239,7 +239,7 @@
     (newLayerId) => {
       if (newLayerId) {
         const layer = dataStore.findLayerById(newLayerId);
-        if (layer && layer.jsonData) {
+        if (layer && layer.processedJsonData) {
           loadLayerInfo(layer);
         }
       } else {
@@ -263,7 +263,7 @@
    * - 將結果存儲到 analysisResults 中
    */
   const loadLayerInfo = async (layer) => {
-    if (!layer || !layer.jsonData) {
+    if (!layer || !layer.processedJsonData) {
       console.warn('無法載入資訊：圖層數據不存在');
       return;
     }
@@ -274,7 +274,7 @@
       // 模擬載入過程，提供視覺反饋
       await new Promise((resolve) => setTimeout(resolve, 500));
 
-      const features = layer.jsonData.features;
+      const features = layer.processedJsonData.features;
 
       // 計算基本統計資訊
       const stats = {
