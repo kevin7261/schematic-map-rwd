@@ -182,7 +182,9 @@
               minHeight: '300px',
             }"
           >
-            <AdministrativeDistrictSchematic :key="props.containerHeight" />
+            <AdministrativeDistrictSchematic
+              :key="`diagram-${Math.floor(props.containerHeight / 50)}`"
+            />
           </div>
         </div>
       </div>

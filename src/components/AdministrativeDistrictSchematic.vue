@@ -1,6 +1,6 @@
 <template>
   <div class="administrative-district-schematic w-100 h-100">
-    <div id="diagram" class="w-100 h-100" style="min-height: 300px"></div>
+    <div id="diagram" class="w-100 h-100" style="min-height: 300px; overflow: hidden"></div>
   </div>
 </template>
 
@@ -31,8 +31,6 @@
   const COLOR_BACKGROUND = '#212121';
   const COLOR_GRID = '#666666';
   const COLOR_GRID_2 = '#333333';
-  const MIN_GRID_WIDTH = 30;
-  const MIN_GRID_HEIGHT = 30;
 
   /**
    * 📊 載入示意圖數據 (Load Schematic Data)
@@ -187,7 +185,8 @@
     let dimensions = getDimensions();
     console.log('dimensions', dimensions);
 
-    const margin = { top: 0, right: 0, bottom: 0, left: 0 };
+    // 添加適當的邊距，確保內容不被截斷
+    const margin = { top: 20, right: 20, bottom: 20, left: 20 };
     const width = dimensions.width - margin.left - margin.right;
     const height = dimensions.height - margin.top - margin.bottom;
 
@@ -208,6 +207,21 @@
     console.log('Maximum x: ', xMax);
     console.log('Maximum y: ', yMax);
 
+    // 檢查是否已存在 SVG，如果存在且尺寸相同則不需要重繪
+    const existingSvg = d3.select('#diagram').select('svg');
+    if (existingSvg.size() > 0) {
+      const existingWidth = parseFloat(existingSvg.attr('width'));
+      const existingHeight = parseFloat(existingSvg.attr('height'));
+
+      // 如果尺寸變化很小（小於 5px），則只更新尺寸而不重繪
+      if (
+        Math.abs(existingWidth - (width + margin.left + margin.right)) < 5 &&
+        Math.abs(existingHeight - (height + margin.top + margin.bottom)) < 5
+      ) {
+        return;
+      }
+    }
+
     // 清除之前的圖表
     d3.select('#diagram').selectAll('svg').remove();
 
@@ -217,31 +231,31 @@
       .append('svg')
       .attr('width', width + margin.left + margin.right)
       .attr('height', height + margin.top + margin.bottom)
-      .style('background-color', COLOR_BACKGROUND);
+      .style('background-color', COLOR_BACKGROUND)
+      .style('transition', 'all 0.2s ease-in-out'); // 添加平滑過渡效果
 
-    // 計算網格尺寸
-    let gridWidth = width / xMax;
-    let gridHeight = height / yMax;
+    // 計算網格尺寸，確保內容完全適應容器
+    const gridWidth = width / xMax;
+    const gridHeight = height / yMax;
 
-    let minWidth = MIN_GRID_WIDTH * xMax;
-    let minHeight = MIN_GRID_HEIGHT * yMax;
+    // 直接使用容器的完整尺寸，允許形狀變形以完全填滿容器
+    const actualWidth = width;
+    const actualHeight = height;
 
-    if (gridWidth < MIN_GRID_WIDTH) {
-      xMax = parseInt(width / MIN_GRID_WIDTH);
-    }
+    console.log('Container dimensions:', { width, height });
+    console.log('Actual drawing area:', { actualWidth, actualHeight });
+    console.log('Data bounds:', { xMax, yMax });
+    console.log('Grid dimensions:', { gridWidth, gridHeight });
 
-    if (gridHeight < MIN_GRID_HEIGHT) {
-      yMax = parseInt(height / MIN_GRID_HEIGHT);
-    }
-
-    console.log('width height', width, height);
-    console.log('xMax yMax', xMax, yMax);
-    console.log('gridWidth gridHeight', gridWidth, gridHeight);
-    console.log('minWidth minHeight', minWidth, minHeight);
-
-    // 設定比例尺
-    const x = d3.scaleLinear().domain([0, xMax]).range([0, width]);
-    const y = d3.scaleLinear().domain([yMax, 0]).range([0, height]);
+    // 設定比例尺，使用實際繪圖區域
+    const x = d3
+      .scaleLinear()
+      .domain([0, xMax])
+      .range([margin.left, margin.left + actualWidth]);
+    const y = d3
+      .scaleLinear()
+      .domain([yMax, 0])
+      .range([margin.top, margin.top + actualHeight]);
 
     // 繪製主要網格線
     for (let i = 0; i <= xMax; i++) {
@@ -249,39 +263,39 @@
         .append('line')
         .style('stroke', COLOR_GRID)
         .attr('x1', x(i))
-        .attr('y1', 0)
+        .attr('y1', margin.top)
         .attr('x2', x(i))
-        .attr('y2', height);
+        .attr('y2', margin.top + actualHeight);
     }
 
     for (let i = 0; i <= yMax; i++) {
       svg
         .append('line')
         .style('stroke', COLOR_GRID)
-        .attr('x1', 0)
+        .attr('x1', margin.left)
         .attr('y1', y(i))
-        .attr('x2', width)
+        .attr('x2', margin.left + actualWidth)
         .attr('y2', y(i));
     }
 
     // 繪製次要網格線
-    for (let i = 0; i <= xMax; i++) {
+    for (let i = 0; i < xMax; i++) {
       svg
         .append('line')
         .style('stroke', COLOR_GRID_2)
         .attr('x1', (x(i) + x(i + 1)) / 2)
-        .attr('y1', 0)
+        .attr('y1', margin.top)
         .attr('x2', (x(i) + x(i + 1)) / 2)
-        .attr('y2', height);
+        .attr('y2', margin.top + actualHeight);
     }
 
-    for (let i = 0; i <= yMax; i++) {
+    for (let i = 0; i < yMax; i++) {
       svg
         .append('line')
         .style('stroke', COLOR_GRID_2)
-        .attr('x1', 0)
+        .attr('x1', margin.left)
         .attr('y1', (y(i) + y(i + 1)) / 2)
-        .attr('x2', width)
+        .attr('x2', margin.left + actualWidth)
         .attr('y2', (y(i) + y(i + 1)) / 2);
     }
 
@@ -604,7 +618,7 @@
     if (resizeTimeout) {
       clearTimeout(resizeTimeout);
     }
-    resizeTimeout = setTimeout(resize, 100); // 100ms 防抖
+    resizeTimeout = setTimeout(resize, 250); // 250ms 防抖，減少閃爍
   };
 
   // ResizeObserver 實例
@@ -623,13 +637,29 @@
     // 監聽容器尺寸變化
     const container = document.getElementById('diagram');
     if (container && window.ResizeObserver) {
+      let lastWidth = 0;
+      let lastHeight = 0;
+
       resizeObserver = new ResizeObserver((entries) => {
         // 檢查尺寸是否真的改變了
         for (let entry of entries) {
           const { width, height } = entry.contentRect;
           if (width > 0 && height > 0) {
-            console.log('ResizeObserver detected size change:', { width, height });
-            debouncedResize();
+            // 只有當尺寸變化超過閾值時才觸發重繪
+            const widthDiff = Math.abs(width - lastWidth);
+            const heightDiff = Math.abs(height - lastHeight);
+
+            if (widthDiff > 10 || heightDiff > 10) {
+              console.log('ResizeObserver detected significant size change:', {
+                width,
+                height,
+                widthDiff,
+                heightDiff,
+              });
+              lastWidth = width;
+              lastHeight = height;
+              debouncedResize();
+            }
           }
         }
       });
