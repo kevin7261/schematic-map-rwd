@@ -33,7 +33,7 @@ module.exports = defineConfig({
    */
   chainWebpack: (config) => {
     config.plugin('html').tap((args) => {
-      args[0].title = 'Schematic Map RWD - 登革熱空間分析視覺化系統';
+      args[0].title = 'Schematic Map RWD';
       return args;
     });
   },

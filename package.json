@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "homepage": "https://kevin7261.github.io/schematic-map-rwd",
-  "description": "一個專為登革熱疫情分析而設計的現代化地理空間分析與視覺化平台 | A modern geospatial analysis and visualization platform designed for dengue fever epidemic analysis",
+  "description": "Schematic Map RWD",
   "author": "Kevin Cheng <kevin7261@gmail.com>",
   "keywords": [
     "vue3",

@@ -6,7 +6,7 @@
 [![Pinia](https://img.shields.io/badge/Pinia-2.1.0-FFD859?style=flat-square&logo=pinia)](https://pinia.vuejs.org/)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 
-一個專為登革熱疫情分析而設計的現代化地理空間分析與視覺化平台，提供響應式設計和互動式示意圖功能。
+示意圖
 
 ## 📋 目錄
 
@@ -27,8 +27,7 @@
 
 ## 🎯 專案概述
 
-Schematic Map RWD 是一個基於 Vue.js
-3 的現代化地理空間分析平台，專門設計用於登革熱疫情的可視化分析。該平台提供：
+Schematic Map RWD 平台提供：
 
 - **互動式示意圖**：支援網格示意圖和行政區示意圖的動態生成
 - **響應式設計**：適配桌面、平板和手機等不同設備
