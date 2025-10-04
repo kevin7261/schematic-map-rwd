@@ -9,11 +9,19 @@
 </template>
 
 <script setup>
+  // 定義組件 props
+  const props = defineProps({
+    layerId: {
+      type: String,
+      default: 'test_layer', // 預設使用 test_layer
+    },
+  });
+
   /**
    * 📊 AdministrativeDistrictSchematic.vue - 行政區分布示意圖組件
    *
    * 功能說明 (Features):
-   * 1. 📊 示意圖數據載入：從 taipei_schematic.json 載入行政區分布數據
+   * 1. 📊 示意圖數據載入：從 dataStore 圖層配置載入行政區分布數據
    * 2. 🎨 網格系統繪製：繪製主要和次要網格線，提供空間參考
    * 3. 🔗 節點連接渲染：根據節點類型繪製不同的連接線和圓弧
    * 4. 📝 數值標籤顯示：在節點位置顯示對應的數值標籤
@@ -48,6 +56,9 @@
    * @see https://vuejs.org/
    */
   import { ref, onMounted, onUnmounted, nextTick } from 'vue';
+
+  // 📦 Pinia 狀態管理引入
+  import { useDataStore } from '@/stores/dataStore';
 
   /**
    * D3.js 數據視覺化庫引入
@@ -91,32 +102,51 @@
    */
   const loadData = async () => {
     try {
-      // 使用 fetch 載入 taipei_schematic.json
-      const response = await fetch('/schematic-map-rwd/data/taipei/taipei_schematic.json');
+      // 取得 dataStore 實例
+      const dataStore = useDataStore();
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      // 找到指定的圖層
+      const targetLayer = dataStore.findLayerById(props.layerId);
+      if (!targetLayer) {
+        throw new Error(`找不到圖層配置: ${props.layerId}`);
       }
 
-      const schematicData = await response.json();
-      console.log('response', response);
+      console.log('🔄 使用圖層配置載入數據:', targetLayer.jsonFileName);
 
-      // 為每個路線的節點隨機分配 1-5 的數值
-      const processedData = schematicData.map((line) => ({
-        ...line,
-        nodes: randomizeNodeValues(line.nodes),
-      }));
+      // 使用圖層的 jsonLoader 載入數據
+      const result = await targetLayer.jsonLoader(targetLayer);
 
-      // 使用處理後的數據
-      nodeData.value = processedData;
-      console.log('nodeData', nodeData.value);
+      // 檢查是否有 jsonData（示意圖數據）
+      if (result.jsonData) {
+        // 標準 JSON 格式
+        nodeData.value = result.jsonData;
+      } else if (result.tableData && result.tableData.length > 0) {
+        // 表格數據格式，轉換為示意圖格式
+        const schematicData = result.tableData.map((item) => ({
+          color: item.color,
+          name: item.name,
+          nodes: item.nodes || [],
+        }));
+
+        // 為每個路線的節點隨機分配 1-5 的數值
+        const processedData = schematicData.map((line) => ({
+          ...line,
+          nodes: randomizeNodeValues(line.nodes),
+        }));
+
+        nodeData.value = processedData;
+      } else {
+        throw new Error('無法從圖層數據中提取示意圖數據');
+      }
+
+      console.log('✅ 數據載入成功:', nodeData.value);
       setLinkData();
       await nextTick();
       resize();
     } catch (error) {
       console.log(error);
       // 如果載入失敗，顯示錯誤訊息
-      console.error('無法載入 taipei_schematic.json 文件');
+      console.error('無法載入示意圖數據:', error.message);
     }
   };
 

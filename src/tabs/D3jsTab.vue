@@ -198,6 +198,7 @@
           >
             <AdministrativeDistrictSchematic
               :key="`diagram-${Math.floor(props.containerHeight / 50)}`"
+              :layer-id="activeLayerTab"
             />
           </div>
         </div>
