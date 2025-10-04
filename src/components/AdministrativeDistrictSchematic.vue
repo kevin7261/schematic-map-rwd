@@ -67,6 +67,26 @@
   const COLOR_GRID_2 = '#333333';
 
   /**
+   * 為節點隨機分配 1-5 的數值
+   *
+   * @param {Array} nodes - 節點陣列
+   * @returns {Array} - 處理後的節點陣列
+   */
+  const randomizeNodeValues = (nodes) => {
+    console.log('🎲 開始隨機化節點數值，原始節點數量:', nodes.length);
+    const randomizedNodes = nodes.map((node) => {
+      const newValue = Math.floor(Math.random() * 5) + 1; // 生成 1-5 的隨機數
+      console.log(`🎲 節點 ${node.coord?.x},${node.coord?.y} 從 ${node.value} 變為 ${newValue}`);
+      return {
+        ...node,
+        value: newValue,
+      };
+    });
+    console.log('🎲 隨機化完成，前3個節點:', randomizedNodes.slice(0, 3));
+    return randomizedNodes;
+  };
+
+  /**
    * 📊 載入示意圖數據 (Load Schematic Data)
    */
   const loadData = async () => {
@@ -81,8 +101,14 @@
       const schematicData = await response.json();
       console.log('response', response);
 
-      // 直接使用 data.json 的數據格式
-      nodeData.value = schematicData;
+      // 為每個路線的節點隨機分配 1-5 的數值
+      const processedData = schematicData.map((line) => ({
+        ...line,
+        nodes: randomizeNodeValues(line.nodes),
+      }));
+
+      // 使用處理後的數據
+      nodeData.value = processedData;
       console.log('nodeData', nodeData.value);
       setLinkData();
       await nextTick();

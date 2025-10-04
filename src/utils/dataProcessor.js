@@ -133,6 +133,26 @@ export async function loadDataLayerJson(layer) {
 }
 
 /**
+ * 為節點隨機分配 1-5 的數值
+ *
+ * @param {Array} nodes - 節點陣列
+ * @returns {Array} - 處理後的節點陣列
+ */
+function randomizeNodeValues(nodes) {
+  console.log('🎲 開始隨機化節點數值，原始節點數量:', nodes.length);
+  const randomizedNodes = nodes.map((node) => {
+    const newValue = Math.floor(Math.random() * 5) + 1; // 生成 1-5 的隨機數
+    console.log(`🎲 節點 ${node.coord?.x},${node.coord?.y} 從 ${node.value} 變為 ${newValue}`);
+    return {
+      ...node,
+      value: newValue,
+    };
+  });
+  console.log('🎲 隨機化完成，前3個節點:', randomizedNodes.slice(0, 3));
+  return randomizedNodes;
+}
+
+/**
  * 處理數據圖層 JSON 數據
  *
  * @param {Object} jsonData - JSON 數據
@@ -144,15 +164,21 @@ async function processDataLayerJson(jsonData) {
     // 這是示意圖節點格式，不需要處理為地圖圖層
     console.log('📊 載入示意圖節點數據，共', jsonData.length, '條路線');
 
+    // 為每個路線的節點隨機分配 1-5 的數值
+    const processedJsonData = jsonData.map((line) => ({
+      ...line,
+      nodes: randomizeNodeValues(line.nodes),
+    }));
+
     // 建立摘要資料
     const summaryData = {
-      totalLines: jsonData.length,
-      totalNodes: jsonData.reduce((sum, line) => sum + line.nodes.length, 0),
-      lineNames: jsonData.map((line) => line.name),
+      totalLines: processedJsonData.length,
+      totalNodes: processedJsonData.reduce((sum, line) => sum + line.nodes.length, 0),
+      lineNames: processedJsonData.map((line) => line.name),
     };
 
     // 為示意圖數據建立 tableData，每個路線作為一個項目
-    const tableData = jsonData.map((line, index) => ({
+    const tableData = processedJsonData.map((line, index) => ({
       '#': index + 1,
       color: line.color,
       name: line.name,

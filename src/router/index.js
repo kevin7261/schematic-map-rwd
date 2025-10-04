@@ -167,7 +167,7 @@ router.beforeEach((to, from, next) => {
  * @param {RouteLocationNormalized} to - 已進入的路由
  * @param {RouteLocationNormalized} from - 已離開的路由
  */
-router.afterEach((to, from) => {
+router.afterEach((to) => {
   // 記錄路由切換完成日誌
   if (process.env.NODE_ENV === 'development') {
     console.log(`✅ 路由切換完成: ${to.path}`);
