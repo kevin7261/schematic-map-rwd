@@ -17,6 +17,7 @@
   import { ref, computed, watch, onMounted, nextTick } from 'vue';
   import { useDataStore } from '@/stores/dataStore.js';
   import AdministrativeDistrictSchematic from '@/components/AdministrativeDistrictSchematic.vue';
+  import GridSchematic from '@/components/GridSchematic.vue';
 
   // Props
   const props = defineProps({
@@ -82,6 +83,17 @@
       groupName: groupName,
       layerName: layer.layerName,
     };
+  };
+
+  /**
+   * 🎨 判斷是否為網格示意圖圖層 (Check if Layer is Grid Schematic)
+   * @param {string} layerId - 圖層 ID
+   * @returns {boolean} 是否為網格示意圖圖層
+   */
+  const isGridSchematicLayer = (layerId) => {
+    if (!layerId) return false;
+    const layer = dataStore.findLayerById(layerId);
+    return layer && layer.isGridSchematic === true;
   };
 
   // 記錄上一次的圖層列表用於比較
@@ -196,7 +208,15 @@
               minHeight: '300px',
             }"
           >
+            <!-- 🎨 網格示意圖組件 (Grid Schematic Component) -->
+            <GridSchematic
+              v-if="isGridSchematicLayer(activeLayerTab)"
+              :key="`grid-${Math.floor(props.containerHeight / 50)}`"
+              :layer-id="activeLayerTab"
+            />
+            <!-- 📊 行政區示意圖組件 (Administrative District Schematic Component) -->
             <AdministrativeDistrictSchematic
+              v-else
               :key="`diagram-${Math.floor(props.containerHeight / 50)}`"
               :layer-id="activeLayerTab"
             />

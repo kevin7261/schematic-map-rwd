@@ -51,7 +51,7 @@ import { ref, computed } from 'vue';
  * 數據處理工具函數引入
  * 提供數據載入功能
  */
-import { loadDataLayerJson } from '../utils/dataProcessor.js';
+import { loadDataLayerJson, loadGridSchematicJson } from '../utils/dataProcessor.js';
 
 // ==================== 主要數據存儲定義 ====================
 
@@ -70,22 +70,23 @@ export const useDataStore = defineStore(
         groupLayers: [
           {
             layerId: 'test_layer',
-            layerName: '測試圖層',
+            layerName: '網格示意圖測試',
             visible: false,
             isLoading: false,
             isLoaded: false,
-            type: 'point',
+            type: 'grid',
             shape: null,
-            colorName: 'orange',
+            colorName: 'green',
             jsonData: null,
             summaryData: null,
             tableData: null,
             legendData: null,
-            jsonLoader: loadDataLayerJson,
+            jsonLoader: loadGridSchematicJson,
             jsonFileName: 'test/test.json',
             isDataLayer: true,
             hideFromMap: true,
             display: true,
+            isGridSchematic: true, // 標記為網格示意圖類型
           },
         ],
       },

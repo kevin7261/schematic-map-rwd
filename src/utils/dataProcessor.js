@@ -153,6 +153,112 @@ function randomizeNodeValues(nodes) {
 }
 
 /**
+ * 📊 載入網格示意圖 JSON 數據 (Load Grid Schematic JSON Data)
+ *
+ * 專門用於載入網格型示意圖數據的載入器
+ * 根據 JSON 中的 x 和 y 值生成對應的網格示意圖
+ *
+ * 功能說明：
+ * - 讀取網格尺寸參數 (x, y)
+ * - 生成網格節點數據結構
+ * - 提供網格示意圖專用的數據格式
+ *
+ * @param {Object} layer - 圖層配置對象
+ * @param {string} layer.jsonFileName - JSON 文件名稱
+ * @returns {Promise<Object>} - 處理後的網格數據對象
+ * @throws {Error} - 當載入失敗時拋出錯誤
+ *
+ * @example
+ * const layer = { jsonFileName: 'test/test.json' };
+ * const result = await loadGridSchematicJson(layer);
+ * console.log(result.gridData); // 網格數據
+ * console.log(result.summaryData); // 摘要數據
+ */
+export async function loadGridSchematicJson(layer) {
+  try {
+    console.log('📊 載入網格示意圖 JSON 數據:', layer.jsonFileName);
+
+    // 載入 JSON 檔案
+    const response = await loadFile(
+      `${PATH_CONFIG.JSON}/${layer.jsonFileName}`,
+      `${PATH_CONFIG.FALLBACK_JSON}/${layer.jsonFileName}`
+    );
+
+    const jsonData = await response.json();
+
+    // 處理網格示意圖數據
+    return await processGridSchematicJson(jsonData);
+  } catch (error) {
+    console.error('❌ 網格示意圖 JSON 數據載入失敗:', error);
+    throw error;
+  }
+}
+
+/**
+ * 📊 處理網格示意圖 JSON 數據 (Process Grid Schematic JSON Data)
+ *
+ * 將網格尺寸參數轉換為示意圖組件所需的數據格式
+ *
+ * @param {Object} jsonData - 包含 x, y 尺寸的 JSON 數據
+ * @returns {Object} - 處理後的網格數據結構
+ */
+async function processGridSchematicJson(jsonData) {
+  console.log('📊 處理網格示意圖數據:', jsonData);
+
+  // 解析網格尺寸
+  const gridX = parseInt(jsonData.x) || 10;
+  const gridY = parseInt(jsonData.y) || 10;
+
+  console.log(`📊 網格尺寸: ${gridX} x ${gridY}`);
+
+  // 生成網格節點數據
+  const gridNodes = [];
+  for (let y = 0; y < gridY; y++) {
+    for (let x = 0; x < gridX; x++) {
+      gridNodes.push({
+        x: x,
+        y: y,
+        value: Math.floor(Math.random() * 5) + 1, // 隨機生成 1-5 的數值
+        type: 1, // 預設節點類型
+        coord: { x: x, y: y },
+      });
+    }
+  }
+
+  // 建立摘要資料
+  const summaryData = {
+    totalNodes: gridX * gridY,
+    gridSize: `${gridX} x ${gridY}`,
+    gridX: gridX,
+    gridY: gridY,
+    nodeCount: gridNodes.length,
+  };
+
+  // 建立表格資料
+  const tableData = [
+    {
+      '#': 1,
+      name: `網格示意圖 (${gridX}x${gridY})`,
+      gridSize: `${gridX} x ${gridY}`,
+      totalNodes: gridX * gridY,
+      nodes: gridNodes,
+    },
+  ];
+
+  return {
+    jsonData: {
+      gridX: gridX,
+      gridY: gridY,
+      nodes: gridNodes,
+      type: 'grid',
+    },
+    summaryData,
+    tableData,
+    legendData: null,
+  };
+}
+
+/**
  * 處理數據圖層 JSON 數據
  *
  * @param {Object} jsonData - JSON 數據

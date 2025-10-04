@@ -1,45 +1,41 @@
-/** * ⏳ 載入覆蓋層組件 (Loading Overlay Component) * * 功能說明 (Features): * 1. 🔄
-載入狀態顯示：在數據載入過程中顯示覆蓋層和載入指示器 * 2. 📊
-進度條顯示：可選的進度條功能，顯示載入進度百分比 * 3. 📝 自定義文字：支援自定義載入文字和描述資訊 *
-4. 🎨 視覺化設計：提供美觀的載入動畫和視覺效果 * 5. 📱 響應式設計：適配不同螢幕尺寸的顯示需求 * 6.
-⚙️ 靈活配置：支援多種載入模式和顯示選項 * * 技術特點 (Technical Features): * - 使用 Vue 2 Options
-API 進行組件管理 * - 支援動畫效果和視覺化增強 * - 提供完整的屬性驗證和預設值設定 * -
-支援響應式佈局和動態尺寸調整 * - 提供靈活的配置選項和自定義功能 * * 使用場景 (Use Cases): * -
-數據載入過程中的使用者反饋 * - 長時間操作的進度顯示 * - 系統初始化過程的狀態提示 * -
-網路請求過程的載入指示 * * @file LoadingOverlay.vue * @version 2.0.0 * @author Kevin Cheng * @since
-1.0.0 */
+/** * LoadingOverlay 載入覆蓋層組件 * *
+提供全螢幕載入狀態顯示功能，包含載入動畫、進度條和自定義文字提示 * * 主要功能： * -
+全螢幕覆蓋層顯示載入狀態 * - 可選的進度條顯示載入百分比 * - 支援自定義載入文字和輔助說明 * -
+響應式設計適配各種螢幕尺寸 * - 美觀的載入動畫效果 * * 使用場景： * - 數據載入過程中的使用者反饋 * -
+長時間操作的進度顯示 * - 系統初始化狀態提示 * - 網路請求載入指示 * * @file LoadingOverlay.vue *
+@version 2.0.0 * @author Kevin Cheng * @since 1.0.0 */
 <script>
   export default {
     name: 'LoadingOverlay',
 
     /**
-     * 🔧 組件屬性定義 (Component Props)
+     * 組件屬性定義
      * 接收來自父組件的載入狀態和配置選項
      */
     props: {
-      /** ⏳ 是否顯示載入覆蓋層 */
+      /** 是否顯示載入覆蓋層 */
       isVisible: {
         type: Boolean,
         default: false,
         required: true,
       },
-      /** 📝 載入過程的主要文字描述 */
+      /** 載入過程的主要文字描述 */
       loadingText: {
         type: String,
         default: '載入中...',
       },
-      /** 📊 載入進度百分比 (0-100) */
+      /** 載入進度百分比 (0-100) */
       progress: {
         type: Number,
         default: -1,
         validator: (value) => value >= -1 && value <= 100,
       },
-      /** 📊 是否顯示進度條 */
+      /** 是否顯示進度條 */
       showProgress: {
         type: Boolean,
         default: false,
       },
-      /** 📝 輔助說明文字 (可選) */
+      /** 輔助說明文字 (可選) */
       subText: {
         type: String,
         default: '',
@@ -49,37 +45,37 @@ API 進行組件管理 * - 支援動畫效果和視覺化增強 * - 提供完整
 </script>
 
 <template>
-  <!-- ⏳ 載入覆蓋層組件 (Loading Overlay Component) -->
+  <!-- 載入覆蓋層組件 -->
   <!-- 在資料載入時顯示，提供視覺化的載入進度回饋和狀態提示 -->
   <div
     class="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
     style="background-color: rgba(0, 0, 0, 0.7); z-index: 9999"
     v-if="isVisible"
   >
-    <!-- 📄 載入內容卡片 (Loading Content Card) -->
+    <!-- 載入內容卡片 -->
     <!-- 包含載入動畫、文字提示、進度條等元素的中央卡片 -->
     <div
       class="text-center my-bgcolor-white p-4 rounded shadow"
       style="min-width: 300px; max-width: 400px"
     >
-      <!-- ⏳ 載入動畫圓環 (Loading Animation Spinner) -->
+      <!-- 載入動畫圓環 -->
       <!-- Bootstrap 提供的圓形載入動畫，表示系統正在處理請求 -->
       <div class="spinner-border text-primary mb-3" style="width: 2rem; height: 2rem" role="status">
-        <!-- 🔍 無障礙輔助文字 (Screen Reader Text) -->
+        <!-- 無障礙輔助文字 -->
         <!-- 為螢幕閱讀器提供的載入狀態說明 -->
         <span class="visually-hidden">載入中...</span>
       </div>
 
-      <!-- 📝 主要載入文字 (Primary Loading Text) -->
+      <!-- 主要載入文字 -->
       <!-- 顯示當前載入的主要操作或狀態描述 -->
       <div class="my-title-lg-black">{{ loadingText }}</div>
 
-      <!-- 📊 載入進度條區域 (Loading Progress Area) -->
+      <!-- 載入進度條區域 -->
       <!-- 當需要顯示具體進度時，提供視覺化的進度條 -->
       <div class="mt-3" v-if="showProgress && progress >= 0">
-        <!-- 📊 Bootstrap 進度條容器 (Bootstrap Progress Container) -->
+        <!-- Bootstrap 進度條容器 -->
         <div class="progress" style="height: 8px">
-          <!-- 📊 進度條滑塊 (Progress Bar) -->
+          <!-- 進度條滑塊 -->
           <!-- 根據 progress 屬性動態調整寬度，顯示載入完成百分比 -->
           <div
             class="progress-bar bg-primary d-flex align-items-center justify-content-center"
@@ -95,7 +91,7 @@ API 進行組件管理 * - 支援動畫效果和視覺化增強 * - 提供完整
         </div>
       </div>
 
-      <!-- 📝 輔助說明文字 (Secondary Text) -->
+      <!-- 輔助說明文字 -->
       <!-- 提供載入操作的詳細說明或提示資訊 -->
       <div v-if="subText" class="mt-2">
         <small class="my-content-xs-gray">{{ subText }}</small>
