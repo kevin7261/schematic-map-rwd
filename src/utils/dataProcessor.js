@@ -930,7 +930,7 @@ async function processDataLayerJson(jsonData) {
 
     return {
       jsonData: jsonData, // 保持原始數據不變
-      processedJsonData: null, // 示意圖數據不需要地圖顯示
+      processedJsonData: processedJsonData, // 處理後的示意圖數據（包含隨機數值）
       dashboardData,
       dataTableData,
       layerInfoData,

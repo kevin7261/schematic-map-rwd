@@ -147,23 +147,13 @@
       </div>
 
       <!-- 📊 處理後 JSON 數據 -->
-      <div v-if="getCurrentLayerProcessedJsonData()">
-        <div class="rounded-4 my-bgcolor-gray-100 p-4 mb-3">
-          <h6 class="mb-3">處理後 JSON 數據</h6>
-          <pre
-            class="my-font-size-sm"
-            style="
-              white-space: pre-wrap;
-              word-wrap: break-word;
-              max-height: 500px;
-              overflow-y: auto;
-            "
-            >{{ JSON.stringify(getCurrentLayerProcessedJsonData(), null, 2) }}</pre
-          >
-        </div>
-      </div>
-      <div v-else class="text-center py-5">
-        <div class="my-title-md-gray">此圖層沒有可用的處理後 JSON 數據</div>
+      <div class="rounded-4 my-bgcolor-gray-100 p-4 mb-3">
+        <h6 class="mb-3">處理後 JSON 數據</h6>
+        <pre
+          class="my-font-size-sm"
+          style="white-space: pre-wrap; word-wrap: break-word; max-height: 500px; overflow-y: auto"
+          >{{ JSON.stringify(getCurrentLayerProcessedJsonData(), null, 2) }}</pre
+        >
       </div>
     </div>
 
