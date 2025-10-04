@@ -60,7 +60,6 @@ Cheng * @since 1.0.0 */
     dynamicMainAreaHeight: { type: Number, default: 500 },
 
     // 🗺️ 圖層和地圖設定 (Layer and Map Settings)
-    showTainanLayer: { type: Boolean, default: false },
     selectedFilter: { type: String, default: '' },
 
     // 🔧 其他設定 (Other Settings)
@@ -344,7 +343,6 @@ Cheng * @since 1.0.0 */
         :activeUpperTab="activeUpperTab"
         :mainPanelWidth="mainPanelWidth"
         :contentHeight="contentHeight"
-        :showTainanLayer="showTainanLayer"
         :selectedFilter="selectedFilter"
         :zoomLevel="zoomLevel"
         :isPanelDragging="isOverallDragging"

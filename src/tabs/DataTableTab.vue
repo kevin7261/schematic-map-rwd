@@ -27,6 +27,7 @@ Cheng * @since 1.0.0 */
    * @see https://pinia.vuejs.org/
    */
   import { useDataStore } from '@/stores/dataStore.js';
+  import { getIcon } from '../utils/utils.js';
 
   // ==================== 📡 組件事件定義 (Component Events Definition) ====================
 
@@ -298,9 +299,9 @@ Cheng * @since 1.0.0 */
   const getSortIcon = (layerId, key) => {
     const sortState = layerSortStates.value[layerId];
     if (!sortState || sortState.key !== key) {
-      return 'fas fa-sort';
+      return getIcon('sort').icon;
     }
-    return sortState.order === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down';
+    return sortState.order === 'asc' ? getIcon('sort_up').icon : getIcon('sort_down').icon;
   };
 
   /**

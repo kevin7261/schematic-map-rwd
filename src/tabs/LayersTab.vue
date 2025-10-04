@@ -27,7 +27,6 @@
   // 🔧 Vue Composition API 引入 (Vue Composition API Imports)
   import { computed, ref } from 'vue'; // 引入響應式 API
   import { useDataStore } from '@/stores/dataStore.js'; // 引入資料存儲
-  import { getIcon } from '../utils/utils.js'; // 引入圖標工具函數
 
   export default {
     name: 'LayersTab',
@@ -116,7 +115,6 @@
         handleToggleChange, // 處理開關變更事件
 
         // 🛠️ 工具函數 (Utility Functions)
-        getIcon, // 圖標獲取函數
       };
     },
   };

@@ -41,6 +41,7 @@ SpatialAnalysisTab：圖層資訊分頁，顯示圖層統計和項目數量 * * 
    * @see https://vuejs.org/
    */
   import { computed, watch } from 'vue';
+  import { getIcon } from '../utils/utils.js';
 
   export default {
     name: 'RightView',
@@ -93,8 +94,8 @@ SpatialAnalysisTab：圖層資訊分頁，顯示圖層統計和項目數量 * * 
 
       // 📊 可用的分頁列表
       const availableTabs = [
-        { id: 'layer-info', name: '圖層資訊', icon: 'fas fa-info-circle' },
-        { id: 'properties', name: '屬性', icon: 'fa-solid fa-location-dot' },
+        { id: 'layer-info', name: '圖層資訊', icon: getIcon('info_circle').icon },
+        { id: 'properties', name: '屬性', icon: getIcon('location_dot').icon },
       ];
 
       // 🔘 切換分頁

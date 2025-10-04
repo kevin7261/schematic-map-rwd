@@ -24,6 +24,7 @@ SpatialAnalysisTab.vue * @version 2.0.0 * @author Kevin Cheng * @since 1.0.0 */
    * @see https://pinia.vuejs.org/
    */
   import { useDataStore } from '@/stores/dataStore.js';
+  import { getIconHtml } from '../utils/utils.js';
 
   // ==================== 🏪 狀態管理初始化 (State Management Initialization) ====================
 
@@ -271,7 +272,7 @@ SpatialAnalysisTab.vue * @version 2.0.0 * @author Kevin Cheng * @since 1.0.0 */
           <div v-if="isLoadingAnalysis" class="pb-2">
             <div class="my-title-xs-gray pb-1">載入狀態</div>
             <div class="my-content-sm-black pb-1">
-              <i class="fas fa-spinner fa-spin me-2"></i>
+              <span v-html="getIconHtml('spinner', 'fa-spin me-2')"></span>
               正在載入圖層資訊...
             </div>
           </div>

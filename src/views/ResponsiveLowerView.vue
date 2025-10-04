@@ -1,5 +1,6 @@
 <script>
   import { computed, ref, onMounted, onUnmounted } from 'vue';
+  import { getIcon } from '../utils/utils.js';
   import LayersTab from '../tabs/LayersTab.vue';
   import DataTableTab from '../tabs/DataTableTab.vue';
   import PropertiesTab from '../tabs/PropertiesTab.vue';
@@ -55,10 +56,10 @@
        * 根據需求顯示不同的分頁選項
        */
       const availableTabs = computed(() => [
-        { id: 'layers', name: '圖層', icon: 'fas fa-layer-group' },
-        { id: 'table', name: '資料表', icon: 'fas fa-table' },
-        { id: 'properties', name: '屬性', icon: 'fa-solid fa-location-dot' },
-        { id: 'layer-info', name: '圖層資訊', icon: 'fas fa-info-circle' },
+        { id: 'layers', name: '圖層', icon: getIcon('layer_group').icon },
+        { id: 'table', name: '資料表', icon: getIcon('table').icon },
+        { id: 'properties', name: '屬性', icon: getIcon('location_dot').icon },
+        { id: 'layer-info', name: '圖層資訊', icon: getIcon('info_circle').icon },
       ]);
 
       /**

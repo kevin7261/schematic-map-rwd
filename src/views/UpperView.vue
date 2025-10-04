@@ -35,6 +35,7 @@ Features): * - 使用 Vue 2 Options API 進行組件管理 * - 整合多個分�
    * @see ../tabs/D3jsTab.vue
    */
   import D3jsTab from '../tabs/D3jsTab.vue';
+  import { getIcon } from '../utils/utils.js';
 
   export default {
     name: 'UpperView',
@@ -56,7 +57,6 @@ Features): * - 使用 Vue 2 Options API 進行組件管理 * - 整合多個分�
       activeUpperTab: { type: String, default: 'd3js' },
       mainPanelWidth: { type: Number, default: 60 },
       contentHeight: { type: Number, default: 500 },
-      showTainanLayer: { type: Boolean, default: false },
       selectedFilter: { type: String, default: '' },
       zoomLevel: { type: Number, default: 11 },
       isPanelDragging: { type: Boolean, default: false },
@@ -213,6 +213,9 @@ Features): * - 使用 Vue 2 Options API 進行組件管理 * - 整合多個分�
         resetView, // 重設視圖功能
         fitToTainanBounds, // 適應邊界功能
         invalidateMapSize, // 刷新地圖尺寸功能
+
+        // 🛠️ 工具函數
+        getIcon, // 圖標獲取函數
       };
     },
   };
@@ -234,7 +237,7 @@ Features): * - 使用 Vue 2 Options API 進行組件管理 * - 整合多個分�
             style="width: 30px; height: 30px"
             title="D3.js 數據視覺化"
           >
-            <i class="fas fa-chart-line"></i>
+            <i :class="getIcon('chart_line').icon"></i>
           </button>
           <!-- 📊 儀表板按鈕 (Dashboard Button) -->
           <button
@@ -246,7 +249,7 @@ Features): * - 使用 Vue 2 Options API 進行組件管理 * - 整合多個分�
             style="width: 30px; height: 30px"
             title="資料儀表板"
           >
-            <i class="fas fa-chart-bar"></i>
+            <i :class="getIcon('chart_bar').icon"></i>
           </button>
         </div>
       </div>
