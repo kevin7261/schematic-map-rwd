@@ -23,6 +23,7 @@ epidemic analysis**
 ## 📋 目錄
 
 - [🎯 專案概述](#-專案概述)
+- [📊 系統架構概覽](#-系統架構概覽)
 - [✨ 核心特性](#-核心特性)
 - [🛠️ 技術架構](#️-技術架構)
 - [🧪 空間分析方法](#-空間分析方法)
@@ -36,7 +37,11 @@ epidemic analysis**
 - [📊 數據流架構](#-數據流架構)
 - [🎨 UI/UX 設計理念](#-uiux-設計理念)
 - [⚡ 性能優化](#-性能優化)
+- [🔌 API 參考](#-api-參考)
+- [🧪 測試指南](#-測試指南)
 - [🐛 常見問題](#-常見問題)
+- [📈 版本歷史](#-版本歷史)
+- [🤝 貢獻指南](#-貢獻指南)
 - [📄 授權條款](#-授權條款)
 
 ---
@@ -103,6 +108,134 @@ UI 框架，以及 Pinia 狀態管理，打造了一個功能完整、性能優�
 - **雙語註解**：中英文雙語程式碼註解
 - **多語言介面**：支援中英文介面切換
 - **國際標準**：遵循 W3C 和國際地理資訊標準
+
+---
+
+## 📊 系統架構概覽
+
+### 🏗️ 整體架構圖
+
+```mermaid
+graph TB
+    subgraph "前端層 (Frontend Layer)"
+        A[Vue.js 3 App] --> B[Pinia Store]
+        A --> C[Vue Router]
+        A --> D[Bootstrap UI]
+        A --> E[D3.js Charts]
+        A --> F[Leaflet Maps]
+    end
+
+    subgraph "核心模組 (Core Modules)"
+        G[Data Processor] --> H[Spatial Analysis]
+        H --> I[PySDA Engine]
+        H --> J[Moran's I Calculator]
+        H --> K[MSTDBSCAN Engine]
+        G --> L[Layer Factory]
+    end
+
+    subgraph "數據層 (Data Layer)"
+        M[JSON Files] --> N[GeoJSON Data]
+        N --> O[Statistical Data]
+        O --> P[Visualization Data]
+    end
+
+    subgraph "部署層 (Deployment Layer)"
+        Q[GitHub Pages] --> R[CDN Assets]
+        R --> S[Static Files]
+    end
+
+    A --> G
+    B --> G
+    G --> M
+    A --> Q
+```
+
+### 🔄 系統數據流
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant V as Vue App
+    participant S as Pinia Store
+    participant D as Data Processor
+    participant A as Spatial Analysis
+    participant M as Map Component
+
+    U->>V: 選擇圖層
+    V->>S: 更新狀態
+    S->>D: 載入數據
+    D->>A: 執行分析
+    A->>S: 返回結果
+    S->>M: 更新視覺化
+    M->>U: 顯示結果
+```
+
+### 🎯 核心設計原則
+
+#### 1. **模組化架構 (Modular Architecture)**
+
+- **組件化設計**：每個功能模組獨立封裝，便於維護和擴展
+- **插件化分析**：空間分析方法可獨立載入和組合
+- **微服務思維**：數據處理、視覺化、分析引擎分離
+
+#### 2. **響應式設計 (Reactive Design)**
+
+- **Vue 3 Composition API**：提供更好的邏輯復用和類型推斷
+- **Pinia 狀態管理**：響應式狀態更新，自動同步 UI
+- **D3.js 數據綁定**：數據變化自動更新視覺化
+
+#### 3. **性能優化 (Performance Optimization)**
+
+- **懶載入策略**：按需載入圖層和數據
+- **虛擬化渲染**：大數據集的高效渲染
+- **快取機制**：分析結果快取，避免重複計算
+
+#### 4. **可擴展性 (Scalability)**
+
+- **插件架構**：支援自定義分析算法
+- **配置驅動**：通過配置文件控制行為
+- **API 設計**：統一的數據處理介面
+
+### 🧩 模組依賴關係
+
+```mermaid
+graph LR
+    subgraph "核心依賴"
+        A[Vue 3] --> B[Pinia]
+        A --> C[Vue Router]
+        A --> D[Bootstrap]
+    end
+
+    subgraph "功能模組"
+        E[Data Processor] --> F[Spatial Analysis]
+        F --> G[PySDA]
+        F --> H[Moran's I]
+        F --> I[MSTDBSCAN]
+        E --> J[Layer Factory]
+    end
+
+    subgraph "視覺化"
+        K[D3.js] --> L[Charts]
+        M[Leaflet] --> N[Maps]
+    end
+
+    A --> E
+    A --> K
+    A --> M
+```
+
+### 📊 技術棧詳細說明
+
+| 技術層級       | 技術選擇     | 版本   | 用途       | 優勢                                    |
+| -------------- | ------------ | ------ | ---------- | --------------------------------------- |
+| **前端框架**   | Vue.js 3     | 3.2.13 | 應用框架   | Composition API、更好的 TypeScript 支援 |
+| **狀態管理**   | Pinia        | 2.1.0  | 狀態管理   | 輕量級、TypeScript 友好                 |
+| **路由管理**   | Vue Router   | 4.5.1  | 路由控制   | 程式碼分割、懶載入                      |
+| **UI 框架**    | Bootstrap    | 5.3.0  | 響應式佈局 | 完整的組件庫、響應式設計                |
+| **地圖引擎**   | Leaflet      | 1.9.4  | 地圖渲染   | 輕量級、插件豐富                        |
+| **數據視覺化** | D3.js        | 7.8.0  | 圖表繪製   | 強大的數據綁定、自定義視覺化            |
+| **地理計算**   | Turf.js      | 7.2.0  | 空間計算   | 豐富的地理空間算法                      |
+| **圖示庫**     | Font Awesome | 6.7.2  | 圖示系統   | 完整的圖示集合                          |
 
 ---
 
@@ -1364,6 +1497,480 @@ observer.observe({ entryTypes: ['navigation', 'paint', 'measure'] });
 
 ---
 
+## 🔌 API 參考
+
+### 📊 數據處理 API
+
+#### `loadDataLayerJson(layer)`
+
+載入數據圖層的 JSON 資料
+
+```javascript
+/**
+ * 載入數據圖層 JSON 資料
+ * @param {Object} layer - 圖層配置對象
+ * @param {string} layer.jsonFileName - JSON 文件名稱
+ * @returns {Promise<Object>} - 處理後的數據對象
+ * @throws {Error} - 當載入失敗時拋出錯誤
+ *
+ * @example
+ * const layer = { jsonFileName: 'data.json' };
+ * const result = await loadDataLayerJson(layer);
+ * console.log(result.summaryData); // 摘要數據
+ * console.log(result.tableData);   // 表格數據
+ */
+```
+
+**返回值結構：**
+
+```javascript
+{
+  jsonData: Object | null,    // 原始 JSON 數據
+  summaryData: {              // 摘要數據
+    totalCount: number,       // 總項目數
+    itemNames: string[]       // 項目名稱列表
+  },
+  tableData: Array,           // 表格數據
+  legendData: Object | null   // 圖例數據
+}
+```
+
+#### `processDataLayerJson(jsonData)`
+
+處理數據圖層 JSON 數據
+
+```javascript
+/**
+ * 處理數據圖層 JSON 數據
+ * @param {Object} jsonData - JSON 數據對象
+ * @returns {Object} - 處理後的數據結構
+ */
+```
+
+### 🧪 空間分析 API
+
+#### `calculateSpatialAnalysis(data, options)`
+
+執行空間分析計算
+
+```javascript
+/**
+ * 空間分析計算主函數
+ * @param {Array} data - 地理要素數據陣列
+ * @param {Object} options - 分析選項
+ * @param {string} options.method - 分析方法 ('moran', 'geary', 'getisord', 'joincounts')
+ * @param {number} options.k - K-近鄰數量 (預設: 8)
+ * @param {number} options.numPermutations - 置換次數 (預設: 999)
+ * @returns {Object} - 分析結果
+ */
+```
+
+**分析結果結構：**
+
+```javascript
+{
+  method: string,           // 分析方法名稱
+  statistic: number,        // 統計量值
+  pValue: number,          // p 值
+  zScore: number,          // Z 分數
+  localResults: Array,     // 局部結果 (如果適用)
+  weights: Object,         // 空間權重矩陣
+  summary: {               // 分析摘要
+    n: number,             // 樣本數量
+    mean: number,          // 平均值
+    variance: number       // 變異數
+  }
+}
+```
+
+#### PySDA 分析 API
+
+```javascript
+/**
+ * PySDA 時空點擴散分析
+ * @param {Array} points - 點數據陣列
+ * @param {Object} params - 分析參數
+ * @param {number} params.SR - 空間搜索半徑 (公尺)
+ * @param {number} params.T1 - 最小時間窗口 (天)
+ * @param {number} params.T2 - 最大時間窗口 (天)
+ * @returns {Object} - PySDA 分析結果
+ */
+```
+
+**PySDA 結果結構：**
+
+```javascript
+{
+  adjacencyPairs: Array,    // 鄰接對列表
+  movingLinks: Array,       // 移動鏈接
+  subClusters: Array,       // 子聚類
+  progressionLinks: Array,  // 進展鏈接
+  statistics: {             // 統計摘要
+    totalPoints: number,
+    totalPairs: number,
+    totalClusters: number
+  }
+}
+```
+
+### 🗺️ 地圖操作 API
+
+#### 圖層管理
+
+```javascript
+// 切換圖層可見性
+const toggleLayerVisibility = async (layerId) => {
+  // 實現圖層顯示/隱藏切換
+};
+
+// 獲取可見圖層
+const getVisibleLayers = () => {
+  return layers.filter((layer) => layer.visible);
+};
+
+// 設置選中要素
+const setSelectedFeature = (feature) => {
+  selectedFeature.value = feature;
+};
+```
+
+#### 地圖控制
+
+```javascript
+// 地圖視圖控制
+const mapControls = {
+  setCenter: (lat, lng) => {
+    /* 設置地圖中心 */
+  },
+  setZoom: (level) => {
+    /* 設置縮放級別 */
+  },
+  fitBounds: (bounds) => {
+    /* 適應邊界 */
+  },
+  addLayer: (layer) => {
+    /* 添加圖層 */
+  },
+  removeLayer: (layerId) => {
+    /* 移除圖層 */
+  },
+};
+```
+
+### 📊 狀態管理 API
+
+#### Pinia Store 方法
+
+```javascript
+// dataStore.js
+export const useDataStore = defineStore('data', () => {
+  // 狀態
+  const layers = ref([]);
+  const selectedFeature = ref(null);
+
+  // 方法
+  const toggleLayerVisibility = async (layerId) => {
+    /* ... */
+  };
+  const setSelectedFeature = (feature) => {
+    /* ... */
+  };
+  const findLayerById = (layerId) => {
+    /* ... */
+  };
+
+  // 計算屬性
+  const visibleLayers = computed(() =>
+    layers.value.filter((layer) => layer.visible)
+  );
+
+  return {
+    layers,
+    selectedFeature,
+    toggleLayerVisibility,
+    setSelectedFeature,
+    findLayerById,
+    visibleLayers,
+  };
+});
+```
+
+### 🎨 視覺化 API
+
+#### D3.js 圖表 API
+
+```javascript
+/**
+ * 創建 Moran Plot
+ * @param {string} containerId - 容器 ID
+ * @param {Array} data - 數據陣列
+ * @param {Object} options - 圖表選項
+ */
+const createMoranPlot = (containerId, data, options = {}) => {
+  // 實現 Moran Plot 繪製邏輯
+};
+
+/**
+ * 創建密度分布圖
+ * @param {string} containerId - 容器 ID
+ * @param {Array} observed - 觀測值
+ * @param {Array} simulated - 模擬值
+ */
+const createDensityPlot = (containerId, observed, simulated) => {
+  // 實現密度圖繪製邏輯
+};
+```
+
+### 🔧 工具函數 API
+
+#### 數據處理工具
+
+```javascript
+/**
+ * 計算 Jenks Natural Breaks
+ * @param {number[]} values - 數值陣列
+ * @param {number} numClasses - 分類數量
+ * @returns {number[]} - 分類閾值陣列
+ */
+const calculateNaturalBreaks = (values, numClasses) => {
+  // 實現 Jenks 分類算法
+};
+
+/**
+ * 生成顏色方案
+ * @param {number} numColors - 顏色數量
+ * @param {string} scheme - 顏色方案名稱
+ * @returns {string[]} - 顏色陣列
+ */
+const generateColorScheme = (numColors, scheme = 'viridis') => {
+  // 實現顏色生成邏輯
+};
+```
+
+---
+
+## 🧪 測試指南
+
+### 🧪 測試架構
+
+本專案採用多層次測試策略，確保代碼品質和系統穩定性：
+
+```mermaid
+graph TB
+    subgraph "測試金字塔"
+        A[E2E Tests] --> B[Integration Tests]
+        B --> C[Unit Tests]
+    end
+
+    subgraph "測試類型"
+        D[功能測試] --> E[性能測試]
+        E --> F[視覺回歸測試]
+        F --> G[可訪問性測試]
+    end
+
+    A --> D
+```
+
+### 🔧 單元測試
+
+#### 空間分析函數測試
+
+```javascript
+// tests/unit/spatialAnalysis.test.js
+import { describe, it, expect } from 'vitest';
+import { calculateMoransI } from '@/utils/spatialAnalysis/esda/moran.js';
+
+describe("Moran's I 計算", () => {
+  it("應該正確計算 Moran's I 統計量", () => {
+    const data = [
+      { value: 1, neighbors: [1, 2] },
+      { value: 2, neighbors: [0, 2] },
+      { value: 3, neighbors: [0, 1] },
+    ];
+
+    const result = calculateMoransI(data);
+
+    expect(result.statistic).toBeCloseTo(0.5, 2);
+    expect(result.pValue).toBeGreaterThan(0);
+    expect(result.zScore).toBeDefined();
+  });
+});
+```
+
+#### 數據處理函數測試
+
+```javascript
+// tests/unit/dataProcessor.test.js
+import { describe, it, expect } from 'vitest';
+import { calculateNaturalBreaks } from '@/utils/dataProcessor.js';
+
+describe('Jenks Natural Breaks', () => {
+  it('應該正確計算分類閾值', () => {
+    const values = [1, 2, 4, 5, 7, 9, 12, 15, 18, 20];
+    const breaks = calculateNaturalBreaks(values, 3);
+
+    expect(breaks).toHaveLength(2);
+    expect(breaks[0]).toBeLessThan(breaks[1]);
+    expect(breaks[0]).toBeCloseTo(5, 1);
+    expect(breaks[1]).toBeCloseTo(12, 1);
+  });
+});
+```
+
+### 🔗 整合測試
+
+#### 組件整合測試
+
+```javascript
+// tests/integration/mapComponent.test.js
+import { mount } from '@vue/test-utils';
+import { createPinia } from 'pinia';
+import MapTab from '@/tabs/MapTab.vue';
+
+describe('地圖組件整合測試', () => {
+  it('應該正確渲染地圖並處理圖層切換', async () => {
+    const pinia = createPinia();
+    const wrapper = mount(MapTab, {
+      global: {
+        plugins: [pinia],
+      },
+    });
+
+    // 測試地圖渲染
+    expect(wrapper.find('.leaflet-container').exists()).toBe(true);
+
+    // 測試圖層切換
+    await wrapper.vm.toggleLayer('test-layer');
+    expect(wrapper.vm.visibleLayers).toContain('test-layer');
+  });
+});
+```
+
+### 🎭 E2E 測試
+
+#### 用戶流程測試
+
+```javascript
+// tests/e2e/userWorkflow.spec.js
+import { test, expect } from '@playwright/test';
+
+test('完整的空間分析流程', async ({ page }) => {
+  // 訪問首頁
+  await page.goto('http://localhost:8080');
+
+  // 選擇圖層
+  await page.click('[data-testid="layer-toggle"]');
+  await expect(page.locator('.layer-visible')).toBeVisible();
+
+  // 執行空間分析
+  await page.click('[data-testid="spatial-analysis-tab"]');
+  await page.selectOption('[data-testid="analysis-method"]', 'moran');
+  await page.click('[data-testid="run-analysis"]');
+
+  // 驗證結果
+  await expect(page.locator('.analysis-results')).toBeVisible();
+  await expect(page.locator('.moran-plot')).toBeVisible();
+});
+```
+
+### 📊 性能測試
+
+#### 載入時間測試
+
+```javascript
+// tests/performance/loading.test.js
+import { test, expect } from '@playwright/test';
+
+test('頁面載入性能', async ({ page }) => {
+  const startTime = Date.now();
+
+  await page.goto('http://localhost:8080');
+  await page.waitForLoadState('networkidle');
+
+  const loadTime = Date.now() - startTime;
+
+  // 頁面載入時間應該小於 3 秒
+  expect(loadTime).toBeLessThan(3000);
+
+  // 檢查 Core Web Vitals
+  const metrics = await page.evaluate(() => {
+    return new Promise((resolve) => {
+      new PerformanceObserver((list) => {
+        const entries = list.getEntries();
+        resolve({
+          LCP: entries.find((e) => e.entryType === 'largest-contentful-paint')
+            ?.startTime,
+          FID: entries.find((e) => e.entryType === 'first-input')
+            ?.processingStart,
+        });
+      }).observe({ entryTypes: ['largest-contentful-paint', 'first-input'] });
+    });
+  });
+
+  expect(metrics.LCP).toBeLessThan(2500);
+});
+```
+
+### 🧪 測試執行
+
+#### 本地測試
+
+```bash
+# 安裝測試依賴
+npm install --save-dev vitest @vue/test-utils playwright
+
+# 執行單元測試
+npm run test:unit
+
+# 執行整合測試
+npm run test:integration
+
+# 執行 E2E 測試
+npm run test:e2e
+
+# 執行所有測試
+npm run test:all
+```
+
+#### CI/CD 測試
+
+```yaml
+# .github/workflows/test.yml
+name: Tests
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        run: npm run test:unit
+
+      - name: Run integration tests
+        run: npm run test:integration
+
+      - name: Install Playwright
+        run: npx playwright install
+
+      - name: Run E2E tests
+        run: npm run test:e2e
+```
+
+---
+
 ## 🐛 常見問題
 
 ### ❓ 安裝和啟動問題
@@ -1503,6 +2110,338 @@ A: 確保 SPA 路由配置正確：
   );
 </script>
 ```
+
+---
+
+## 📈 版本歷史
+
+### 🚀 最新版本 (v3.0.0)
+
+**發布日期：** 2024年1月
+
+#### ✨ 新功能
+
+- 🎨 全新的響應式設計系統，支援多設備適配
+- 🧪 完整的 PySDA 時空點擴散分析實現
+- 📊 增強的 D3.js 視覺化功能
+- 🔧 改進的空間分析算法性能
+- 📱 優化的行動裝置體驗
+
+#### 🔧 改進
+
+- 重構核心模組架構，提升代碼可維護性
+- 優化數據載入和處理流程
+- 增強錯誤處理和用戶反饋
+- 改進地圖渲染性能
+
+#### 🐛 修復
+
+- 修復圖層切換時的記憶體洩漏問題
+- 解決大數據集載入時的卡頓問題
+- 修復行動裝置上的觸控操作問題
+
+### 📋 版本 v2.1.0
+
+**發布日期：** 2023年11月
+
+#### ✨ 新功能
+
+- 🗺️ 支援多底圖切換功能
+- 📊 新增 Join Counts 空間分析
+- 🎯 改進的圖層管理系統
+- 📱 響應式佈局優化
+
+#### 🔧 改進
+
+- 優化空間分析計算性能
+- 改進用戶界面設計
+- 增強數據處理穩定性
+
+### 📋 版本 v2.0.0
+
+**發布日期：** 2023年9月
+
+#### ✨ 重大更新
+
+- 🔄 從 Vue 2 升級到 Vue 3
+- 📦 引入 Pinia 狀態管理
+- 🧪 實現完整的空間分析算法套件
+- 🎨 全新的 UI 設計系統
+
+#### 🔧 架構改進
+
+- 採用 Composition API 重構組件
+- 實現模組化的空間分析引擎
+- 優化數據流和狀態管理
+
+### 📋 版本 v1.5.0
+
+**發布日期：** 2023年6月
+
+#### ✨ 新功能
+
+- 🗺️ 基礎地圖功能實現
+- 📊 簡單的數據視覺化
+- 🧪 Moran's I 空間自相關分析
+- 📱 基礎響應式設計
+
+### 📋 版本 v1.0.0
+
+**發布日期：** 2023年3月
+
+#### 🎉 初始發布
+
+- 🏗️ 基礎專案架構
+- 🗺️ 基本地圖顯示功能
+- 📊 簡單的數據載入和顯示
+- 📚 完整的文檔系統
+
+---
+
+## 🤝 貢獻指南
+
+### 🌟 如何貢獻
+
+我們歡迎所有形式的貢獻！無論是代碼、文檔、設計還是建議，都能幫助這個專案變得更好。
+
+#### 📋 貢獻類型
+
+1. **🐛 Bug 修復**：修復現有功能中的問題
+2. **✨ 新功能**：添加新的功能或特性
+3. **📚 文檔改進**：完善文檔和註釋
+4. **🎨 UI/UX 改進**：改進用戶界面和體驗
+5. **⚡ 性能優化**：提升系統性能
+6. **🧪 測試**：添加或改進測試用例
+
+#### 🚀 快速開始
+
+1. **Fork 專案**
+
+   ```bash
+   # 在 GitHub 上 Fork 本專案
+   # 然後克隆你的 Fork
+   git clone https://github.com/YOUR_USERNAME/schematic-map-rwd.git
+   cd schematic-map-rwd
+   ```
+
+2. **設置開發環境**
+
+   ```bash
+   # 安裝依賴
+   npm install
+
+   # 啟動開發服務器
+   npm run serve
+   ```
+
+3. **創建功能分支**
+
+   ```bash
+   git checkout -b feature/your-feature-name
+   # 或
+   git checkout -b bugfix/your-bug-fix
+   ```
+
+4. **進行開發**
+
+   - 編寫代碼
+   - 添加測試
+   - 更新文檔
+   - 確保代碼符合專案標準
+
+5. **提交變更**
+
+   ```bash
+   git add .
+   git commit -m "feat: add new spatial analysis method"
+   git push origin feature/your-feature-name
+   ```
+
+6. **創建 Pull Request**
+   - 在 GitHub 上創建 Pull Request
+   - 詳細描述你的變更
+   - 等待代碼審查
+
+### 📝 代碼規範
+
+#### 🔧 代碼風格
+
+- **JavaScript/Vue**：遵循 ESLint 和 Prettier 配置
+- **CSS**：使用 Bootstrap 工具類，避免自定義樣式
+- **註釋**：所有函數必須包含 JSDoc 註釋
+- **命名**：使用有意義的變數和函數名稱
+
+#### 📋 提交訊息規範
+
+使用 Conventional Commits 格式：
+
+```bash
+# 功能新增
+git commit -m "feat: add new spatial analysis algorithm"
+
+# Bug 修復
+git commit -m "fix: resolve memory leak in layer management"
+
+# 文檔更新
+git commit -m "docs: update API documentation"
+
+# 性能優化
+git commit -m "perf: optimize data loading performance"
+
+# 重構
+git commit -m "refactor: restructure spatial analysis modules"
+```
+
+#### 🧪 測試要求
+
+- **單元測試**：新增功能必須包含單元測試
+- **整合測試**：複雜功能需要整合測試
+- **E2E 測試**：用戶流程需要端到端測試
+
+```bash
+# 運行所有測試
+npm run test:all
+
+# 運行特定測試
+npm run test:unit
+npm run test:integration
+npm run test:e2e
+```
+
+### 🎯 開發指南
+
+#### 🏗️ 添加新的空間分析方法
+
+1. **創建算法模組**
+
+   ```javascript
+   // src/utils/spatialAnalysis/esda/yourMethod.js
+   /**
+    * 你的空間分析方法
+    * @param {Array} data - 輸入數據
+    * @param {Object} options - 選項參數
+    * @returns {Object} - 分析結果
+    */
+   export function calculateYourMethod(data, options = {}) {
+     // 實現你的算法
+   }
+   ```
+
+2. **集成到主分析函數**
+
+   ```javascript
+   // src/utils/spatialAnalysis/calculateSpatialAnalysis.js
+   import { calculateYourMethod } from './esda/yourMethod.js';
+
+   // 添加到分析方法映射
+   const methods = {
+     // ... 現有方法
+     yourmethod: calculateYourMethod,
+   };
+   ```
+
+3. **添加 UI 支援**
+   ```vue
+   <!-- 在 SpatialAnalysisTab.vue 中添加選項 -->
+   <option value="yourmethod">你的分析方法</option>
+   ```
+
+#### 🎨 添加新的視覺化類型
+
+1. **創建視覺化函數**
+
+   ```javascript
+   // src/utils/visualization/yourChart.js
+   /**
+    * 創建你的圖表
+    * @param {string} containerId - 容器 ID
+    * @param {Array} data - 數據
+    * @param {Object} options - 選項
+    */
+   export function createYourChart(containerId, data, options = {}) {
+     // 實現你的視覺化邏輯
+   }
+   ```
+
+2. **集成到組件**
+   ```vue
+   <!-- 在相應的組件中使用 -->
+   <script>
+     import { createYourChart } from '@/utils/visualization/yourChart.js';
+   </script>
+   ```
+
+### 🔍 代碼審查流程
+
+#### 📋 審查檢查清單
+
+- [ ] 代碼符合專案規範
+- [ ] 包含適當的測試
+- [ ] 文檔已更新
+- [ ] 沒有破壞性變更
+- [ ] 性能影響已評估
+- [ ] 安全性考慮已包含
+
+#### 👥 審查流程
+
+1. **自動檢查**：CI/CD 管道運行測試和 linting
+2. **代碼審查**：至少需要一位維護者審查
+3. **測試驗證**：確保所有測試通過
+4. **文檔更新**：確認文檔已同步更新
+
+### 🐛 回報問題
+
+#### 📝 Bug 報告模板
+
+```markdown
+**Bug 描述** 簡潔描述問題
+
+**重現步驟**
+
+1. 進入 '...'
+2. 點擊 '...'
+3. 滾動到 '...'
+4. 看到錯誤
+
+**預期行為** 描述你期望發生什麼
+
+**實際行為** 描述實際發生什麼
+
+**環境信息**
+
+- 作業系統：Windows 10
+- 瀏覽器：Chrome 91
+- 版本：v3.0.0
+
+**截圖** 如果適用，添加截圖
+
+**額外信息** 任何其他相關信息
+```
+
+#### 💡 功能建議模板
+
+```markdown
+**功能描述** 簡潔描述建議的功能
+
+**使用場景** 描述為什麼需要這個功能
+
+**解決方案** 描述你希望的解決方案
+
+**替代方案** 描述你考慮過的其他解決方案
+
+**額外信息** 任何其他相關信息
+```
+
+### 📞 獲得幫助
+
+- **GitHub
+  Issues**：[提交問題或建議](https://github.com/kevin7261/schematic-map-rwd/issues)
+- **討論區**：使用 GitHub Discussions 進行討論
+- **電子郵件**：kevin7261@gmail.com
+
+### 🙏 致謝
+
+感謝所有為這個專案做出貢獻的開發者！
 
 ---
 

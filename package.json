@@ -1,61 +1,148 @@
 {
+  "_comment": "📦 package.json - Node.js 專案配置文件",
+  "_description": "示意圖響應式網站的依賴管理和腳本配置",
+  "_version": "2.0.0",
+  "_author": "Kevin Cheng",
+
   "name": "schematic-map-rwd",
   "version": "0.1.0",
   "private": true,
   "homepage": "https://kevin7261.github.io/schematic-map-rwd",
   "scripts": {
+    "_comment_scripts": "🚀 NPM 腳本命令配置",
+    "_description_scripts": "定義專案的開發、建置、部署等命令",
+
     "serve": "vue-cli-service serve --port 8080",
+    "_comment_serve": "🖥️ 啟動開發伺服器，在 8080 端口運行",
+
     "build": "vue-cli-service build",
+    "_comment_build": "📦 建置生產版本，生成 dist 目錄",
+
     "lint": "vue-cli-service lint",
+    "_comment_lint": "🔍 檢查程式碼品質，使用 ESLint 規則",
+
     "lint:fix": "vue-cli-service lint --fix",
+    "_comment_lint_fix": "🔧 自動修復 ESLint 可修復的問題",
+
     "prettier": "prettier --write .",
+    "_comment_prettier": "🎨 使用 Prettier 格式化所有程式碼檔案",
+
     "prettier:check": "prettier --check .",
+    "_comment_prettier_check": "✅ 檢查程式碼格式是否符合 Prettier 規範",
+
     "format": "npm run prettier && npm run lint:fix",
+    "_comment_format": "🔄 組合命令：先格式化再修復程式碼品質問題",
+
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist --no-history"
+    "_comment_predeploy": "🚀 部署前準備：建置生產版本",
+
+    "deploy": "gh-pages -d dist --no-history",
+    "_comment_deploy": "🌐 部署到 GitHub Pages，使用 gh-pages 工具"
   },
   "dependencies": {
+    "_comment_dependencies": "📦 生產環境依賴項目",
+    "_description_dependencies": "應用程式運行時必需的套件",
+
     "@fortawesome/fontawesome-free": "^6.7.2",
+    "_comment_fontawesome": "🎨 Font Awesome 圖標庫，提供豐富的圖標字體",
+
     "bootstrap": "^5.3.0",
+    "_comment_bootstrap": "🎨 Bootstrap 5 UI 框架，提供響應式佈局和組件",
+
     "core-js": "^3.8.3",
+    "_comment_corejs": "🔧 JavaScript 標準庫 polyfill，確保舊瀏覽器兼容性",
+
     "d3": "^7.8.0",
+    "_comment_d3": "📊 D3.js 數據視覺化庫，用於繪製示意圖和圖表",
+
     "pinia": "^2.1.0",
+    "_comment_pinia": "🏪 Pinia 狀態管理庫，Vue 3 官方推薦的狀態管理解決方案",
+
     "vue": "^3.2.13",
-    "vue-router": "^4.5.1"
+    "_comment_vue": "⚡ Vue 3 前端框架，提供響應式數據綁定和組件化開發",
+
+    "vue-router": "^4.5.1",
+    "_comment_vue_router": "🗺️ Vue Router 4 路由管理庫，提供單頁應用路由功能"
   },
   "devDependencies": {
+    "_comment_devDependencies": "🛠️ 開發環境依賴項目",
+    "_description_devDependencies": "僅在開發和建置時需要的套件",
+
     "@babel/core": "^7.12.16",
+    "_comment_babel_core": "🔧 Babel 核心編譯器，用於 JavaScript 轉譯",
+
     "@babel/eslint-parser": "^7.12.16",
+    "_comment_babel_eslint_parser": "🔍 Babel ESLint 解析器，支援現代 JavaScript 語法",
+
     "@vue/cli-plugin-babel": "^5.0.8",
+    "_comment_vue_cli_babel": "⚡ Vue CLI Babel 插件，整合 Babel 轉譯功能",
+
     "@vue/cli-plugin-eslint": "^5.0.8",
+    "_comment_vue_cli_eslint": "🔍 Vue CLI ESLint 插件，整合程式碼品質檢查",
+
     "@vue/cli-service": "^5.0.8",
+    "_comment_vue_cli_service": "⚡ Vue CLI 服務，提供開發和建置功能",
+
     "eslint": "^8.57.0",
+    "_comment_eslint": "🔍 ESLint 程式碼品質檢查工具",
+
     "eslint-config-prettier": "^10.1.5",
+    "_comment_eslint_config_prettier": "🎨 ESLint Prettier 配置，避免與 Prettier 衝突",
+
     "eslint-plugin-prettier": "^5.4.1",
+    "_comment_eslint_plugin_prettier": "🎨 ESLint Prettier 插件，整合程式碼格式化",
+
     "eslint-plugin-vue": "^9.27.0",
+    "_comment_eslint_plugin_vue": "🔍 ESLint Vue 插件，支援 Vue 單文件組件檢查",
+
     "gh-pages": "^5.0.0",
+    "_comment_gh_pages": "🌐 GitHub Pages 部署工具",
+
     "html-webpack-plugin": "^4.5.2",
-    "prettier": "^3.5.3"
+    "_comment_html_webpack_plugin": "📄 HTML Webpack 插件，生成 HTML 檔案",
+
+    "prettier": "^3.5.3",
+    "_comment_prettier": "🎨 Prettier 程式碼格式化工具"
   },
   "eslintConfig": {
+    "_comment_eslintConfig": "🔍 ESLint 程式碼品質檢查配置",
+    "_description_eslintConfig": "定義程式碼檢查規則和環境設定",
+
     "root": true,
+    "_comment_root": "🎯 設定為根配置，停止向上查找其他 ESLint 配置",
+
     "env": {
       "node": true,
       "es2022": true
     },
+    "_comment_env": "🌍 指定程式碼運行環境，支援 Node.js 和 ES2022 語法",
+
     "extends": ["plugin:vue/vue3-essential", "eslint:recommended"],
+    "_comment_extends": "📋 繼承的 ESLint 規則集，包含 Vue 3 和推薦規則",
+
     "parserOptions": {
       "parser": "@babel/eslint-parser",
       "requireConfigFile": false,
       "ecmaVersion": 2022,
       "sourceType": "module"
     },
+    "_comment_parserOptions": "🔧 解析器選項，使用 Babel 解析器支援現代語法",
+
     "rules": {
       "prettier/prettier": "off",
+      "_comment_prettier_rule": "🎨 關閉 Prettier 規則，避免與 ESLint 衝突",
+
       "no-console": "warn",
+      "_comment_no_console": "⚠️ console 語句警告而非錯誤，允許開發時使用",
+
       "no-debugger": "warn",
-      "vue/multi-word-component-names": "off"
+      "_comment_no_debugger": "⚠️ debugger 語句警告而非錯誤，允許調試時使用",
+
+      "vue/multi-word-component-names": "off",
+      "_comment_vue_multi_word": "🔧 關閉 Vue 組件名稱必須多詞的規則"
     }
   },
-  "browserslist": ["> 1%", "last 2 versions", "not dead", "not ie 11"]
+  "browserslist": ["> 1%", "last 2 versions", "not dead", "not ie 11"],
+  "_comment_browserslist": "🌐 瀏覽器支援列表，定義目標瀏覽器範圍",
+  "_description_browserslist": "用於 Babel 和 Autoprefixer 等工具的瀏覽器支援配置"
 }

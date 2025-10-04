@@ -1,5 +1,9 @@
 <template>
+  <!-- 📊 行政區分布示意圖組件容器 -->
+  <!-- 提供完整的示意圖顯示區域，支援響應式佈局 -->
   <div class="administrative-district-schematic w-100 h-100">
+    <!-- 🎨 D3.js 圖表容器 -->
+    <!-- 用於渲染示意圖的 SVG 元素，支援動態尺寸調整 -->
     <div id="diagram" class="w-100 h-100" style="min-height: 300px; overflow: hidden"></div>
   </div>
 </template>
@@ -8,19 +12,49 @@
   /**
    * 📊 AdministrativeDistrictSchematic.vue - 行政區分布示意圖組件
    *
-   * 功能說明：
-   * 1. 📊 載入示意圖數據 - 從 data.json 載入行政區數據
-   * 2. 🎨 繪製網格系統 - 主要和次要網格線
-   * 3. 🔗 節點連接渲染 - 根據節點類型繪製不同的連接線和圓弧
-   * 4. 📝 數值標籤顯示 - 在節點位置顯示數值
-   * 5. 📱 響應式設計 - 根據容器大小自動調整
+   * 功能說明 (Features):
+   * 1. 📊 示意圖數據載入：從 data.json 載入行政區分布數據
+   * 2. 🎨 網格系統繪製：繪製主要和次要網格線，提供空間參考
+   * 3. 🔗 節點連接渲染：根據節點類型繪製不同的連接線和圓弧
+   * 4. 📝 數值標籤顯示：在節點位置顯示對應的數值標籤
+   * 5. 📱 響應式設計：根據容器大小自動調整圖表尺寸
+   * 6. 🎯 互動功能：支援滑鼠懸停和點擊事件
+   * 7. 🔄 動態更新：支援數據變更時的圖表重新渲染
+   *
+   * 技術特點 (Technical Features):
+   * - 使用 D3.js 進行數據視覺化
+   * - 支援 SVG 向量圖形渲染
+   * - 實現響應式佈局和尺寸調整
+   * - 提供平滑的動畫過渡效果
+   * - 支援多種節點類型的視覺化
+   *
+   * 數據格式 (Data Format):
+   * - 支援示意圖節點數據格式
+   * - 包含節點座標、類型、數值等資訊
+   * - 支援多條路線的並行顯示
    *
    * @component AdministrativeDistrictSchematic
-   * @version 1.0.0
+   * @version 2.0.0
    * @author Kevin Cheng
+   * @since 1.0.0
    */
 
+  // ==================== 📦 第三方庫引入 (Third-Party Library Imports) ====================
+
+  /**
+   * Vue 3 Composition API 核心功能引入
+   * 提供響應式數據、生命週期鉤子等功能
+   *
+   * @see https://vuejs.org/
+   */
   import { ref, onMounted, onUnmounted, nextTick } from 'vue';
+
+  /**
+   * D3.js 數據視覺化庫引入
+   * 提供強大的數據視覺化和 DOM 操作功能
+   *
+   * @see https://d3js.org/
+   */
   import * as d3 from 'd3';
 
   // 響應式數據
