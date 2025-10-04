@@ -3,8 +3,28 @@
   "version": "0.1.0",
   "private": true,
   "homepage": "https://kevin7261.github.io/schematic-map-rwd",
-  "description": "一個專為登革熱疫情分析而設計的現代化地理空間分析與視覺化平台",
+  "description": "一個專為登革熱疫情分析而設計的現代化地理空間分析與視覺化平台 | A modern geospatial analysis and visualization platform designed for dengue fever epidemic analysis",
   "author": "Kevin Cheng <kevin7261@gmail.com>",
+  "keywords": [
+    "vue3",
+    "d3js",
+    "bootstrap",
+    "pinia",
+    "spatial-analysis",
+    "dengue-fever",
+    "visualization",
+    "geospatial",
+    "responsive-design",
+    "schematic-map"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kevin7261/schematic-map-rwd.git"
+  },
+  "bugs": {
+    "url": "https://github.com/kevin7261/schematic-map-rwd/issues"
+  },
+  "license": "MIT",
   "scripts": {
     "serve": "vue-cli-service serve --port 8080",
     "build": "vue-cli-service build",
