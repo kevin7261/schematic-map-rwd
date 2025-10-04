@@ -183,7 +183,6 @@
 
     // 畫布長寬px
     let dimensions = getDimensions();
-    console.log('dimensions', dimensions);
 
     // 添加適當的邊距，確保內容不被截斷
     const margin = { top: 20, right: 20, bottom: 20, left: 20 };
@@ -234,18 +233,11 @@
       .style('background-color', COLOR_BACKGROUND)
       .style('transition', 'all 0.2s ease-in-out'); // 添加平滑過渡效果
 
-    // 計算網格尺寸，確保內容完全適應容器
-    const gridWidth = width / xMax;
-    const gridHeight = height / yMax;
-
     // 直接使用容器的完整尺寸，允許形狀變形以完全填滿容器
     const actualWidth = width;
     const actualHeight = height;
 
-    console.log('Container dimensions:', { width, height });
-    console.log('Actual drawing area:', { actualWidth, actualHeight });
-    console.log('Data bounds:', { xMax, yMax });
-    console.log('Grid dimensions:', { gridWidth, gridHeight });
+    // 繪製參數已準備就緒
 
     // 設定比例尺，使用實際繪圖區域
     const x = d3
@@ -603,22 +595,11 @@
   };
 
   /**
-   * 📏 調整尺寸 (Resize)
+   * 📏 調整尺寸 (Resize) - 立即重繪，無延遲
    */
   const resize = () => {
-    // 使用 nextTick 確保 DOM 更新完成後再重繪
-    nextTick(() => {
-      draw();
-    });
-  };
-
-  // 防抖函數，避免過於頻繁的重繪
-  let resizeTimeout = null;
-  const debouncedResize = () => {
-    if (resizeTimeout) {
-      clearTimeout(resizeTimeout);
-    }
-    resizeTimeout = setTimeout(resize, 250); // 250ms 防抖，減少閃爍
+    // 立即重繪，不使用 nextTick 避免延遲
+    draw();
   };
 
   // ResizeObserver 實例
@@ -632,34 +613,17 @@
     resize();
 
     // 監聽窗口大小變化
-    window.addEventListener('resize', debouncedResize);
+    window.addEventListener('resize', resize);
 
     // 監聽容器尺寸變化
     const container = document.getElementById('diagram');
     if (container && window.ResizeObserver) {
-      let lastWidth = 0;
-      let lastHeight = 0;
-
       resizeObserver = new ResizeObserver((entries) => {
-        // 檢查尺寸是否真的改變了
+        // 立即響應任何尺寸變化，無閾值檢查
         for (let entry of entries) {
           const { width, height } = entry.contentRect;
           if (width > 0 && height > 0) {
-            // 只有當尺寸變化超過閾值時才觸發重繪
-            const widthDiff = Math.abs(width - lastWidth);
-            const heightDiff = Math.abs(height - lastHeight);
-
-            if (widthDiff > 10 || heightDiff > 10) {
-              console.log('ResizeObserver detected significant size change:', {
-                width,
-                height,
-                widthDiff,
-                heightDiff,
-              });
-              lastWidth = width;
-              lastHeight = height;
-              debouncedResize();
-            }
+            resize(); // 立即重繪，無延遲
           }
         }
       });
@@ -675,13 +639,7 @@
 
   // 組件卸載
   onUnmounted(() => {
-    window.removeEventListener('resize', debouncedResize);
-
-    // 清理防抖定時器
-    if (resizeTimeout) {
-      clearTimeout(resizeTimeout);
-      resizeTimeout = null;
-    }
+    window.removeEventListener('resize', resize);
 
     // 清理 ResizeObserver
     if (resizeObserver) {
