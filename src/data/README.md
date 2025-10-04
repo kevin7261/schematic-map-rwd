@@ -11,9 +11,9 @@ src/data/
 ├── districts/               # 行政區相關資料
 │   ├── taipei-districts.json
 │   └── population-data.json
-├── geojson/                 # 地理資料檔案
-│   ├── taipei-boundaries.geojson
-│   └── roads-network.geojson
+├── schematic/               # 示意圖資料檔案
+│   ├── nodes-data.json
+│   └── routes-data.json
 ├── statistics/              # 統計資料
 │   ├── demographic-data.json
 │   └── economic-indicators.json
@@ -89,19 +89,19 @@ export default {
 }
 ```
 
-### 地理資料結構
+### 示意圖資料結構
 
 ```json
-{
-  "type": "FeatureCollection",
-  "features": [
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "區域名稱",
-        "id": "unique-id"
-      },
-      "geometry": {
+[
+  {
+    "name": "路線名稱",
+    "color": "#ff0000",
+    "nodes": [
+      {
+        "id": "node-1",
+        "name": "節點名稱",
+        "x": 100,
+        "y": 200
         "type": "Point",
         "coordinates": [121.5654, 25.033]
       }

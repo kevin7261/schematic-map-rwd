@@ -127,8 +127,8 @@
         <!-- 主群組 -->
         <div v-for="mainGroup in layers" :key="mainGroup.groupName" class="p-3">
           <!-- 主群組標題 -->
-          <div class="d-flex align-items-center justify-content-center pb-2">
-            <div class="my-title-sm-gray">{{ mainGroup.groupName }}</div>
+          <div class="d-flex align-items-center pb-2">
+            <div class="my-title-xs-gray">{{ mainGroup.groupName }}</div>
           </div>
 
           <!-- 圖層列表 -->

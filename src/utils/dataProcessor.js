@@ -48,7 +48,7 @@ const PATH_CONFIG = {
  * - 嘗試從主要路徑載入檔案
  * - 失敗時自動切換到備用路徑
  * - 提供詳細的錯誤資訊和載入狀態
- * - 支援多種檔案格式（JSON、CSV 等）
+ * - 支援 JSON 檔案格式
  *
  * @param {string} primaryPath - 主要檔案路徑
  * @param {string} [fallbackPath] - 備用檔案路徑（可選）
@@ -160,33 +160,28 @@ async function processDataLayerJson(jsonData) {
     }));
 
     return {
-      geoJsonData: null, // 示意圖數據不需要地圖顯示
+      jsonData: null, // 示意圖數據不需要地圖顯示
       summaryData,
       tableData,
     };
   }
 
-  // 標準 JSON 格式處理
-  if (!jsonData.features) {
-    throw new Error('無效的 JSON 格式：缺少 features 屬性');
-  }
+  // 標準 JSON 格式處理 - 示意圖節點數據
+  console.log('📊 載入標準 JSON 數據，共', jsonData.length, '個項目');
 
   // 建立摘要資料
   const summaryData = {
-    totalCount: jsonData.features.length,
-    districtCount: jsonData.features.map((feature) => ({
-      name: feature.properties.name,
-      count: Math.max(0, feature.properties.stationCount || 1), // 確保 count 不為負值
-    })),
+    totalCount: jsonData.length,
+    itemNames: jsonData.map((item) => item.name || item.id || '未命名項目'),
   };
 
   return {
-    geoJsonData: jsonData,
+    jsonData: jsonData,
     summaryData,
-    tableData: jsonData.features.map((feature, index) => ({
+    tableData: jsonData.map((item, index) => ({
       '#': index + 1,
-      name: feature.properties.name,
-      ...feature.properties,
+      name: item.name || item.id || '未命名項目',
+      ...item,
     })),
   };
 }

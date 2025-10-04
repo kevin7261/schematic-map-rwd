@@ -60,7 +60,7 @@ export const useDataStore = defineStore(
   () => {
     // ==================== 圖層狀態管理 ====================
 
-    // 存儲所有圖層的狀態 (visible, isLoaded, geoJsonData 等)
+    // 存儲所有圖層的狀態 (visible, isLoaded, jsonData 等)
     const layerStates = ref({});
 
     // 靜態定義的圖層配置
@@ -70,14 +70,14 @@ export const useDataStore = defineStore(
         groupLayers: [
           {
             layerId: 'data_layer',
-            layerName: '數據圖層',
+            layerName: 'Taipei Metro',
             visible: false,
             isLoading: false,
             isLoaded: false,
             type: 'point',
             shape: null,
             colorName: 'orange',
-            geoJsonData: null,
+            jsonData: null,
             summaryData: null,
             tableData: null,
             legendData: null,
@@ -208,7 +208,7 @@ export const useDataStore = defineStore(
           const result = await layer.jsonLoader(layer);
 
           // 更新圖層資料
-          layer.geoJsonData = result.geoJsonData;
+          layer.jsonData = result.jsonData;
           layer.tableData = result.tableData;
           layer.summaryData = result.summaryData;
           layer.legendData = result.legendData || null;
@@ -220,7 +220,7 @@ export const useDataStore = defineStore(
           // 保存完整的圖層狀態
           saveLayerState(layerId, {
             isLoaded: layer.isLoaded,
-            geoJsonData: layer.geoJsonData,
+            jsonData: layer.jsonData,
             tableData: layer.tableData,
             summaryData: layer.summaryData,
             legendData: layer.legendData,

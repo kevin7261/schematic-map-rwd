@@ -11,9 +11,9 @@ src/data/
 ├── districts/               # 行政區相關資料
 │   ├── taipei-districts.json
 │   └── population-data.json
-├── geojson/                 # 地理資料檔案
-│   ├── taipei-boundaries.geojson
-│   └── roads-network.geojson
+├── schematic/               # 示意圖資料檔案
+│   ├── nodes-data.json
+│   └── routes-data.json
 ├── statistics/              # 統計資料
 │   ├── demographic-data.json
 │   └── economic-indicators.json
@@ -59,11 +59,11 @@ import sampleData from '@/data/sample-data.json'
 export default {
   setup() {
     const data = ref(null)
-    
+
     onMounted(() => {
       data.value = sampleData
     })
-    
+
     return { data }
   }
 }
@@ -87,24 +87,22 @@ export default {
 }
 ```
 
-### 地理資料結構
+### 示意圖資料結構
 ```json
-{
-  "type": "FeatureCollection",
-  "features": [
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "區域名稱",
-        "id": "unique-id"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [121.5654, 25.0330]
+[
+  {
+    "name": "路線名稱",
+    "color": "#ff0000",
+    "nodes": [
+      {
+        "id": "node-1",
+        "name": "節點名稱",
+        "x": 100,
+        "y": 200
       }
-    }
-  ]
-}
+    ]
+  }
+]
 ```
 
 ## 注意事項
@@ -120,4 +118,4 @@ export default {
 - 對於大型資料集，考慮使用 Web Workers 處理
 - 實作資料快取機制避免重複載入
 - 使用分頁或虛擬滾動處理大量資料顯示
-- 考慮使用 IndexedDB 存放客戶端資料 
+- 考慮使用 IndexedDB 存放客戶端資料
