@@ -1123,6 +1123,14 @@ export function processGridToDrawData(processedData) {
     .filter(({ stat }) => stat.max === minColumnMax)
     .map(({ index }) => index);
 
+  // 計算需要高亮的 row（基於最大值最小的 row）
+  const rowMaxValues = yRowStats.map((stat) => stat.max);
+  const minRowMax = Math.min(...rowMaxValues);
+  const highlightRowIndices = yRowStats
+    .map((stat, index) => ({ stat, index }))
+    .filter(({ stat }) => stat.max === minRowMax)
+    .map(({ index }) => index);
+
   return {
     type: 'grid',
     gridX,
@@ -1139,6 +1147,7 @@ export function processGridToDrawData(processedData) {
       // 簡化的顏色配置
       color: '#4CAF50', // 預設綠色
       highlightColumnIndices, // 需要高亮的 column 索引（紅色）
+      highlightRowIndices, // 需要高亮的 row 索引（紅色）
     },
   };
 }

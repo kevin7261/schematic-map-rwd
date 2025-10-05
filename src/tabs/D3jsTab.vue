@@ -525,8 +525,14 @@
     const drawJsonData = currentLayer ? currentLayer.drawJsonData : null;
 
     if (drawJsonData && drawJsonData.statsLabels) {
-      const { xRowStats, yRowStats, overallStats, color, highlightColumnIndices } =
-        drawJsonData.statsLabels;
+      const {
+        xRowStats,
+        yRowStats,
+        overallStats,
+        color,
+        highlightColumnIndices,
+        highlightRowIndices,
+      } = drawJsonData.statsLabels;
 
       // 繪製 X 排（垂直方向）統計標籤 - 只顯示最大值
       if (xRowStats) {
@@ -558,11 +564,19 @@
 
       // 繪製 Y 排（水平方向）統計標籤 - 只顯示最大值
       if (yRowStats) {
-        yRowStats.forEach((yStat) => {
+        yRowStats.forEach((yStat, index) => {
           const x = margin.left - labelOffset;
           const y = margin.top + (yStat.row + 0.5) * cellHeight;
 
-          // 只顯示最大值標籤（使用預設顏色）
+          // 根據 cellHeight 和是否需要高亮決定顏色
+          let textColor = color; // 預設顏色（綠色）
+
+          // 當 cellHeight < 40px 且是需要高亮的 row 時，使用紅色
+          if (cellHeight < 40 && highlightRowIndices.includes(index)) {
+            textColor = '#F44336'; // 紅色
+          }
+
+          // 只顯示最大值標籤
           statsGroup
             .append('text')
             .attr('x', x)
@@ -571,7 +585,7 @@
             .attr('dominant-baseline', 'middle')
             .attr('font-size', fontSize)
             .attr('font-weight', 'bold')
-            .attr('fill', color) // 預設顏色（綠色）
+            .attr('fill', textColor) // 動態顏色
             .text(`${yStat.max}`);
         });
       }
