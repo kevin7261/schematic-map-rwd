@@ -493,8 +493,8 @@
 
         // 如果該節點所在的 column 或 row 需要高亮，則將數字變為紅色
         if (
-          (cellWidth < 40 && highlightColumnIndices.includes(node.x)) ||
-          (cellHeight < 40 && highlightRowIndices.includes(node.y))
+          (cellWidth < 80 && highlightColumnIndices.includes(node.x)) ||
+          (cellHeight < 80 && highlightRowIndices.includes(node.y))
         ) {
           nodeColor = '#F44336'; // 紅色
         }
@@ -556,8 +556,8 @@
           // 根據 cellWidth 和是否需要高亮決定顏色
           let textColor = color; // 預設顏色（綠色）
 
-          // 當 cellWidth < 40px 且是需要高亮的 column 時，使用紅色
-          if (cellWidth < 40 && highlightColumnIndices.includes(index)) {
+          // 當 cellWidth < 80px 且是需要高亮的 column 時，使用紅色
+          if (cellWidth < 80 && highlightColumnIndices.includes(index)) {
             textColor = '#F44336'; // 紅色
           }
 
@@ -584,8 +584,8 @@
           // 根據 cellHeight 和是否需要高亮決定顏色
           let textColor = color; // 預設顏色（綠色）
 
-          // 當 cellHeight < 40px 且是需要高亮的 row 時，使用紅色
-          if (cellHeight < 40 && highlightRowIndices.includes(index)) {
+          // 當 cellHeight < 80px 且是需要高亮的 row 時，使用紅色
+          if (cellHeight < 80 && highlightRowIndices.includes(index)) {
             textColor = '#F44336'; // 紅色
           }
 
