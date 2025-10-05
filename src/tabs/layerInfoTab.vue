@@ -171,6 +171,152 @@
     return currentLayer ? currentLayer.layerInfoData || null : null;
   };
 
+  /**
+   * 📏 計算網格寬度 (Calculate Grid Width)
+   * 根據 D3js 容器尺寸和網格配置計算每個網格單元的寬度
+   *
+   * @returns {number} 網格單元寬度（像素）
+   * @description
+   * - 從當前圖層的 layerInfoData 或 processedJsonData 中獲取網格配置
+   * - 根據 D3js 容器尺寸和網格 X 方向數量計算單元寬度
+   * - 如果沒有網格配置則返回 0
+   */
+  const getGridWidth = () => {
+    const layerInfoData = getCurrentLayerInfoData();
+    const currentLayer = visibleLayers.value.find(
+      (layer) => layer.layerId === activeLayerTab.value
+    );
+
+    if (!dataStore.d3jsDimensions.width) {
+      return 0;
+    }
+
+    // 嘗試從不同來源獲取網格配置
+    let gridX = null;
+
+    // 1. 從 layerInfoData 獲取
+    if (layerInfoData && layerInfoData.gridX) {
+      gridX = layerInfoData.gridX;
+    }
+    // 2. 從 processedJsonData 獲取
+    else if (
+      currentLayer &&
+      currentLayer.processedJsonData &&
+      currentLayer.processedJsonData.gridX
+    ) {
+      gridX = currentLayer.processedJsonData.gridX;
+    }
+    // 3. 從 dashboardData 獲取
+    else if (currentLayer && currentLayer.dashboardData && currentLayer.dashboardData.gridX) {
+      gridX = currentLayer.dashboardData.gridX;
+    }
+
+    if (!gridX) {
+      console.log('🔍 Grid Width Debug: 找不到 gridX 配置', {
+        layerInfoData,
+        currentLayer: currentLayer
+          ? {
+              processedJsonData: currentLayer.processedJsonData,
+              dashboardData: currentLayer.dashboardData,
+            }
+          : null,
+      });
+
+      // 如果是非網格圖層，返回容器寬度作為參考
+      if (currentLayer && !currentLayer.isGridSchematic) {
+        console.log('🔍 非網格圖層，返回容器寬度作為參考');
+        return dataStore.d3jsDimensions.width;
+      }
+
+      return 0;
+    }
+
+    // 計算網格單元寬度：容器寬度 / 網格 X 方向數量
+    const containerWidth = dataStore.d3jsDimensions.width;
+    const cellWidth = Math.floor(containerWidth / gridX);
+
+    console.log('🔍 Grid Width Debug:', {
+      containerWidth,
+      gridX,
+      cellWidth,
+    });
+
+    return cellWidth;
+  };
+
+  /**
+   * 📏 計算網格高度 (Calculate Grid Height)
+   * 根據 D3js 容器尺寸和網格配置計算每個網格單元的高度
+   *
+   * @returns {number} 網格單元高度（像素）
+   * @description
+   * - 從當前圖層的 layerInfoData 或 processedJsonData 中獲取網格配置
+   * - 根據 D3js 容器尺寸和網格 Y 方向數量計算單元高度
+   * - 如果沒有網格配置則返回 0
+   */
+  const getGridHeight = () => {
+    const layerInfoData = getCurrentLayerInfoData();
+    const currentLayer = visibleLayers.value.find(
+      (layer) => layer.layerId === activeLayerTab.value
+    );
+
+    if (!dataStore.d3jsDimensions.height) {
+      return 0;
+    }
+
+    // 嘗試從不同來源獲取網格配置
+    let gridY = null;
+
+    // 1. 從 layerInfoData 獲取
+    if (layerInfoData && layerInfoData.gridY) {
+      gridY = layerInfoData.gridY;
+    }
+    // 2. 從 processedJsonData 獲取
+    else if (
+      currentLayer &&
+      currentLayer.processedJsonData &&
+      currentLayer.processedJsonData.gridY
+    ) {
+      gridY = currentLayer.processedJsonData.gridY;
+    }
+    // 3. 從 dashboardData 獲取
+    else if (currentLayer && currentLayer.dashboardData && currentLayer.dashboardData.gridY) {
+      gridY = currentLayer.dashboardData.gridY;
+    }
+
+    if (!gridY) {
+      console.log('🔍 Grid Height Debug: 找不到 gridY 配置', {
+        layerInfoData,
+        currentLayer: currentLayer
+          ? {
+              processedJsonData: currentLayer.processedJsonData,
+              dashboardData: currentLayer.dashboardData,
+            }
+          : null,
+      });
+
+      // 如果是非網格圖層，返回容器高度作為參考
+      if (currentLayer && !currentLayer.isGridSchematic) {
+        console.log('🔍 非網格圖層，返回容器高度作為參考');
+        return dataStore.d3jsDimensions.height;
+      }
+
+      return 0;
+    }
+
+    // 計算網格單元高度：容器高度 / 網格 Y 方向數量
+    const containerHeight = dataStore.d3jsDimensions.height;
+    const cellHeight = Math.floor(containerHeight / gridY);
+
+    console.log('🔍 Grid Height Debug:', {
+      containerHeight,
+      gridY,
+      cellHeight,
+    });
+
+    return cellHeight;
+  };
+
   // ==================== 👀 響應式監聽器 (Reactive Watchers) ====================
 
   /**
@@ -386,6 +532,10 @@
             <!-- D3jsTab 繪製範圍尺寸 -->
             <DetailItem label="D3js Width" :value="dataStore.d3jsDimensions.width + 'px'" />
             <DetailItem label="D3js Height" :value="dataStore.d3jsDimensions.height + 'px'" />
+
+            <!-- Grid 網格尺寸 -->
+            <DetailItem label="Grid Width" :value="getGridWidth() + 'px'" />
+            <DetailItem label="Grid Height" :value="getGridHeight() + 'px'" />
           </template>
 
           <!-- 錯誤顯示 -->
