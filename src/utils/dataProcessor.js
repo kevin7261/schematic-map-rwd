@@ -724,6 +724,54 @@ async function processGridSchematicJson(jsonData) {
     }
   }
 
+  // 計算 x 排和 y 排的最大值與最小值
+  const xRowStats = []; // 每一 x 排的統計數據
+  const yRowStats = []; // 每一 y 排的統計數據
+
+  // 計算 x 排統計（垂直方向）
+  for (let x = 0; x < gridX; x++) {
+    const xRowNodes = gridNodes.filter((node) => node.x === x);
+    const values = xRowNodes.map((node) => node.value);
+    xRowStats.push({
+      row: x,
+      min: Math.min(...values),
+      max: Math.max(...values),
+      sum: values.reduce((sum, val) => sum + val, 0),
+      count: values.length,
+      avg: (values.reduce((sum, val) => sum + val, 0) / values.length).toFixed(2),
+    });
+  }
+
+  // 計算 y 排統計（水平方向）
+  for (let y = 0; y < gridY; y++) {
+    const yRowNodes = gridNodes.filter((node) => node.y === y);
+    const values = yRowNodes.map((node) => node.value);
+    yRowStats.push({
+      row: y,
+      min: Math.min(...values),
+      max: Math.max(...values),
+      sum: values.reduce((sum, val) => sum + val, 0),
+      count: values.length,
+      avg: (values.reduce((sum, val) => sum + val, 0) / values.length).toFixed(2),
+    });
+  }
+
+  // 計算整體統計
+  const allValues = gridNodes.map((node) => node.value);
+  const overallStats = {
+    min: Math.min(...allValues),
+    max: Math.max(...allValues),
+    sum: allValues.reduce((sum, val) => sum + val, 0),
+    count: allValues.length,
+    avg: (allValues.reduce((sum, val) => sum + val, 0) / allValues.length).toFixed(2),
+  };
+
+  console.log('📊 網格統計數據計算完成:', {
+    xRowStats: xRowStats.slice(0, 3), // 顯示前3個 x 排的統計
+    yRowStats: yRowStats.slice(0, 3), // 顯示前3個 y 排的統計
+    overallStats,
+  });
+
   // 建立摘要資料
   const dashboardData = {
     totalNodes: gridX * gridY,
@@ -731,6 +779,19 @@ async function processGridSchematicJson(jsonData) {
     gridX: gridX,
     gridY: gridY,
     nodeCount: gridNodes.length,
+    // 新增統計數據
+    xRowStats: xRowStats,
+    yRowStats: yRowStats,
+    overallStats: overallStats,
+    // 簡化的統計摘要（用於儀表板顯示）
+    xRowMinMax: {
+      min: Math.min(...xRowStats.map((stat) => stat.min)),
+      max: Math.max(...xRowStats.map((stat) => stat.max)),
+    },
+    yRowMinMax: {
+      min: Math.min(...yRowStats.map((stat) => stat.min)),
+      max: Math.max(...yRowStats.map((stat) => stat.max)),
+    },
   };
 
   // 建立圖層資訊數據
@@ -739,6 +800,18 @@ async function processGridSchematicJson(jsonData) {
     gridSize: `${gridX} x ${gridY}`,
     gridX: gridX,
     gridY: gridY,
+    // 新增統計數據
+    xRowStats: xRowStats,
+    yRowStats: yRowStats,
+    overallStats: overallStats,
+    xRowMinMax: {
+      min: Math.min(...xRowStats.map((stat) => stat.min)),
+      max: Math.max(...xRowStats.map((stat) => stat.max)),
+    },
+    yRowMinMax: {
+      min: Math.min(...yRowStats.map((stat) => stat.min)),
+      max: Math.max(...yRowStats.map((stat) => stat.max)),
+    },
   };
 
   // 建立表格資料
@@ -749,6 +822,16 @@ async function processGridSchematicJson(jsonData) {
       gridSize: `${gridX} x ${gridY}`,
       totalNodes: gridX * gridY,
       nodes: gridNodes,
+      // 新增統計數據到表格
+      xRowMinMax: {
+        min: Math.min(...xRowStats.map((stat) => stat.min)),
+        max: Math.max(...xRowStats.map((stat) => stat.max)),
+      },
+      yRowMinMax: {
+        min: Math.min(...yRowStats.map((stat) => stat.min)),
+        max: Math.max(...yRowStats.map((stat) => stat.max)),
+      },
+      overallStats: overallStats,
     },
   ];
 
@@ -759,6 +842,18 @@ async function processGridSchematicJson(jsonData) {
       gridY: gridY,
       nodes: gridNodes,
       type: 'grid',
+      // 新增統計數據到處理後的數據
+      xRowStats: xRowStats,
+      yRowStats: yRowStats,
+      overallStats: overallStats,
+      xRowMinMax: {
+        min: Math.min(...xRowStats.map((stat) => stat.min)),
+        max: Math.max(...xRowStats.map((stat) => stat.max)),
+      },
+      yRowMinMax: {
+        min: Math.min(...yRowStats.map((stat) => stat.min)),
+        max: Math.max(...yRowStats.map((stat) => stat.max)),
+      },
     },
     dashboardData,
     dataTableData,

@@ -482,6 +482,37 @@ Cheng * @since 1.0.0 */
                       <div v-else-if="column === 'nodes'" class="my-content-xs-black px-3 py-2">
                         {{ Array.isArray(item[column]) ? item[column].length : '-' }}
                       </div>
+                      <!-- 特殊處理：xRowMinMax 欄位顯示 x 排最大值最小值 -->
+                      <div
+                        v-else-if="column === 'xRowMinMax'"
+                        class="my-content-xs-black px-3 py-2"
+                      >
+                        <div class="d-flex flex-column">
+                          <div>最小值: {{ item[column]?.min || '-' }}</div>
+                          <div>最大值: {{ item[column]?.max || '-' }}</div>
+                        </div>
+                      </div>
+                      <!-- 特殊處理：yRowMinMax 欄位顯示 y 排最大值最小值 -->
+                      <div
+                        v-else-if="column === 'yRowMinMax'"
+                        class="my-content-xs-black px-3 py-2"
+                      >
+                        <div class="d-flex flex-column">
+                          <div>最小值: {{ item[column]?.min || '-' }}</div>
+                          <div>最大值: {{ item[column]?.max || '-' }}</div>
+                        </div>
+                      </div>
+                      <!-- 特殊處理：overallStats 欄位顯示整體統計 -->
+                      <div
+                        v-else-if="column === 'overallStats'"
+                        class="my-content-xs-black px-3 py-2"
+                      >
+                        <div class="d-flex flex-column">
+                          <div>最小值: {{ item[column]?.min || '-' }}</div>
+                          <div>最大值: {{ item[column]?.max || '-' }}</div>
+                          <div>平均: {{ item[column]?.avg || '-' }}</div>
+                        </div>
+                      </div>
                       <!-- 特殊處理：name 欄位 -->
                       <div v-else-if="column === 'name'" class="my-content-xs-black px-3 py-2">
                         {{ item[column] || '-' }}
