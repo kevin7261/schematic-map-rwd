@@ -154,6 +154,84 @@
   };
 
   /**
+   * 🎨 格式化顯示值 (Format Display Value)
+   * 根據值的類型進行適當的格式化處理，避免顯示 [object Object]
+   *
+   * @param {any} value - 要格式化的值
+   * @returns {string} 格式化後的顯示值
+   * @description
+   * - 處理基本類型：直接返回
+   * - 處理陣列：格式化陣列內容
+   * - 處理物件：轉換為 JSON 字串或顯示物件屬性
+   * - 處理 null/undefined：顯示適當的預設值
+   */
+  const formatDisplayValue = (value) => {
+    // 處理 null 或 undefined
+    if (value === null || value === undefined) {
+      return '無資料';
+    }
+
+    // 處理基本類型
+    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+      return String(value);
+    }
+
+    // 處理陣列
+    if (Array.isArray(value)) {
+      if (value.length === 0) {
+        return '空陣列';
+      }
+
+      // 檢查陣列內容是否為物件
+      const hasObjects = value.some((item) => typeof item === 'object' && item !== null);
+
+      if (hasObjects) {
+        // 如果是物件陣列，顯示物件的主要屬性
+        return value
+          .map((item, index) => {
+            if (typeof item === 'object' && item !== null) {
+              // 嘗試顯示物件的主要屬性
+              const keys = Object.keys(item);
+              if (keys.length > 0) {
+                const mainKey = keys[0];
+                return `${index + 1}: ${mainKey}=${item[mainKey]}`;
+              }
+              return `${index + 1}: 物件`;
+            }
+            return String(item);
+          })
+          .join(', ');
+      } else {
+        // 基本類型陣列，直接連接
+        return value.join(', ');
+      }
+    }
+
+    // 處理物件
+    if (typeof value === 'object') {
+      const keys = Object.keys(value);
+      if (keys.length === 0) {
+        return '空物件';
+      }
+
+      // 如果物件屬性較少，顯示所有屬性
+      if (keys.length <= 3) {
+        return keys.map((key) => `${key}: ${value[key]}`).join(', ');
+      }
+
+      // 如果物件屬性較多，顯示前幾個屬性
+      const previewKeys = keys.slice(0, 2);
+      return (
+        previewKeys.map((key) => `${key}: ${value[key]}`).join(', ') +
+        ` ... (共 ${keys.length} 個屬性)`
+      );
+    }
+
+    // 其他類型，轉換為字串
+    return String(value);
+  };
+
+  /**
    * 📊 取得當前圖層資訊數據 (Get Current Layer Info Data)
    * 獲取當前選中圖層的 layerInfoData
    *
@@ -210,6 +288,39 @@
     else if (currentLayer && currentLayer.dashboardData && currentLayer.dashboardData.gridX) {
       gridX = currentLayer.dashboardData.gridX;
     }
+    // 4. 從台北捷運等示意圖數據計算網格尺寸
+    else if (
+      currentLayer &&
+      currentLayer.processedJsonData &&
+      Array.isArray(currentLayer.processedJsonData) &&
+      currentLayer.processedJsonData.length > 0 &&
+      currentLayer.processedJsonData[0].nodes
+    ) {
+      // 這是台北捷運等示意圖數據，需要從節點座標計算網格尺寸
+      const allXCoords = [];
+
+      currentLayer.processedJsonData.forEach((line) => {
+        if (line.nodes && Array.isArray(line.nodes)) {
+          line.nodes.forEach((node) => {
+            if (node.coord && typeof node.coord.x === 'number') {
+              allXCoords.push(node.coord.x);
+            }
+          });
+        }
+      });
+
+      if (allXCoords.length > 0) {
+        const minX = Math.min(...allXCoords);
+        const maxX = Math.max(...allXCoords);
+        gridX = maxX - minX + 1; // 網格寬度 = 最大x - 最小x + 1
+        console.log('🔍 從台北捷運數據計算網格寬度:', {
+          minX,
+          maxX,
+          gridX,
+          allXCoords: allXCoords.slice(0, 10),
+        });
+      }
+    }
 
     if (!gridX) {
       console.log('🔍 Grid Width Debug: 找不到 gridX 配置', {
@@ -222,10 +333,10 @@
           : null,
       });
 
-      // 如果是非網格圖層，返回容器寬度作為參考
+      // 如果是非網格圖層，返回 0 表示不適用
       if (currentLayer && !currentLayer.isGridSchematic) {
-        console.log('🔍 非網格圖層，返回容器寬度作為參考');
-        return dataStore.d3jsDimensions.width;
+        console.log('🔍 非網格圖層，Grid Width 不適用');
+        return 0;
       }
 
       return 0;
@@ -283,6 +394,39 @@
     else if (currentLayer && currentLayer.dashboardData && currentLayer.dashboardData.gridY) {
       gridY = currentLayer.dashboardData.gridY;
     }
+    // 4. 從台北捷運等示意圖數據計算網格尺寸
+    else if (
+      currentLayer &&
+      currentLayer.processedJsonData &&
+      Array.isArray(currentLayer.processedJsonData) &&
+      currentLayer.processedJsonData.length > 0 &&
+      currentLayer.processedJsonData[0].nodes
+    ) {
+      // 這是台北捷運等示意圖數據，需要從節點座標計算網格尺寸
+      const allYCoords = [];
+
+      currentLayer.processedJsonData.forEach((line) => {
+        if (line.nodes && Array.isArray(line.nodes)) {
+          line.nodes.forEach((node) => {
+            if (node.coord && typeof node.coord.y === 'number') {
+              allYCoords.push(node.coord.y);
+            }
+          });
+        }
+      });
+
+      if (allYCoords.length > 0) {
+        const minY = Math.min(...allYCoords);
+        const maxY = Math.max(...allYCoords);
+        gridY = maxY - minY + 1; // 網格高度 = 最大y - 最小y + 1
+        console.log('🔍 從台北捷運數據計算網格高度:', {
+          minY,
+          maxY,
+          gridY,
+          allYCoords: allYCoords.slice(0, 10),
+        });
+      }
+    }
 
     if (!gridY) {
       console.log('🔍 Grid Height Debug: 找不到 gridY 配置', {
@@ -295,10 +439,10 @@
           : null,
       });
 
-      // 如果是非網格圖層，返回容器高度作為參考
+      // 如果是非網格圖層，返回 0 表示不適用
       if (currentLayer && !currentLayer.isGridSchematic) {
-        console.log('🔍 非網格圖層，返回容器高度作為參考');
-        return dataStore.d3jsDimensions.height;
+        console.log('🔍 非網格圖層，Grid Height 不適用');
+        return 0;
       }
 
       return 0;
@@ -524,8 +668,7 @@
             <div v-for="(value, key) in getCurrentLayerInfoData()" :key="key" class="pb-2">
               <div class="my-title-xs-gray pb-1">{{ key }}</div>
               <div class="my-content-sm-black pb-1">
-                <span v-if="Array.isArray(value)">{{ value.join(', ') }}</span>
-                <span v-else>{{ value }}</span>
+                {{ formatDisplayValue(value) }}
               </div>
             </div>
 
@@ -534,8 +677,14 @@
             <DetailItem label="D3js Height" :value="dataStore.d3jsDimensions.height + 'px'" />
 
             <!-- Grid 網格尺寸 -->
-            <DetailItem label="Grid Width" :value="getGridWidth() + 'px'" />
-            <DetailItem label="Grid Height" :value="getGridHeight() + 'px'" />
+            <DetailItem
+              label="Grid Width"
+              :value="getGridWidth() > 0 ? getGridWidth() + 'px' : 'N/A'"
+            />
+            <DetailItem
+              label="Grid Height"
+              :value="getGridHeight() > 0 ? getGridHeight() + 'px' : 'N/A'"
+            />
           </template>
 
           <!-- 錯誤顯示 -->
