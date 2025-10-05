@@ -64,8 +64,7 @@
       const dataStore = useDataStore();
 
       // 📊 本地資料狀態 (Local Data State)
-      /** 📋 表格資料暫存 */
-      const dataTableData = ref([]);
+      // 移除了未使用的 dataTableData
 
       // 📚 組件引用 (Component References)
       /** 🌟 中間面板組件引用 */
@@ -151,8 +150,7 @@
 
       // 🗺️ 地圖和圖層狀態 (Map and Layer States)
       // 大部分狀態由 Pinia store 管理，此處保留 UI 控制相關狀態
-      /** 🔍 選定的資料篩選器 */
-      const selectedFilter = ref(null);
+      // 移除了未使用的 selectedFilter
       /** 🔍 地圖縮放等級 */
       const zoomLevel = ref(11);
       /** 📍 當前地圖座標 */
@@ -634,9 +632,6 @@
         showLoadingProgress, // 是否顯示進度條
         loadingSubText, // 載入子文字
 
-        // 🗺️ 圖層狀態
-        selectedFilter, // 選定篩選器
-
         // 🗺️ 地圖狀態
         zoomLevel, // 地圖縮放等級
         currentCoords, // 當前地圖座標
@@ -651,8 +646,6 @@
         rightViewWidthPx, // 右側面板像素寬度
         mainPanelWidth, // 中間面板寬度百分比
         mainPanelWidthPx, // 中間面板像素寬度
-
-        dataTableData, // 表格資料
 
         // 📥 數據管理功能
         resetView, // 重設視圖
@@ -738,7 +731,7 @@
             :activeUpperTab="activeUpperTab"
             :activeBottomTab="activeBottomTab"
             :mainPanelWidth="mainPanelWidth"
-            :selectedFilter="selectedFilter"
+            :selectedFilter="null"
             :zoomLevel="zoomLevel"
             :currentCoords="currentCoords"
             :activeMarkers="activeMarkers"
@@ -796,7 +789,7 @@
               :activeUpperTab="activeUpperTab"
               :mainPanelWidth="100"
               :contentHeight="Math.max(400, (100 - mobileBottomViewHeight) * windowHeight * 0.01)"
-              :selectedFilter="selectedFilter"
+              :selectedFilter="null"
               :zoomLevel="zoomLevel"
               :isPanelDragging="isVerticalDragging"
               :activeMarkers="activeMarkers"

@@ -76,18 +76,5 @@
    * 主要樣式規則已在 common.css 中定義，此處僅包含組件特定調整
    */
 
-  /* 📝 長文字自動換行處理 (Long Text Wrapping) */
-  /* 確保過長的數值能夠正確換行顯示，避免佈局破壞 */
-  .lead {
-    word-wrap: break-word; /* 強制長單詞在邊界處換行 */
-  }
-
-  /* 🖼️ 中間分隔器樣式 (Middle Resizer Styles) */
-  /* 為組件提供視覺分隔效果，增強內容層次感 */
-  .my-resizer-middle {
-    background-color: white; /* 白色背景 */
-    position: relative; /* 相對定位，便於邊框定位 */
-    border-top: 1px solid var(--my-color-gray-200); /* 上邊框分隔線 */
-    border-bottom: 1px solid var(--my-color-gray-200); /* 下邊框分隔線 */
-  }
+  /* 移除了未使用的樣式 */
 </style>

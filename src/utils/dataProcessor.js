@@ -362,107 +362,7 @@ export async function loadDataLayerJson(layer) {
   }
 }
 
-/**
- * 🎲 為節點隨機分配數值 (Randomize Node Values)
- *
- * 這是一個用於為節點數據隨機分配數值的輔助函數，主要用於測試和演示目的。
- * 該函數會為每個節點隨機分配一個 1-5 之間的整數值，用於模擬真實的數據分布
- * 和測試視覺化組件的顯示效果。
- *
- * 🎯 主要功能 (Main Features):
- * - 隨機數值生成：為每個節點生成 1-5 範圍內的隨機整數
- * - 數據保持：保持原始節點的其他屬性不變
- * - 詳細日誌：記錄每個節點的數值變化過程
- * - 批量處理：支援處理大量節點數據
- *
- * 🔧 技術實現 (Technical Implementation):
- * - 使用 Math.random() 生成隨機數
- * - 使用 Math.floor() 確保結果為整數
- * - 使用 map() 方法批量處理節點陣列
- * - 使用展開運算符保持原始屬性
- *
- * 📊 數值分布 (Value Distribution):
- * - 最小值：1
- * - 最大值：5
- * - 分布：均勻分布
- * - 類型：整數
- *
- * 🚀 使用範例 (Usage Examples):
- * ```javascript
- * // 基本用法
- * const nodes = [
- *   { id: 1, coord: { x: 0, y: 0 }, value: 0 },
- *   { id: 2, coord: { x: 1, y: 0 }, value: 0 }
- * ];
- *
- * const randomizedNodes = randomizeNodeValues(nodes);
- * console.log(randomizedNodes);
- * // 輸出: [
- * //   { id: 1, coord: { x: 0, y: 0 }, value: 3 },
- * //   { id: 2, coord: { x: 1, y: 0 }, value: 1 }
- * // ]
- * ```
- *
- * 📈 輸入數據格式 (Input Data Format):
- * ```javascript
- * [
- *   {
- *     id: number,           // 節點唯一識別碼
- *     coord: { x: number, y: number },  // 節點座標
- *     value: any,           // 原始數值（將被覆蓋）
- *     [其他屬性]: any       // 其他節點屬性
- *   }
- * ]
- * ```
- *
- * 📈 輸出數據格式 (Output Data Format):
- * ```javascript
- * [
- *   {
- *     id: number,           // 節點唯一識別碼（保持不變）
- *     coord: { x: number, y: number },  // 節點座標（保持不變）
- *     value: number,        // 隨機分配的數值（1-5）
- *     [其他屬性]: any       // 其他節點屬性（保持不變）
- *   }
- * ]
- * ```
- *
- * 🔍 調試信息 (Debug Information):
- * - 處理開始：記錄原始節點數量
- * - 數值變化：記錄每個節點的數值變化
- * - 處理完成：記錄處理結果的前幾個節點
- *
- * ⚠️ 注意事項 (Important Notes):
- * - 該函數會修改節點的 value 屬性
- * - 其他節點屬性保持不變
- * - 每次調用都會生成不同的隨機數值
- * - 主要用於測試和演示，生產環境請使用真實數據
- *
- * @param {Array} nodes - 節點陣列，包含需要隨機化數值的節點對象
- * @returns {Array} - 處理後的節點陣列，每個節點的 value 屬性被隨機分配 1-5 的數值
- *
- * @example
- * // 隨機化節點數值
- * const nodes = [{ id: 1, coord: { x: 0, y: 0 }, value: 0 }];
- * const result = randomizeNodeValues(nodes);
- *
- * @since 1.0.0
- * @see {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/random} Math.random() 文檔
- * @see {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map} Array.map() 文檔
- */
-function randomizeNodeValues(nodes) {
-  console.log('🎲 開始隨機化節點數值，原始節點數量:', nodes.length);
-  const randomizedNodes = nodes.map((node) => {
-    const newValue = generateWeightedRandomValue(); // 使用權重隨機生成 1-5 的數值
-    console.log(`🎲 節點 ${node.coord?.x},${node.coord?.y} 從 ${node.value} 變為 ${newValue}`);
-    return {
-      ...node,
-      value: newValue,
-    };
-  });
-  console.log('🎲 隨機化完成，前3個節點:', randomizedNodes.slice(0, 3));
-  return randomizedNodes;
-}
+// 移除了重複的 randomizeNodeValues 函數，因為在 D3jsTab.vue 中有相同的實現
 
 /**
  * 📊 載入網格示意圖 JSON 數據 (Load Grid Schematic JSON Data)
@@ -1027,7 +927,10 @@ async function processDataLayerJson(jsonData) {
     // 為每個路線的節點隨機分配 1-5 的數值
     const processedJsonData = jsonData.map((line) => ({
       ...line,
-      nodes: randomizeNodeValues(line.nodes),
+      nodes: line.nodes.map((node) => ({
+        ...node,
+        value: generateWeightedRandomValue(),
+      })),
     }));
 
     // 建立摘要資料

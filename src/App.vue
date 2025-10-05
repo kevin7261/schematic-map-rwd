@@ -37,11 +37,7 @@
 
   // ==================== 🔧 Vue Composition API 引入 (Vue Composition API Imports) ====================
 
-  /**
-   * Vue 3 Composition API 核心功能引入
-   * 使用 ref 創建響應式引用，用於管理組件狀態
-   */
-  import { ref } from 'vue';
+  // App.vue 目前主要作為路由容器，不需要額外的 Vue API
 
   export default {
     /**
@@ -69,72 +65,8 @@
      * @returns {Object} 返回響應式數據和函數供模板使用
      */
     setup() {
-      // ==================== ⏳ 全域載入狀態管理 (Global Loading State Management) ====================
-
-      /**
-       * 載入狀態控制變數
-       * 控制全域載入覆蓋層的顯示和隱藏
-       * 使用 Vue 3 的 ref() 函數創建響應式引用
-       * 當此值為 true 時，載入覆蓋層會顯示在應用程式上方
-       *
-       * @type {Ref<boolean>} 是否顯示載入覆蓋層
-       */
-      const isLoading = ref(false);
-
-      /**
-       * 載入主要文字提示
-       * 顯示在載入覆蓋層上的主要文字說明
-       * 預設為 '載入中...'，可根據載入內容動態更新
-       * 例如：'載入地圖數據中...'、'處理圖層數據中...'
-       *
-       * @type {Ref<string>} 載入文字提示
-       */
-      const loadingText = ref('載入中...');
-
-      /**
-       * 載入進度百分比
-       * 用於進度條顯示，範圍 0-100
-       * 0 表示載入開始，100 表示載入完成
-       * 配合 showLoadingProgress 控制進度條的顯示
-       *
-       * @type {Ref<number>} 載入進度百分比 (0-100)
-       */
-      const loadingProgress = ref(0);
-
-      /**
-       * 進度條顯示控制
-       * 控制是否顯示載入進度條
-       * 當載入過程需要顯示具體進度時設為 true
-       * 當只需要載入動畫時設為 false
-       *
-       * @type {Ref<boolean>} 是否顯示進度條
-       */
-      const showLoadingProgress = ref(false);
-
-      /**
-       * 載入輔助文字說明
-       * 顯示在載入覆蓋層上的輔助文字說明
-       * 提供更詳細的載入狀態信息
-       * 例如：'正在處理地理資訊...'、'數據已更新'
-       *
-       * @type {Ref<string>} 載入子文字說明
-       */
-      const loadingSubText = ref('');
-
-      // ==================== 📤 返回響應式數據和函數 (Return Reactive Data and Functions) ====================
-
-      /**
-       * 返回響應式數據和函數給模板使用
-       * 所有返回的變數都會在模板中可用
-       */
-      return {
-        // ⏳ 載入狀態相關變數
-        isLoading, // 載入狀態開關
-        loadingText, // 載入主要文字
-        loadingProgress, // 載入進度
-        showLoadingProgress, // 是否顯示進度條
-        loadingSubText, // 載入輔助文字
-      };
+      // App.vue 目前主要作為路由容器，不需要額外的狀態管理
+      return {};
     },
   };
 </script>
