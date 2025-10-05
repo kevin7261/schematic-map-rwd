@@ -158,25 +158,6 @@
   // ==================== 📊 數據載入和處理函數 (Data Loading and Processing Functions) ====================
 
   /**
-   * 🎲 為節點隨機分配 1-5 的數值 (Randomize Node Values)
-   * @param {Array} nodes - 節點陣列
-   * @returns {Array} - 處理後的節點陣列
-   */
-  const randomizeNodeValues = (nodes) => {
-    console.log('🎲 開始隨機化節點數值，原始節點數量:', nodes.length);
-    const randomizedNodes = nodes.map((node) => {
-      const newValue = Math.floor(Math.random() * 5) + 1; // 生成 1-5 的隨機數
-      console.log(`🎲 節點 ${node.coord?.x},${node.coord?.y} 從 ${node.value} 變為 ${newValue}`);
-      return {
-        ...node,
-        value: newValue,
-      };
-    });
-    console.log('🎲 隨機化完成，前3個節點:', randomizedNodes.slice(0, 3));
-    return randomizedNodes;
-  };
-
-  /**
    * 📊 載入圖層數據 (Load Layer Data)
    * @param {string} layerId - 圖層 ID
    */
@@ -188,45 +169,60 @@
         throw new Error(`找不到圖層配置: ${layerId}`);
       }
 
-      console.log('🔄 使用圖層配置載入數據:', targetLayer.jsonFileName);
+      console.log('🔄 使用圖層已載入的數據:', targetLayer.jsonFileName);
+      console.log('🔍 調試圖層數據:', {
+        hasProcessedJsonData: !!targetLayer.processedJsonData,
+        hasDataTableData: !!targetLayer.dataTableData,
+        processedJsonDataType: targetLayer.processedJsonData
+          ? typeof targetLayer.processedJsonData
+          : 'undefined',
+        processedJsonDataKeys: targetLayer.processedJsonData
+          ? Object.keys(targetLayer.processedJsonData)
+          : [],
+        isGridSchematic: targetLayer.isGridSchematic,
+        dataTableDataLength: targetLayer.dataTableData ? targetLayer.dataTableData.length : 0,
+      });
 
-      // 使用圖層的 jsonLoader 載入數據
-      const result = await targetLayer.jsonLoader(targetLayer);
-
-      // 檢查數據類型並載入相應數據
-      if (result.processedJsonData) {
-        if (result.processedJsonData.type === 'grid') {
+      // 🎯 直接使用圖層已經載入的 processedJsonData，不重新載入
+      // 這樣可以確保與網格預覽使用相同的數據
+      if (targetLayer.processedJsonData) {
+        if (targetLayer.processedJsonData.type === 'grid') {
           // 網格數據
-          gridData.value = result.processedJsonData;
+          gridData.value = targetLayer.processedJsonData;
           gridDimensions.value = {
-            x: result.processedJsonData.gridX,
-            y: result.processedJsonData.gridY,
+            x: targetLayer.processedJsonData.gridX,
+            y: targetLayer.processedJsonData.gridY,
           };
           console.log('✅ 網格數據載入成功:', gridData.value);
-        } else {
-          // 行政區示意圖數據
-          nodeData.value = result.processedJsonData;
+        } else if (Array.isArray(targetLayer.processedJsonData)) {
+          // 行政區示意圖數據（陣列格式）
+          nodeData.value = targetLayer.processedJsonData;
           console.log('✅ 行政區數據載入成功:', nodeData.value);
           setLinkData();
+        } else {
+          // 其他格式的 processedJsonData
+          nodeData.value = targetLayer.processedJsonData;
+          console.log('✅ 數據載入成功:', nodeData.value);
+          setLinkData();
         }
-      } else if (result.dataTableData && result.dataTableData.length > 0) {
+      } else if (targetLayer.dataTableData && targetLayer.dataTableData.length > 0) {
         // 表格數據格式，轉換為示意圖格式
-        const schematicData = result.dataTableData.map((item) => ({
+        const schematicData = targetLayer.dataTableData.map((item) => ({
           color: item.color,
           name: item.name,
           nodes: item.nodes || [],
         }));
 
-        // 為每個路線的節點隨機分配 1-5 的數值
-        const processedData = schematicData.map((line) => ({
-          ...line,
-          nodes: randomizeNodeValues(line.nodes),
-        }));
-
-        nodeData.value = processedData;
+        nodeData.value = schematicData;
         console.log('✅ 表格數據轉換成功:', nodeData.value);
         setLinkData();
       } else {
+        console.error('❌ 無法找到圖層數據:', {
+          layerId: layerId,
+          hasProcessedJsonData: !!targetLayer.processedJsonData,
+          hasDataTableData: !!targetLayer.dataTableData,
+          isLoaded: targetLayer.isLoaded,
+        });
         throw new Error('無法從圖層數據中提取示意圖數據');
       }
     } catch (error) {
@@ -308,6 +304,8 @@
    */
   const getDimensions = () => {
     const container = document.getElementById('schematic-container');
+    console.log('📏 查找示意圖容器:', container);
+
     if (container) {
       // 獲取容器的實際可用尺寸
       const rect = container.getBoundingClientRect();
@@ -333,6 +331,8 @@
 
       return dimensions;
     }
+
+    console.log('❌ 找不到示意圖容器，使用預設尺寸');
     // 如果找不到容器，使用預設尺寸
     const defaultDimensions = {
       width: 800,
@@ -349,7 +349,11 @@
    * 🎨 繪製網格示意圖 (Draw Grid Schematic)
    */
   const drawGridSchematic = () => {
-    if (!gridData.value) return;
+    console.log('🎨 drawGridSchematic 開始執行，gridData.value:', gridData.value);
+    if (!gridData.value) {
+      console.log('❌ gridData.value 為空，跳過繪製');
+      return;
+    }
 
     // 獲取容器尺寸
     const dimensions = getDimensions();
@@ -388,20 +392,20 @@
       .style('background-color', COLOR_CONFIG.BACKGROUND)
       .style('transition', 'all 0.2s ease-in-out');
 
-    // 獲取當前圖層的 drawJsonData 和統計數據
-    const currentLayer = dataStore.findLayerById(activeLayerTab.value);
-    const drawJsonData = currentLayer ? currentLayer.drawJsonData : null;
+    // 注意：現在使用實時計算的 columnMaxValues 和 rowMaxValues，不再需要預先計算的統計數據
 
-    // 獲取統計數據（用於根據 max 值排序）
-    let xRowStats = [];
-    let yRowStats = [];
+    // 🎯 計算每列和每行的最大值（用於刪除邏輯）
+    const columnMaxValues = new Array(gridDimensions.value.x).fill(0);
+    const rowMaxValues = new Array(gridDimensions.value.y).fill(0);
 
-    if (drawJsonData && drawJsonData.statsLabels) {
-      xRowStats = drawJsonData.statsLabels.xRowStats || [];
-      yRowStats = drawJsonData.statsLabels.yRowStats || [];
+    if (gridData.value && gridData.value.nodes) {
+      gridData.value.nodes.forEach((node) => {
+        columnMaxValues[node.x] = Math.max(columnMaxValues[node.x], node.value || 0);
+        rowMaxValues[node.y] = Math.max(rowMaxValues[node.y], node.value || 0);
+      });
     }
 
-    // 遞歸計算需要隱藏的行列，直到所有單元格 >= 80px
+    // 遞歸計算需要隱藏的行列，直到所有單元格 >= 20px
     const computeHiddenIndices = () => {
       const hiddenCols = new Set();
       const hiddenRows = new Set();
@@ -413,50 +417,68 @@
       while (iteration < maxIterations) {
         iteration++;
 
-        // 計算當前可見的行列數
-        const visibleCols = gridDimensions.value.x - hiddenCols.size;
-        const visibleRows = gridDimensions.value.y - hiddenRows.size;
+        // 🎯 計算當前可見列和行的最大值總和（用於比例分配）
+        const visibleColumnMaxValues = columnMaxValues.filter((_, i) => !hiddenCols.has(i));
+        const visibleRowMaxValues = rowMaxValues.filter((_, i) => !hiddenRows.has(i));
 
-        // 計算當前單元格尺寸
-        const currentCellWidth =
-          visibleCols > 0 ? width / visibleCols : width / gridDimensions.value.x;
-        const currentCellHeight =
-          visibleRows > 0 ? height / visibleRows : height / gridDimensions.value.y;
+        const totalVisibleColumnValue = visibleColumnMaxValues.reduce((sum, val) => sum + val, 0);
+        const totalVisibleRowValue = visibleRowMaxValues.reduce((sum, val) => sum + val, 0);
+
+        // 🎯 計算每列的實際寬度和每行的實際高度
+        const actualColumnWidths = columnMaxValues.map((maxVal, index) => {
+          if (hiddenCols.has(index)) return 0;
+          if (totalVisibleColumnValue === 0) {
+            return width / visibleColumnMaxValues.length;
+          }
+          return (maxVal / totalVisibleColumnValue) * width;
+        });
+
+        const actualRowHeights = rowMaxValues.map((maxVal, index) => {
+          if (hiddenRows.has(index)) return 0;
+          if (totalVisibleRowValue === 0) {
+            return height / visibleRowMaxValues.length;
+          }
+          return (maxVal / totalVisibleRowValue) * height;
+        });
 
         let needAdjust = false;
 
-        // 如果寬度 < 80，找出未隱藏的列中 max 最小的並隱藏
-        if (
-          currentCellWidth < 80 &&
-          visibleCols > 1 &&
-          xRowStats.length === gridDimensions.value.x
-        ) {
-          const availableStats = xRowStats
-            .map((stat, index) => ({ index, max: stat.max }))
-            .filter((item) => !hiddenCols.has(item.index))
-            .sort((a, b) => a.max - b.max);
+        // 🎯 找出實際寬度 < 20 的列中，max 值最小的並隱藏
+        const narrowColumns = columnMaxValues
+          .map((max, index) => ({ index, max, width: actualColumnWidths[index] }))
+          .filter((item) => !hiddenCols.has(item.index) && item.width < 20)
+          .sort((a, b) => a.max - b.max);
 
-          if (availableStats.length > 0) {
-            hiddenCols.add(availableStats[0].index);
-            needAdjust = true;
-          }
+        if (narrowColumns.length > 0 && visibleColumnMaxValues.length > 1) {
+          hiddenCols.add(narrowColumns[0].index);
+          needAdjust = true;
+          console.log(
+            '🗑️ 隱藏列:',
+            narrowColumns[0].index,
+            'max值:',
+            narrowColumns[0].max,
+            '實際寬度:',
+            narrowColumns[0].width.toFixed(2)
+          );
         }
 
-        // 如果高度 < 80，找出未隱藏的行中 max 最小的並隱藏
-        if (
-          currentCellHeight < 80 &&
-          visibleRows > 1 &&
-          yRowStats.length === gridDimensions.value.y
-        ) {
-          const availableStats = yRowStats
-            .map((stat, index) => ({ index, max: stat.max }))
-            .filter((item) => !hiddenRows.has(item.index))
-            .sort((a, b) => a.max - b.max);
+        // 🎯 找出實際高度 < 20 的行中，max 值最小的並隱藏
+        const shortRows = rowMaxValues
+          .map((max, index) => ({ index, max, height: actualRowHeights[index] }))
+          .filter((item) => !hiddenRows.has(item.index) && item.height < 20)
+          .sort((a, b) => a.max - b.max);
 
-          if (availableStats.length > 0) {
-            hiddenRows.add(availableStats[0].index);
-            needAdjust = true;
-          }
+        if (shortRows.length > 0 && visibleRowMaxValues.length > 1) {
+          hiddenRows.add(shortRows[0].index);
+          needAdjust = true;
+          console.log(
+            '🗑️ 隱藏行:',
+            shortRows[0].index,
+            'max值:',
+            shortRows[0].max,
+            '實際高度:',
+            shortRows[0].height.toFixed(2)
+          );
         }
 
         // 如果這次迭代沒有調整，說明已達到穩定狀態
@@ -477,13 +499,60 @@
     const visibleColumns = gridDimensions.value.x - hiddenColumnIndices.length;
     const visibleRows = gridDimensions.value.y - hiddenRowIndices.length;
 
-    // 根據實際顯示的行列數計算最終單元格尺寸
-    const cellWidth = visibleColumns > 0 ? width / visibleColumns : width / gridDimensions.value.x;
-    const cellHeight = visibleRows > 0 ? height / visibleRows : height / gridDimensions.value.y;
+    // 🎯 最大值已經在上面計算過了，這裡直接使用
 
-    console.log('📊 網格單元格尺寸:', {
-      cellWidth,
-      cellHeight,
+    // 過濾掉隱藏的列和行，只計算可見的最大值
+    const visibleColumnMaxValues = columnMaxValues.filter(
+      (_, i) => !hiddenColumnIndices.includes(i)
+    );
+    const visibleRowMaxValues = rowMaxValues.filter((_, i) => !hiddenRowIndices.includes(i));
+
+    // 計算可見列/行的總和，用於比例分配
+    const totalVisibleColumnValue = visibleColumnMaxValues.reduce((sum, val) => sum + val, 0);
+    const totalVisibleRowValue = visibleRowMaxValues.reduce((sum, val) => sum + val, 0);
+
+    // 🎯 根據最大值比例分配每列寬度和每行高度
+    const columnWidths = columnMaxValues.map((maxVal, index) => {
+      if (hiddenColumnIndices.includes(index)) {
+        return 0; // 隱藏的列寬度為0
+      }
+      // 如果總和為0，平均分配
+      if (totalVisibleColumnValue === 0) {
+        return width / visibleColumns;
+      }
+      return (maxVal / totalVisibleColumnValue) * width;
+    });
+
+    const rowHeights = rowMaxValues.map((maxVal, index) => {
+      if (hiddenRowIndices.includes(index)) {
+        return 0; // 隱藏的行高度為0
+      }
+      // 如果總和為0，平均分配
+      if (totalVisibleRowValue === 0) {
+        return height / visibleRows;
+      }
+      return (maxVal / totalVisibleRowValue) * height;
+    });
+
+    // 計算累積位置（用於快速查找每列/行的起始位置）
+    const columnPositions = [0];
+    const rowPositions = [0];
+    for (let i = 0; i < columnWidths.length; i++) {
+      columnPositions.push(columnPositions[i] + columnWidths[i]);
+    }
+    for (let i = 0; i < rowHeights.length; i++) {
+      rowPositions.push(rowPositions[i] + rowHeights[i]);
+    }
+
+    console.log('📊 網格單元格尺寸（依最大值分配）:', {
+      columnMaxValues,
+      rowMaxValues,
+      visibleColumnMaxValues,
+      visibleRowMaxValues,
+      totalVisibleColumnValue,
+      totalVisibleRowValue,
+      columnWidths,
+      rowHeights,
       visibleColumns,
       visibleRows,
       hiddenColumns: hiddenColumnIndices.length,
@@ -492,28 +561,80 @@
       hiddenRowIndices,
     });
 
+    console.log('🔍 列最大值檢查:', {
+      columnMaxValues,
+      hiddenColumnIndices,
+      deletionOrder: columnMaxValues
+        .map((max, index) => ({ index, max }))
+        .sort((a, b) => a.max - b.max),
+    });
+
+    console.log(
+      '📊 所有列的詳細信息:',
+      columnMaxValues.map((max, index) => ({
+        index,
+        max,
+        isHidden: hiddenColumnIndices.includes(index),
+        width: columnWidths[index],
+      }))
+    );
+
+    console.log(
+      '📊 所有行的詳細信息:',
+      rowMaxValues.map((max, index) => ({
+        index,
+        max,
+        isHidden: hiddenRowIndices.includes(index),
+        height: rowHeights[index],
+      }))
+    );
+
+    console.log('🔍 第二列數據檢查:', {
+      columnIndex: 1,
+      maxValue: columnMaxValues[1],
+      width: columnWidths[1],
+      isHidden: hiddenColumnIndices.includes(1),
+    });
+
     // 繪製網格線
     drawGridLines(
       svg,
       width,
       height,
-      cellWidth,
-      cellHeight,
+      columnWidths,
+      rowHeights,
+      columnPositions,
+      rowPositions,
       margin,
       hiddenColumnIndices,
       hiddenRowIndices
     );
 
     // 繪製網格節點
-    drawGridNodes(svg, cellWidth, cellHeight, margin, hiddenColumnIndices, hiddenRowIndices);
+    drawGridNodes(
+      svg,
+      columnWidths,
+      rowHeights,
+      columnPositions,
+      rowPositions,
+      margin,
+      hiddenColumnIndices,
+      hiddenRowIndices,
+      columnMaxValues,
+      rowMaxValues
+    );
 
     // 將此次重繪後的可見行列與單元尺寸寫入 store，供其他 Tab 讀取
+    // 注意：這裡使用平均值作為參考，實際尺寸已經是動態的
+    const avgCellWidth =
+      visibleColumns > 0 ? width / visibleColumns : width / gridDimensions.value.x;
+    const avgCellHeight = visibleRows > 0 ? height / visibleRows : height / gridDimensions.value.y;
     if (activeLayerTab.value) {
       dataStore.updateComputedGridState(activeLayerTab.value, {
         visibleX: visibleColumns,
         visibleY: visibleRows,
-        cellWidth,
-        cellHeight,
+        cellWidth: avgCellWidth,
+        cellHeight: avgCellHeight,
       });
     }
   };
@@ -523,8 +644,10 @@
    * @param {Object} svg - D3 SVG 選擇器
    * @param {number} width - 繪圖區域寬度
    * @param {number} height - 繪圖區域高度
-   * @param {number} cellWidth - 單元格寬度
-   * @param {number} cellHeight - 單元格高度
+   * @param {Array} columnWidths - 每列的寬度陣列
+   * @param {Array} rowHeights - 每行的高度陣列
+   * @param {Array} columnPositions - 每列的累積位置陣列
+   * @param {Array} rowPositions - 每行的累積位置陣列
    * @param {Object} margin - 邊距配置
    * @param {Array} hiddenColumnIndices - 需要隱藏的列索引
    * @param {Array} hiddenRowIndices - 需要隱藏的行索引
@@ -533,126 +656,118 @@
     svg,
     width,
     height,
-    cellWidth,
-    cellHeight,
+    columnWidths,
+    rowHeights,
+    columnPositions,
+    rowPositions,
     margin,
     hiddenColumnIndices,
     hiddenRowIndices
   ) => {
-    // 建立顯示索引映射（原始索引 -> 顯示索引）
-    const visibleColumnMap = [];
-    const visibleRowMap = [];
-    let visibleColIndex = 0;
-    let visibleRowIndex = 0;
-
-    for (let i = 0; i < gridDimensions.value.x; i++) {
+    // 計算可見列的累積位置
+    const visibleColumnPositions = [0];
+    let cumX = 0;
+    for (let i = 0; i < columnWidths.length; i++) {
       if (!hiddenColumnIndices.includes(i)) {
-        visibleColumnMap[i] = visibleColIndex++;
+        cumX += columnWidths[i];
+        visibleColumnPositions.push(cumX);
       }
     }
 
-    for (let i = 0; i < gridDimensions.value.y; i++) {
+    // 計算可見行的累積位置
+    const visibleRowPositions = [0];
+    let cumY = 0;
+    for (let i = 0; i < rowHeights.length; i++) {
       if (!hiddenRowIndices.includes(i)) {
-        visibleRowMap[i] = visibleRowIndex++;
+        cumY += rowHeights[i];
+        visibleRowPositions.push(cumY);
       }
     }
 
     // 繪製垂直網格線
-    let drawnX = 0;
-    for (let i = 0; i <= gridDimensions.value.x; i++) {
-      // 檢查是否需要隱藏此列
-      const isHidden = hiddenColumnIndices.includes(i);
-
-      if (!isHidden || i === gridDimensions.value.x) {
-        svg
-          .append('line')
-          .style('stroke', COLOR_CONFIG.GRID_LINE)
-          .style('stroke-width', 1)
-          .attr('x1', margin.left + drawnX * cellWidth)
-          .attr('y1', margin.top)
-          .attr('x2', margin.left + drawnX * cellWidth)
-          .attr('y2', margin.top + height);
-
-        if (!isHidden && i < gridDimensions.value.x) {
-          drawnX++;
-        }
-      }
-    }
+    visibleColumnPositions.forEach((xPos) => {
+      svg
+        .append('line')
+        .style('stroke', COLOR_CONFIG.GRID_LINE)
+        .style('stroke-width', 1)
+        .attr('x1', margin.left + xPos)
+        .attr('y1', margin.top)
+        .attr('x2', margin.left + xPos)
+        .attr('y2', margin.top + height);
+    });
 
     // 繪製水平網格線
-    let drawnY = 0;
-    for (let i = 0; i <= gridDimensions.value.y; i++) {
-      // 檢查是否需要隱藏此行
-      const isHidden = hiddenRowIndices.includes(i);
-
-      if (!isHidden || i === gridDimensions.value.y) {
-        svg
-          .append('line')
-          .style('stroke', COLOR_CONFIG.GRID_LINE)
-          .style('stroke-width', 1)
-          .attr('x1', margin.left)
-          .attr('y1', margin.top + drawnY * cellHeight)
-          .attr('x2', margin.left + width)
-          .attr('y2', margin.top + drawnY * cellHeight);
-
-        if (!isHidden && i < gridDimensions.value.y) {
-          drawnY++;
-        }
-      }
-    }
+    visibleRowPositions.forEach((yPos) => {
+      svg
+        .append('line')
+        .style('stroke', COLOR_CONFIG.GRID_LINE)
+        .style('stroke-width', 1)
+        .attr('y1', margin.top + yPos)
+        .attr('x1', margin.left)
+        .attr('y2', margin.top + yPos)
+        .attr('x2', margin.left + width);
+    });
 
     // 繪製次要網格線（網格中心線）
-    for (let i = 0; i < gridDimensions.value.x; i++) {
-      // 檢查是否需要隱藏此列的中心線
+    let xPosCum = 0;
+    for (let i = 0; i < columnWidths.length; i++) {
       if (hiddenColumnIndices.includes(i)) continue;
-
-      const displayX = visibleColumnMap[i];
-      if (displayX === undefined) continue;
+      const xCenter = xPosCum + columnWidths[i] / 2;
 
       svg
         .append('line')
         .style('stroke', COLOR_CONFIG.GRID_LINE_SECONDARY)
         .style('stroke-width', 0.5)
-        .attr('x1', margin.left + (displayX + 0.5) * cellWidth)
+        .attr('x1', margin.left + xCenter)
         .attr('y1', margin.top)
-        .attr('x2', margin.left + (displayX + 0.5) * cellWidth)
+        .attr('x2', margin.left + xCenter)
         .attr('y2', margin.top + height);
+
+      xPosCum += columnWidths[i];
     }
 
-    for (let i = 0; i < gridDimensions.value.y; i++) {
-      // 檢查是否需要隱藏此行的中心線
+    let yPosCum = 0;
+    for (let i = 0; i < rowHeights.length; i++) {
       if (hiddenRowIndices.includes(i)) continue;
-
-      const displayY = visibleRowMap[i];
-      if (displayY === undefined) continue;
+      const yCenter = yPosCum + rowHeights[i] / 2;
 
       svg
         .append('line')
         .style('stroke', COLOR_CONFIG.GRID_LINE_SECONDARY)
         .style('stroke-width', 0.5)
         .attr('x1', margin.left)
-        .attr('y1', margin.top + (displayY + 0.5) * cellHeight)
+        .attr('y1', margin.top + yCenter)
         .attr('x2', margin.left + width)
-        .attr('y2', margin.top + (displayY + 0.5) * cellHeight);
+        .attr('y2', margin.top + yCenter);
+
+      yPosCum += rowHeights[i];
     }
   };
 
   /**
    * 🔢 繪製網格節點 (Draw Grid Nodes)
    * @param {Object} svg - D3 SVG 選擇器
-   * @param {number} cellWidth - 單元格寬度
-   * @param {number} cellHeight - 單元格高度
+   * @param {Array} columnWidths - 每列的寬度陣列
+   * @param {Array} rowHeights - 每行的高度陣列
+   * @param {Array} columnPositions - 每列的累積位置陣列
+   * @param {Array} rowPositions - 每行的累積位置陣列
    * @param {Object} margin - 邊距配置
    * @param {Array} hiddenColumnIndices - 需要隱藏的列索引
    * @param {Array} hiddenRowIndices - 需要隱藏的行索引
+   * @param {Array} columnMaxValues - 每列的最大值陣列
+   * @param {Array} rowMaxValues - 每行的最大值陣列
    */
   const drawGridNodes = (
     svg,
-    cellWidth,
-    cellHeight,
+    columnWidths,
+    rowHeights,
+    columnPositions,
+    rowPositions,
     margin,
     hiddenColumnIndices,
-    hiddenRowIndices
+    hiddenRowIndices,
+    columnMaxValues,
+    rowMaxValues
   ) => {
     if (!gridData.value || !gridData.value.nodes) return;
 
@@ -660,21 +775,40 @@
     const currentLayer = dataStore.findLayerById(activeLayerTab.value);
     const drawJsonData = currentLayer ? currentLayer.drawJsonData : null;
 
-    // 建立顯示索引映射（原始索引 -> 顯示索引）
-    const visibleColumnMap = [];
-    const visibleRowMap = [];
-    let visibleColIndex = 0;
-    let visibleRowIndex = 0;
-
-    for (let i = 0; i < gridDimensions.value.x; i++) {
+    // 計算可見列和行的累積位置
+    const visibleColumnPositions = [0];
+    let cumX = 0;
+    for (let i = 0; i < columnWidths.length; i++) {
       if (!hiddenColumnIndices.includes(i)) {
-        visibleColumnMap[i] = visibleColIndex++;
+        cumX += columnWidths[i];
+        visibleColumnPositions.push(cumX);
       }
     }
 
-    for (let i = 0; i < gridDimensions.value.y; i++) {
+    const visibleRowPositions = [0];
+    let cumY = 0;
+    for (let i = 0; i < rowHeights.length; i++) {
       if (!hiddenRowIndices.includes(i)) {
-        visibleRowMap[i] = visibleRowIndex++;
+        cumY += rowHeights[i];
+        visibleRowPositions.push(cumY);
+      }
+    }
+
+    // 建立原始索引到可見索引的映射
+    const columnToVisibleIndex = new Map();
+    const rowToVisibleIndex = new Map();
+    let visibleColIdx = 0;
+    let visibleRowIdx = 0;
+
+    for (let i = 0; i < columnWidths.length; i++) {
+      if (!hiddenColumnIndices.includes(i)) {
+        columnToVisibleIndex.set(i, visibleColIdx++);
+      }
+    }
+
+    for (let i = 0; i < rowHeights.length; i++) {
+      if (!hiddenRowIndices.includes(i)) {
+        rowToVisibleIndex.set(i, visibleRowIdx++);
       }
     }
 
@@ -688,20 +822,23 @@
         return; // 不繪製此節點
       }
 
-      // 使用映射後的索引計算位置
-      const displayX = visibleColumnMap[node.x];
-      const displayY = visibleRowMap[node.y];
+      const visibleColIdx = columnToVisibleIndex.get(node.x);
+      const visibleRowIdx = rowToVisibleIndex.get(node.y);
 
-      if (displayX === undefined || displayY === undefined) return;
+      if (visibleColIdx === undefined || visibleRowIdx === undefined) return;
 
-      const x = margin.left + (displayX + 0.5) * cellWidth;
-      const y = margin.top + (displayY + 0.5) * cellHeight;
+      // 計算節點中心位置
+      const x = margin.left + visibleColumnPositions[visibleColIdx] + columnWidths[node.x] / 2;
+      const y = margin.top + visibleRowPositions[visibleRowIdx] + rowHeights[node.y] / 2;
 
       // 從 drawJsonData 中獲取節點的顏色
       let nodeColor =
         drawJsonData && drawJsonData.nodes && drawJsonData.nodes[index]
           ? drawJsonData.nodes[index].color
           : '#FFFFFF'; // 預設白色
+
+      // 使用固定字體大小，不受網格大小影響
+      const fontSize = 14; // 固定字體大小
 
       // 只繪製節點數值文字，使用動態決定的顏色
       nodeGroup
@@ -710,63 +847,114 @@
         .attr('y', y)
         .attr('text-anchor', 'middle')
         .attr('dominant-baseline', 'middle')
-        .attr('font-size', Math.min(cellWidth, cellHeight) * 0.25)
+        .attr('font-size', fontSize)
         .attr('font-weight', 'bold')
         .attr('fill', nodeColor)
         .text(node.value);
     });
 
     // 繪製統計數據標籤
-    drawStatisticsLabels(svg, cellWidth, cellHeight, margin, hiddenColumnIndices, hiddenRowIndices);
+    drawStatisticsLabels(
+      svg,
+      columnWidths,
+      rowHeights,
+      columnPositions,
+      rowPositions,
+      margin,
+      hiddenColumnIndices,
+      hiddenRowIndices,
+      columnMaxValues,
+      rowMaxValues
+    );
   };
 
   /**
    * 📊 繪製統計數據標籤 (Draw Statistics Labels)
    * @param {Object} svg - D3 SVG 選擇器
-   * @param {number} cellWidth - 單元格寬度
-   * @param {number} cellHeight - 單元格高度
+   * @param {Array} columnWidths - 每列的寬度陣列
+   * @param {Array} rowHeights - 每行的高度陣列
+   * @param {Array} columnPositions - 每列的累積位置陣列
+   * @param {Array} rowPositions - 每行的累積位置陣列
    * @param {Object} margin - 邊距配置
    * @param {Array} hiddenColumnIndices - 需要隱藏的列索引
    * @param {Array} hiddenRowIndices - 需要隱藏的行索引
+   * @param {Array} columnMaxValues - 每列的最大值陣列
+   * @param {Array} rowMaxValues - 每行的最大值陣列
    */
   const drawStatisticsLabels = (
     svg,
-    cellWidth,
-    cellHeight,
+    columnWidths,
+    rowHeights,
+    columnPositions,
+    rowPositions,
     margin,
     hiddenColumnIndices,
-    hiddenRowIndices
+    hiddenRowIndices,
+    columnMaxValues,
+    rowMaxValues
   ) => {
-    if (!gridData.value || !gridData.value.xRowStats || !gridData.value.yRowStats) return;
+    if (!gridData.value || !columnMaxValues || !rowMaxValues) return;
 
     // 創建統計標籤群組
     const statsGroup = svg.append('g').attr('class', 'statistics-labels');
 
-    const fontSize = Math.min(cellWidth, cellHeight) * 0.25;
+    // 使用固定字體大小，不受網格大小影響
+    const fontSize = 12; // 固定字體大小（比節點數字稍小）
     const labelOffset = 5;
 
-    // 從 drawJsonData 中獲取統計標籤數據
+    // 使用實時計算的最大值數據，而不是預先計算的數據
     const currentLayer = dataStore.findLayerById(activeLayerTab.value);
     const drawJsonData = currentLayer ? currentLayer.drawJsonData : null;
 
-    if (drawJsonData && drawJsonData.statsLabels) {
-      const { xRowStats, yRowStats, color } = drawJsonData.statsLabels;
+    // 創建實時統計數據
+    const xRowStats = columnMaxValues.map((maxVal, index) => ({
+      row: index,
+      max: maxVal,
+    }));
 
-      // 建立顯示索引映射（原始索引 -> 顯示索引）
-      const visibleColumnMap = [];
-      const visibleRowMap = [];
-      let visibleColIndex = 0;
-      let visibleRowIndex = 0;
+    const yRowStats = rowMaxValues.map((maxVal, index) => ({
+      row: index,
+      max: maxVal,
+    }));
 
-      for (let i = 0; i < gridDimensions.value.x; i++) {
+    const color = drawJsonData?.statsLabels?.color || '#4CAF50';
+
+    if (xRowStats && yRowStats) {
+      // 計算可見列的累積位置
+      const visibleColumnPositions = [0];
+      let cumX = 0;
+      for (let i = 0; i < columnWidths.length; i++) {
         if (!hiddenColumnIndices.includes(i)) {
-          visibleColumnMap[i] = visibleColIndex++;
+          cumX += columnWidths[i];
+          visibleColumnPositions.push(cumX);
         }
       }
 
-      for (let i = 0; i < gridDimensions.value.y; i++) {
+      // 計算可見行的累積位置
+      const visibleRowPositions = [0];
+      let cumY = 0;
+      for (let i = 0; i < rowHeights.length; i++) {
         if (!hiddenRowIndices.includes(i)) {
-          visibleRowMap[i] = visibleRowIndex++;
+          cumY += rowHeights[i];
+          visibleRowPositions.push(cumY);
+        }
+      }
+
+      // 建立原始索引到可見索引的映射
+      const columnToVisibleIndex = new Map();
+      const rowToVisibleIndex = new Map();
+      let visibleColIdx = 0;
+      let visibleRowIdx = 0;
+
+      for (let i = 0; i < columnWidths.length; i++) {
+        if (!hiddenColumnIndices.includes(i)) {
+          columnToVisibleIndex.set(i, visibleColIdx++);
+        }
+      }
+
+      for (let i = 0; i < rowHeights.length; i++) {
+        if (!hiddenRowIndices.includes(i)) {
+          rowToVisibleIndex.set(i, visibleRowIdx++);
         }
       }
 
@@ -778,10 +966,11 @@
             return; // 不繪製此標籤
           }
 
-          const displayX = visibleColumnMap[xStat.row];
-          if (displayX === undefined) return;
+          const visibleColIdx = columnToVisibleIndex.get(xStat.row);
+          if (visibleColIdx === undefined) return;
 
-          const x = margin.left + (displayX + 0.5) * cellWidth;
+          const x =
+            margin.left + visibleColumnPositions[visibleColIdx] + columnWidths[xStat.row] / 2;
           const y = margin.top - labelOffset;
 
           // 只顯示最大值標籤
@@ -806,11 +995,11 @@
             return; // 不繪製此標籤
           }
 
-          const displayY = visibleRowMap[yStat.row];
-          if (displayY === undefined) return;
+          const visibleRowIdx = rowToVisibleIndex.get(yStat.row);
+          if (visibleRowIdx === undefined) return;
 
           const x = margin.left - labelOffset;
-          const y = margin.top + (displayY + 0.5) * cellHeight;
+          const y = margin.top + visibleRowPositions[visibleRowIdx] + rowHeights[yStat.row] / 2;
 
           // 只顯示最大值標籤
           statsGroup
@@ -1264,9 +1453,19 @@
    * 根據圖層類型選擇相應的繪製方法
    */
   const drawSchematic = () => {
+    console.log('🎨 drawSchematic 開始執行，activeLayerTab:', activeLayerTab.value);
+    console.log('🔍 圖層類型檢查:', {
+      activeLayerTab: activeLayerTab.value,
+      isGridSchematic: isGridSchematicLayer(activeLayerTab.value),
+      gridData: gridData.value,
+      nodeData: nodeData.value,
+    });
+
     if (isGridSchematicLayer(activeLayerTab.value)) {
+      console.log('📊 繪製網格示意圖');
       drawGridSchematic();
     } else {
+      console.log('🚇 繪製行政區示意圖');
       drawAdministrativeSchematic();
     }
   };
@@ -1352,6 +1551,27 @@
         console.log('✅ 圖層切換完成');
       }
     }
+  );
+
+  /**
+   * 👀 監聽當前圖層的 processedJsonData 變化
+   * 當圖層數據載入完成時，自動載入並繪製示意圖
+   */
+  watch(
+    () => {
+      if (!activeLayerTab.value) return null;
+      const layer = visibleLayers.value.find((l) => l.layerId === activeLayerTab.value);
+      return layer ? layer.processedJsonData : null;
+    },
+    async (newProcessedData) => {
+      if (newProcessedData && activeLayerTab.value) {
+        console.log('🔄 檢測到圖層數據變化，重新載入並繪製');
+        await loadLayerData(activeLayerTab.value);
+        await nextTick();
+        drawSchematic();
+      }
+    },
+    { deep: true }
   );
 
   /**
