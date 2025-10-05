@@ -1026,6 +1026,8 @@ export function processGridToDrawData(processedData) {
     coord: { x: node.x, y: node.y },
     gridIndex: index,
     isGridNode: true,
+    // 顏色：優先使用自定義顏色，否則預設白色
+    color: node.color || '#FFFFFF',
   }));
 
   // 生成繪製用的連線數據（網格邊界）

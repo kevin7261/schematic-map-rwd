@@ -469,41 +469,34 @@
   const drawGridNodes = (svg, cellWidth, cellHeight, margin) => {
     if (!gridData.value || !gridData.value.nodes) return;
 
+    // 獲取當前圖層的 drawJsonData
+    const currentLayer = dataStore.findLayerById(activeLayerTab.value);
+    const drawJsonData = currentLayer ? currentLayer.drawJsonData : null;
+
     // 創建節點群組
     const nodeGroup = svg.append('g').attr('class', 'grid-nodes');
 
-    // 繪製每個節點
-    gridData.value.nodes.forEach((node) => {
+    // 繪製每個節點（只顯示數值文字，不顯示圓圈）
+    gridData.value.nodes.forEach((node, index) => {
       const x = margin.left + (node.x + 0.5) * cellWidth;
       const y = margin.top + (node.y + 0.5) * cellHeight;
 
-      // 繪製節點圓圈
-      nodeGroup
-        .append('circle')
-        .attr('cx', x)
-        .attr('cy', y)
-        .attr('r', Math.min(cellWidth, cellHeight) * 0.3)
-        .style('fill', COLOR_CONFIG.NODE_FILL)
-        .style('stroke', COLOR_CONFIG.NODE_STROKE)
-        .style('stroke-width', 2)
-        .style('opacity', 0.8)
-        .on('mouseover', function () {
-          d3.select(this).style('opacity', 1).style('stroke-width', 3);
-        })
-        .on('mouseout', function () {
-          d3.select(this).style('opacity', 0.8).style('stroke-width', 2);
-        });
+      // 從 drawJsonData 中獲取節點的顏色
+      const nodeColor =
+        drawJsonData && drawJsonData.nodes && drawJsonData.nodes[index]
+          ? drawJsonData.nodes[index].color
+          : '#FFFFFF'; // 預設白色
 
-      // 繪製節點數值文字
+      // 只繪製節點數值文字，使用 drawJsonData 中定義的顏色
       nodeGroup
         .append('text')
         .attr('x', x)
         .attr('y', y)
         .attr('text-anchor', 'middle')
         .attr('dominant-baseline', 'middle')
-        .attr('font-size', Math.min(cellWidth, cellHeight) * 0.2)
+        .attr('font-size', Math.min(cellWidth, cellHeight) * 0.25)
         .attr('font-weight', 'bold')
-        .attr('fill', COLOR_CONFIG.TEXT_FILL)
+        .attr('fill', nodeColor)
         .text(node.value);
     });
 
@@ -992,6 +985,10 @@
 
     // 繪製節點數值標籤
     if (linkData.value) {
+      // 獲取當前圖層的 drawJsonData
+      const currentLayer = dataStore.findLayerById(activeLayerTab.value);
+      const drawJsonData = currentLayer ? currentLayer.drawJsonData : null;
+
       const allLinks = linkData.value.flatMap((line) =>
         line.nodes.map((node) => ({
           ...node,
@@ -1000,7 +997,13 @@
 
       console.log('allLinks', allLinks);
 
-      allLinks.forEach((node) => {
+      allLinks.forEach((node, index) => {
+        // 從 drawJsonData 中獲取節點的顏色
+        const nodeColor =
+          drawJsonData && drawJsonData.nodes && drawJsonData.nodes[index]
+            ? drawJsonData.nodes[index].color
+            : '#FFFFFF'; // 預設白色
+
         svg
           .append('text')
           .attr('x', x(node.coord.x))
@@ -1008,7 +1011,7 @@
           .attr('text-anchor', 'middle')
           .attr('dominant-baseline', 'middle')
           .attr('font-size', '10px')
-          .attr('fill', 'white')
+          .attr('fill', nodeColor)
           .text(`${node.value}`);
       });
     }
@@ -1264,16 +1267,6 @@
   #schematic-container {
     position: relative;
     overflow: hidden;
-  }
-
-  /* 🎨 網格節點懸停效果 (Grid Node Hover Effects) */
-  :deep(.grid-nodes circle) {
-    transition: all 0.2s ease-in-out;
-    cursor: pointer;
-  }
-
-  :deep(.grid-nodes circle:hover) {
-    filter: brightness(1.2);
   }
 
   /* 📝 網格文字樣式 (Grid Text Styles) */
