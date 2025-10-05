@@ -38,11 +38,16 @@
   // ==================== 🔧 Vue Composition API 引入 (Vue Composition API Imports) ====================
 
   // App.vue 目前主要作為路由容器，不需要額外的 Vue API
+  // 所有的響應式功能都通過子組件實現
 
+  // ==================== 📤 組件導出 (Component Export) ====================
+
+  // 導出 Vue 組件選項對象，定義應用程式的根組件
   export default {
     /**
      * 組件名稱
      * 用於 Vue DevTools 調試和組件識別
+     * 在開發工具中顯示為 'App'
      */
     name: 'App',
 
@@ -50,6 +55,7 @@
      * 🧩 組件註冊 (Component Registration)
      * 註冊應用程式層級使用的組件
      * 目前為空，所有子組件都在各自的路由視圖中註冊
+     * 這樣可以避免全域污染，保持組件的獨立性
      */
     components: {},
 
@@ -63,9 +69,14 @@
      * - 支援載入文字和進度條的動態更新
      *
      * @returns {Object} 返回響應式數據和函數供模板使用
+     * @description 目前返回空對象，因為 App.vue 主要作為路由容器
      */
     setup() {
       // App.vue 目前主要作為路由容器，不需要額外的狀態管理
+      // 所有的業務邏輯都在子組件中處理
+
+      // 返回空對象給模板使用
+      // 如果未來需要添加全域狀態，可以在這裡定義
       return {};
     },
   };
@@ -74,6 +85,14 @@
 <template>
   <!-- 🏠 App.vue - 主應用程式組件 (Main Application Component) -->
   <!-- 提供應用程式整體框架，使用 Bootstrap 實現滿版無空隙佈局 -->
+
+  <!--
+    📦 應用程式根容器 (Application Root Container)
+    - id="app": Vue 應用程式的掛載點，對應 main.js 中的 app.mount('#app')
+    - class="d-flex": Bootstrap 5 的 flexbox 佈局類，啟用彈性盒子模型
+    - class="flex-column": 設定 flex 容器的主軸為垂直方向，子元素垂直排列
+    - class="vh-100": 設定容器高度為 100vh（視窗高度的 100%），實現滿版佈局
+  -->
   <div id="app" class="d-flex flex-column vh-100">
     <!--
       📱 主要內容區域 (Main Content Area)
@@ -140,6 +159,10 @@
    * 引入共用樣式表
    * 包含所有自定義樣式、CSS 變數和主題配置
    * 提供統一的樣式基礎和視覺規範
+   *
+   * 路徑說明：
+   * - './assets/css/common.css': 相對於當前文件的共用樣式表路徑
+   * - 包含：自定義 CSS 變數、通用樣式類、響應式佈局、主題配置等
    */
   @import './assets/css/common.css';
 
@@ -152,5 +175,14 @@
    *
    * 注意：避免在此處定義過多的樣式規則
    * 優先使用 common.css 中的統一樣式定義
+   *
+   * 樣式定義原則：
+   * 1. 只定義 App.vue 特有的樣式
+   * 2. 避免與子組件樣式衝突
+   * 3. 保持樣式的模組化和可維護性
+   * 4. 優先使用 CSS 變數和 Bootstrap 工具類
    */
+
+  /* 目前沒有 App 特定的樣式需要定義 */
+  /* 所有樣式都通過 common.css 和 Bootstrap 工具類實現 */
 </style>
