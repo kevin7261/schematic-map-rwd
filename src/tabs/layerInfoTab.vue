@@ -370,30 +370,6 @@
     { deep: true, immediate: true }
   );
 
-  /**
-   * 👀 監聽當前選中的圖層變化，自動執行資訊載入
-   * 當 activeLayerTab 發生變化時，自動載入對應圖層的資訊
-   *
-   * @description 主要邏輯：
-   * - 當切換到新圖層時，自動載入該圖層的資訊
-   * - 當清除選中狀態時，清除分析結果
-   * - 確保圖層資訊與當前選中狀態保持同步
-   */
-  watch(
-    () => activeLayerTab.value,
-    (newLayerId) => {
-      if (newLayerId) {
-        const layer = dataStore.findLayerById(newLayerId);
-        if (layer && layer.processedJsonData) {
-          loadLayerInfo(layer);
-        }
-      } else {
-        analysisResults.value = null;
-      }
-    },
-    { immediate: true }
-  );
-
   // ==================== 📊 資料處理函數 (Data Processing Functions) ====================
 
   /**
@@ -455,6 +431,30 @@
       isLoadingAnalysis.value = false;
     }
   };
+
+  /**
+   * 👀 監聽當前選中的圖層變化，自動執行資訊載入
+   * 當 activeLayerTab 發生變化時，自動載入對應圖層的資訊
+   *
+   * @description 主要邏輯：
+   * - 當切換到新圖層時，自動載入該圖層的資訊
+   * - 當清除選中狀態時，清除分析結果
+   * - 確保圖層資訊與當前選中狀態保持同步
+   */
+  watch(
+    () => activeLayerTab.value,
+    (newLayerId) => {
+      if (newLayerId) {
+        const layer = dataStore.findLayerById(newLayerId);
+        if (layer && layer.processedJsonData) {
+          loadLayerInfo(layer);
+        }
+      } else {
+        analysisResults.value = null;
+      }
+    },
+    { immediate: true }
+  );
 
   // ==================== 🚀 生命週期鉤子 (Lifecycle Hooks) ====================
 
