@@ -453,7 +453,7 @@ export async function loadDataLayerJson(layer) {
 function randomizeNodeValues(nodes) {
   console.log('🎲 開始隨機化節點數值，原始節點數量:', nodes.length);
   const randomizedNodes = nodes.map((node) => {
-    const newValue = Math.floor(Math.random() * 5) + 1; // 生成 1-5 的隨機數
+    const newValue = generateWeightedRandomValue(); // 使用權重隨機生成 1-5 的數值
     console.log(`🎲 節點 ${node.coord?.x},${node.coord?.y} 從 ${node.value} 變為 ${newValue}`);
     return {
       ...node,
@@ -701,6 +701,35 @@ export async function loadGridSchematicJson(layer) {
  * @since 1.0.0
  * @see {@link loadGridSchematicJson} 網格示意圖載入函數
  */
+/**
+ * 🎲 生成符合機率分布的隨機數 (Generate Weighted Random Number)
+ *
+ * 根據指定的權重比例生成隨機數，實現非均勻分布
+ * 權重比例：9:8:7:6:5:4:3:2:1:1 (對應數值 0:1:2:3:4:5:6:7:8:9)
+ * 數值越高機率越低，數值越低機率越高
+ *
+ * @returns {number} 0-9 之間的整數，符合指定機率分布
+ */
+function generateWeightedRandomValue() {
+  // 定義權重：9:8:7:6:5:4:3:2:1:1 (總權重 = 46)
+  const weights = [9, 8, 7, 6, 5, 4, 3, 2, 1, 1]; // 對應數值 0, 1, 2, 3, 4, 5, 6, 7, 8, 9
+  const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
+
+  // 生成 0 到總權重之間的隨機數
+  let random = Math.random() * totalWeight;
+
+  // 根據權重分配確定返回的數值
+  for (let i = 0; i < weights.length; i++) {
+    random -= weights[i];
+    if (random <= 0) {
+      return i; // 返回對應的數值 (0, 1, 2, 3, 4, 5, 6, 7, 8, 9)
+    }
+  }
+
+  // 備用返回（理論上不會執行到這裡）
+  return 0;
+}
+
 async function processGridSchematicJson(jsonData) {
   console.log('📊 處理網格示意圖數據:', jsonData);
 
@@ -717,7 +746,7 @@ async function processGridSchematicJson(jsonData) {
       gridNodes.push({
         x: x,
         y: y,
-        value: Math.floor(Math.random() * 5) + 1, // 隨機生成 1-5 的數值
+        value: generateWeightedRandomValue(), // 使用權重隨機生成 1-5 的數值
         type: 1, // 預設節點類型
         coord: { x: x, y: y },
       });

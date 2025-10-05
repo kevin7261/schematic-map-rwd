@@ -506,6 +506,91 @@
         .attr('fill', COLOR_CONFIG.TEXT_FILL)
         .text(node.value);
     });
+
+    // 繪製統計數據標籤
+    drawStatisticsLabels(svg, cellWidth, cellHeight, margin);
+  };
+
+  /**
+   * 📊 繪製統計數據標籤 (Draw Statistics Labels)
+   * @param {Object} svg - D3 SVG 選擇器
+   * @param {number} cellWidth - 單元格寬度
+   * @param {number} cellHeight - 單元格高度
+   * @param {Object} margin - 邊距配置
+   */
+  const drawStatisticsLabels = (svg, cellWidth, cellHeight, margin) => {
+    if (!gridData.value || !gridData.value.xRowStats || !gridData.value.yRowStats) return;
+
+    // 創建統計標籤群組
+    const statsGroup = svg.append('g').attr('class', 'statistics-labels');
+
+    const fontSize = Math.min(cellWidth, cellHeight) * 0.25;
+    const labelOffset = 5;
+
+    // 繪製 X 排（垂直方向）統計標籤 - 只顯示最大值
+    gridData.value.xRowStats.forEach((xStat) => {
+      const x = margin.left + (xStat.row + 0.5) * cellWidth;
+      const y = margin.top - labelOffset;
+
+      // 只顯示最大值標籤
+      statsGroup
+        .append('text')
+        .attr('x', x)
+        .attr('y', y)
+        .attr('text-anchor', 'middle')
+        .attr('dominant-baseline', 'bottom')
+        .attr('font-size', fontSize)
+        .attr('font-weight', 'bold')
+        .attr('fill', '#4ECDC4') // 青色表示最大值
+        .text(`${xStat.max}`);
+    });
+
+    // 繪製 Y 排（水平方向）統計標籤 - 只顯示最大值
+    gridData.value.yRowStats.forEach((yStat) => {
+      const x = margin.left - labelOffset;
+      const y = margin.top + (yStat.row + 0.5) * cellHeight;
+
+      // 只顯示最大值標籤
+      statsGroup
+        .append('text')
+        .attr('x', x)
+        .attr('y', y)
+        .attr('text-anchor', 'end')
+        .attr('dominant-baseline', 'middle')
+        .attr('font-size', fontSize)
+        .attr('font-weight', 'bold')
+        .attr('fill', '#4ECDC4') // 青色表示最大值
+        .text(`${yStat.max}`);
+    });
+
+    // 繪製整體統計標籤（在網格右下角）
+    if (gridData.value.overallStats) {
+      const overallX = margin.left + gridDimensions.value.x * cellWidth + 10;
+      const overallY = margin.top + gridDimensions.value.y * cellHeight - 10;
+
+      statsGroup
+        .append('text')
+        .attr('x', overallX)
+        .attr('y', overallY)
+        .attr('text-anchor', 'start')
+        .attr('dominant-baseline', 'bottom')
+        .attr('font-size', fontSize * 0.8)
+        .attr('font-weight', 'bold')
+        .attr('fill', '#95A5A6') // 灰色表示整體統計
+        .text(`整體 max:${gridData.value.overallStats.max}`);
+
+      // 添加整體統計標題
+      statsGroup
+        .append('text')
+        .attr('x', overallX)
+        .attr('y', overallY - fontSize - 2)
+        .attr('text-anchor', 'start')
+        .attr('dominant-baseline', 'bottom')
+        .attr('font-size', fontSize * 0.9)
+        .attr('font-weight', 'bold')
+        .attr('fill', '#2C3E50')
+        .text('整體統計:');
+    }
   };
 
   /**
