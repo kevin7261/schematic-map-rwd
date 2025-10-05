@@ -324,8 +324,8 @@
       });
 
       const dimensions = {
-        width: Math.max(width, 400),
-        height: Math.max(height, 300),
+        width: Math.max(width, 40),
+        height: Math.max(height, 30),
       };
 
       // 更新 dataStore 中的尺寸狀態
