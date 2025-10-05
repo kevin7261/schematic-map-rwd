@@ -482,12 +482,25 @@
       const y = margin.top + (node.y + 0.5) * cellHeight;
 
       // 從 drawJsonData 中獲取節點的顏色
-      const nodeColor =
+      let nodeColor =
         drawJsonData && drawJsonData.nodes && drawJsonData.nodes[index]
           ? drawJsonData.nodes[index].color
           : '#FFFFFF'; // 預設白色
 
-      // 只繪製節點數值文字，使用 drawJsonData 中定義的顏色
+      // 檢查是否需要將節點數字變為紅色
+      if (drawJsonData && drawJsonData.statsLabels) {
+        const { highlightColumnIndices, highlightRowIndices } = drawJsonData.statsLabels;
+
+        // 如果該節點所在的 column 或 row 需要高亮，則將數字變為紅色
+        if (
+          (cellWidth < 40 && highlightColumnIndices.includes(node.x)) ||
+          (cellHeight < 40 && highlightRowIndices.includes(node.y))
+        ) {
+          nodeColor = '#F44336'; // 紅色
+        }
+      }
+
+      // 只繪製節點數值文字，使用動態決定的顏色
       nodeGroup
         .append('text')
         .attr('x', x)
