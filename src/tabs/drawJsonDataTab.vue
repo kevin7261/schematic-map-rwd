@@ -42,13 +42,15 @@
   };
 
   /**
-   * 📊 取得當前圖層的繪製數據 (Get Current Layer Draw Data)
+   * 📊 取得當前圖層的 drawJsonData (Get Current Layer Draw JSON Data)
    */
-  const currentLayerDrawData = computed(() => {
+  const getCurrentLayerDrawJsonData = () => {
     if (!activeLayerTab.value) return null;
-    const layer = visibleLayers.value.find((l) => l.layerId === activeLayerTab.value);
-    return layer ? layer.drawJsonData || null : null;
-  });
+    const currentLayer = visibleLayers.value.find(
+      (layer) => layer.layerId === activeLayerTab.value
+    );
+    return currentLayer ? currentLayer.drawJsonData || null : null;
+  };
 
   // 記錄上一次的圖層列表用於比較
   const previousLayers = ref([]);
@@ -107,7 +109,7 @@
 </script>
 
 <template>
-  <!-- 📊 多圖層繪製數據視圖組件 -->
+  <!-- 📊 繪製 JSON 數據視圖組件 -->
   <div class="d-flex flex-column my-bgcolor-gray-200 h-100">
     <!-- 📑 圖層分頁導航 -->
     <div v-if="visibleLayers.length > 0" class="">
@@ -138,145 +140,40 @@
     </div>
 
     <!-- 有開啟圖層時的內容 -->
-    <div v-if="visibleLayers.length > 0" class="my-bgcolor-white h-100">
-      <!-- 當前圖層標題 -->
-      <div class="p-3 border-bottom">
-        <div class="my-title-sm-black">
-          {{
-            getLayerFullTitle(visibleLayers.find((l) => l.layerId === activeLayerTab))?.groupName
-          }}
-          -
-          {{
-            getLayerFullTitle(visibleLayers.find((l) => l.layerId === activeLayerTab))?.layerName
-          }}
-        </div>
+    <div v-if="visibleLayers.length > 0" class="flex-grow-1 overflow-auto my-bgcolor-white p-3">
+      <!-- 📊 當前圖層資訊 -->
+      <div class="mb-4">
+        <h5 class="my-title-md-black">{{ currentLayerName }}</h5>
       </div>
 
-      <!-- 繪製數據內容 -->
-      <div v-if="currentLayerDrawData" class="p-3 h-100 overflow-auto">
-        <div class="mb-3">
-          <div class="my-title-xs-gray pb-2">繪製數據類型</div>
-          <div class="my-content-sm-black pb-2">
-            <span class="badge bg-primary">{{ currentLayerDrawData.type }}</span>
-          </div>
-        </div>
-
-        <!-- 網格示意圖數據 -->
-        <div v-if="currentLayerDrawData.type === 'grid'" class="mb-3">
-          <div class="my-title-xs-gray pb-2">網格配置</div>
-          <div class="my-content-sm-black pb-2">
-            <div>網格尺寸: {{ currentLayerDrawData.gridX }} × {{ currentLayerDrawData.gridY }}</div>
-            <div>總節點數: {{ currentLayerDrawData.totalNodes }}</div>
-            <div>總連線數: {{ currentLayerDrawData.totalLinks }}</div>
-          </div>
-        </div>
-
-        <!-- 台北捷運數據 -->
-        <div v-if="currentLayerDrawData.type === 'metro'" class="mb-3">
-          <div class="my-title-xs-gray pb-2">捷運配置</div>
-          <div class="my-content-sm-black pb-2">
-            <div>總路線數: {{ currentLayerDrawData.totalLines }}</div>
-            <div>總節點數: {{ currentLayerDrawData.totalNodes }}</div>
-            <div>總連線數: {{ currentLayerDrawData.totalLinks }}</div>
-          </div>
-
-          <!-- 路線列表 -->
-          <div class="my-title-xs-gray pb-2">路線列表</div>
-          <div class="my-content-sm-black pb-2">
-            <div v-for="line in currentLayerDrawData.lines" :key="line.name" class="mb-1">
-              <span class="badge me-2" :style="{ backgroundColor: line.color }">{{
-                line.name
-              }}</span>
-              <span class="text-muted">({{ line.nodeCount }} 個節點)</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 節點數據預覽 -->
-        <div class="mb-3">
-          <div class="my-title-xs-gray pb-2">節點數據預覽 (前10個)</div>
-          <div class="my-content-sm-black pb-2">
-            <pre
-              class="bg-light p-2 rounded"
-              style="font-size: 0.8rem; max-height: 200px; overflow-y: auto"
-              >{{ JSON.stringify(currentLayerDrawData.nodes?.slice(0, 10), null, 2) }}</pre
-            >
-          </div>
-        </div>
-
-        <!-- 連線數據預覽 -->
-        <div class="mb-3">
-          <div class="my-title-xs-gray pb-2">連線數據預覽 (前10個)</div>
-          <div class="my-content-sm-black pb-2">
-            <pre
-              class="bg-light p-2 rounded"
-              style="font-size: 0.8rem; max-height: 200px; overflow-y: auto"
-              >{{ JSON.stringify(currentLayerDrawData.links?.slice(0, 10), null, 2) }}</pre
-            >
-          </div>
-        </div>
-
-        <!-- 完整數據下載 -->
-        <div class="mb-3">
-          <div class="my-title-xs-gray pb-2">完整數據</div>
-          <div class="my-content-sm-black pb-2">
-            <button
-              class="btn btn-sm btn-outline-primary"
-              @click="
-                () => {
-                  const dataStr = JSON.stringify(currentLayerDrawData, null, 2);
-                  const dataBlob = new Blob([dataStr], { type: 'application/json' });
-                  const url = URL.createObjectURL(dataBlob);
-                  const link = document.createElement('a');
-                  link.href = url;
-                  link.download = `${currentLayerName}_drawData.json`;
-                  link.click();
-                  URL.revokeObjectURL(url);
-                }
-              "
-            >
-              下載完整繪製數據
-            </button>
-          </div>
+      <!-- 📊 繪製 JSON 數據 -->
+      <div v-if="getCurrentLayerDrawJsonData()">
+        <div class="rounded-4 my-bgcolor-gray-100 p-4 mb-3">
+          <h6 class="mb-3">繪製 JSON 數據</h6>
+          <pre
+            class="my-font-size-sm"
+            style="
+              white-space: pre-wrap;
+              word-wrap: break-word;
+              max-height: 500px;
+              overflow-y: auto;
+            "
+            >{{ JSON.stringify(getCurrentLayerDrawJsonData(), null, 2) }}</pre
+          >
         </div>
       </div>
-
-      <!-- 無繪製數據時 -->
-      <div v-else class="p-3 h-100 d-flex align-items-center justify-content-center">
-        <div class="text-center">
-          <div class="my-title-sm-gray mb-2">無繪製數據</div>
-          <div class="my-content-xs-gray">當前圖層尚未生成繪製數據</div>
-        </div>
+      <div v-else class="text-center py-5">
+        <div class="my-title-md-gray">此圖層沒有可用的繪製 JSON 數據</div>
       </div>
     </div>
 
-    <!-- 無開啟圖層時的內容 -->
-    <div v-else class="my-bgcolor-white h-100 d-flex align-items-center justify-content-center">
+    <!-- 沒有開啟圖層時的空狀態 -->
+    <div v-else class="flex-grow-1 d-flex align-items-center justify-content-center">
       <div class="text-center">
-        <div class="my-title-sm-gray mb-2">無開啟圖層</div>
-        <div class="my-content-xs-gray">請先開啟圖層以查看繪製數據</div>
+        <div class="my-title-md-gray p-3">沒有開啟的圖層</div>
       </div>
     </div>
   </div>
 </template>
 
-<style scoped>
-  .nav-tabs .nav-link.active {
-    background-color: #f8f9fa;
-    border-color: #dee2e6 #dee2e6 #f8f9fa;
-  }
-
-  .nav-tabs .nav-link {
-    color: #495057;
-    border: 1px solid transparent;
-  }
-
-  .nav-tabs .nav-link:hover {
-    border-color: #e9ecef #e9ecef #dee2e6;
-  }
-
-  pre {
-    white-space: pre-wrap;
-    word-wrap: break-word;
-  }
-</style>
+<style scoped></style>
