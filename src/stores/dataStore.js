@@ -104,7 +104,12 @@ import { ref, computed } from 'vue';
  * 數據處理工具函數引入
  * 提供數據載入功能
  */
-import { loadDataLayerJson, loadGridSchematicJson } from '../utils/dataProcessor.js';
+import {
+  loadDataLayerJson,
+  loadGridSchematicJson,
+  processGridToDrawData,
+  processMetroToDrawData,
+} from '../utils/dataProcessor.js';
 
 // ==================== 📦 主要數據存儲定義 (Main Data Store Definition) ====================
 
@@ -203,10 +208,12 @@ export const useDataStore = defineStore(
             colorName: 'green',
             jsonData: null,
             processedJsonData: null,
+            drawJsonData: null,
             dashboardData: null,
             dataTableData: null,
             layerInfoData: null,
             jsonLoader: loadGridSchematicJson,
+            processToDrawData: processGridToDrawData,
             jsonFileName: 'test/test.json',
             isDataLayer: true,
             hideFromMap: true,
@@ -227,10 +234,12 @@ export const useDataStore = defineStore(
             colorName: 'orange',
             jsonData: null,
             processedJsonData: null,
+            drawJsonData: null,
             dashboardData: null,
             dataTableData: null,
             layerInfoData: null,
             jsonLoader: loadDataLayerJson,
+            processToDrawData: processMetroToDrawData,
             jsonFileName: 'taipei/taipei_schematic.json',
             isDataLayer: true,
             hideFromMap: true,
@@ -245,10 +254,12 @@ export const useDataStore = defineStore(
             colorName: 'orange',
             jsonData: null,
             processedJsonData: null,
+            drawJsonData: null,
             dashboardData: null,
             dataTableData: null,
             layerInfoData: null,
             jsonLoader: loadDataLayerJson,
+            processToDrawData: processMetroToDrawData,
             jsonFileName: 'taipei/taipei_schematic_2.json',
             isDataLayer: true,
             hideFromMap: true,
@@ -596,6 +607,13 @@ export const useDataStore = defineStore(
           layer.dataTableData = result.dataTableData;
           layer.dashboardData = result.dashboardData;
           layer.layerInfoData = result.layerInfoData;
+
+          // 生成繪製數據
+          if (layer.processToDrawData && layer.processedJsonData) {
+            layer.drawJsonData = layer.processToDrawData(layer.processedJsonData);
+            console.log(`🎨 圖層 "${layer.layerName}" 繪製數據生成完成:`, layer.drawJsonData);
+          }
+
           layer.isLoaded = true;
 
           console.log(`✅ 圖層 "${layer.layerName}" 載入完成`);
@@ -606,6 +624,7 @@ export const useDataStore = defineStore(
             isLoaded: layer.isLoaded,
             jsonData: layer.jsonData,
             processedJsonData: layer.processedJsonData,
+            drawJsonData: layer.drawJsonData,
             dataTableData: layer.dataTableData,
             dashboardData: layer.dashboardData,
             layerInfoData: layer.layerInfoData,

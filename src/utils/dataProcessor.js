@@ -993,3 +993,150 @@ async function processDataLayerJson(jsonData) {
     })),
   };
 }
+
+// ==================== 🎨 繪製數據處理函數 (Draw Data Processing Functions) ====================
+
+/**
+ * 🎨 網格示意圖轉繪製數據 (Process Grid to Draw Data)
+ *
+ * 將網格示意圖的 processedJsonData 轉換為適合 D3.js 繪製的 drawJsonData
+ *
+ * @param {Object} processedData - 處理後的網格數據
+ * @returns {Object} 繪製用的數據結構
+ */
+export function processGridToDrawData(processedData) {
+  console.log('🎨 處理網格示意圖繪製數據:', processedData);
+
+  if (!processedData || !processedData.nodes) {
+    console.warn('網格數據不完整，無法生成繪製數據');
+    return null;
+  }
+
+  // 計算網格尺寸
+  const gridX = processedData.gridX || 10;
+  const gridY = processedData.gridY || 10;
+
+  // 生成繪製用的節點數據
+  const drawNodes = processedData.nodes.map((node, index) => ({
+    id: `grid_${node.x}_${node.y}`,
+    x: node.x,
+    y: node.y,
+    value: node.value,
+    type: node.type || 1,
+    coord: { x: node.x, y: node.y },
+    gridIndex: index,
+    isGridNode: true,
+  }));
+
+  // 生成繪製用的連線數據（網格邊界）
+  const drawLinks = [];
+  for (let y = 0; y < gridY; y++) {
+    for (let x = 0; x < gridX; x++) {
+      const currentIndex = y * gridX + x;
+
+      // 水平連線（向右）
+      if (x < gridX - 1) {
+        const rightIndex = y * gridX + (x + 1);
+        drawLinks.push({
+          id: `link_h_${x}_${y}`,
+          source: currentIndex,
+          target: rightIndex,
+          type: 'horizontal',
+        });
+      }
+
+      // 垂直連線（向下）
+      if (y < gridY - 1) {
+        const bottomIndex = (y + 1) * gridX + x;
+        drawLinks.push({
+          id: `link_v_${x}_${y}`,
+          source: currentIndex,
+          target: bottomIndex,
+          type: 'vertical',
+        });
+      }
+    }
+  }
+
+  return {
+    type: 'grid',
+    gridX,
+    gridY,
+    nodes: drawNodes,
+    links: drawLinks,
+    totalNodes: drawNodes.length,
+    totalLinks: drawLinks.length,
+  };
+}
+
+/**
+ * 🎨 台北捷運轉繪製數據 (Process Metro to Draw Data)
+ *
+ * 將台北捷運的 processedJsonData 轉換為適合 D3.js 繪製的 drawJsonData
+ *
+ * @param {Array} processedData - 處理後的捷運數據
+ * @returns {Object} 繪製用的數據結構
+ */
+export function processMetroToDrawData(processedData) {
+  console.log('🎨 處理台北捷運繪製數據:', processedData);
+
+  if (!Array.isArray(processedData) || processedData.length === 0) {
+    console.warn('捷運數據不完整，無法生成繪製數據');
+    return null;
+  }
+
+  // 生成繪製用的節點數據
+  const drawNodes = [];
+  const drawLinks = [];
+
+  processedData.forEach((line, lineIndex) => {
+    if (!line.nodes || !Array.isArray(line.nodes)) return;
+
+    // 處理每個路線的節點
+    line.nodes.forEach((node, nodeIdx) => {
+      const nodeId = `metro_${lineIndex}_${nodeIdx}`;
+
+      drawNodes.push({
+        id: nodeId,
+        x: node.coord.x,
+        y: node.coord.y,
+        value: node.value,
+        type: node.type,
+        coord: { x: node.coord.x, y: node.coord.y },
+        lineName: line.name,
+        lineColor: line.color,
+        lineIndex: lineIndex,
+        nodeIndex: nodeIdx,
+        isMetroNode: true,
+      });
+
+      // 生成路線連線（相鄰節點）
+      if (nodeIdx > 0) {
+        const prevNodeId = `metro_${lineIndex}_${nodeIdx - 1}`;
+        drawLinks.push({
+          id: `metro_link_${lineIndex}_${nodeIdx - 1}`,
+          source: prevNodeId,
+          target: nodeId,
+          lineName: line.name,
+          lineColor: line.color,
+          lineIndex: lineIndex,
+          type: 'metro',
+        });
+      }
+    });
+  });
+
+  return {
+    type: 'metro',
+    lines: processedData.map((line) => ({
+      name: line.name,
+      color: line.color,
+      nodeCount: line.nodes.length,
+    })),
+    nodes: drawNodes,
+    links: drawLinks,
+    totalNodes: drawNodes.length,
+    totalLinks: drawLinks.length,
+    totalLines: processedData.length,
+  };
+}

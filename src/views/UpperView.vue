@@ -51,6 +51,14 @@ Features): * - 使用 Vue 2 Options API 進行組件管理 * - 整合多個分�
    * @see ../tabs/jsonDataTab.vue
    */
   import JsonDataTab from '../tabs/jsonDataTab.vue';
+
+  /**
+   * 繪製數據分頁組件引入
+   * 顯示圖層的繪製數據
+   *
+   * @see ../tabs/drawJsonDataTab.vue
+   */
+  import DrawJsonDataTab from '../tabs/drawJsonDataTab.vue';
   import { getIcon } from '../utils/utils.js';
 
   export default {
@@ -65,6 +73,7 @@ Features): * - 使用 Vue 2 Options API 進行組件管理 * - 整合多個分�
       D3jsTab,
       ProcessedJsonDataTab,
       JsonDataTab,
+      DrawJsonDataTab,
     },
 
     /**
@@ -345,6 +354,18 @@ Features): * - 使用 Vue 2 Options API 進行組件管理 * - 整合多個分�
           >
             <i class="fas fa-file-code"></i>
           </button>
+          <!-- 🎨 繪製數據按鈕 (Draw Data Button) -->
+          <button
+            class="btn rounded-circle border-0 d-flex align-items-center justify-content-center my-btn-transparent my-font-size-xs"
+            :class="{
+              'my-btn-blue': activeUpperTab === 'draw-json-data',
+            }"
+            @click="$emit('update:activeUpperTab', 'draw-json-data')"
+            style="width: 30px; height: 30px"
+            title="繪製數據"
+          >
+            <i class="fas fa-paint-brush"></i>
+          </button>
         </div>
       </div>
 
@@ -406,6 +427,22 @@ Features): * - 使用 Vue 2 Options API 進行組件管理 * - 整合多個分�
         <div style="height: 40px"></div>
         <JsonDataTab
           ref="JsonDataTab"
+          :containerHeight="contentHeight"
+          :isPanelDragging="isPanelDragging"
+          :activeMarkers="activeMarkers"
+        />
+      </div>
+
+      <!-- 繪製數據分頁內容 -->
+      <div
+        v-show="activeUpperTab === 'draw-json-data'"
+        ref="drawJsonDataContainerRef"
+        class="h-100 overflow-hidden pt-5"
+      >
+        <!-- 🎛️ 為導航按鈕組預留空間 (Reserve Space for Navigation Buttons) -->
+        <div style="height: 40px"></div>
+        <DrawJsonDataTab
+          ref="DrawJsonDataTab"
           :containerHeight="contentHeight"
           :isPanelDragging="isPanelDragging"
           :activeMarkers="activeMarkers"
