@@ -174,7 +174,6 @@ export const useDataStore = defineStore(
      * - isLoading: 圖層載入狀態
      * - isLoaded: 圖層載入完成狀態
      * - type: 圖層類型（grid, point, line 等）
-     * - shape: 圖層形狀（目前為 null）
      * - colorName: 圖層顏色名稱
      * - jsonData: 圖層原始 JSON 數據（不可修改）
      * - processedJsonData: 圖層處理後 JSON 數據（用於顯示和計算）
@@ -201,8 +200,6 @@ export const useDataStore = defineStore(
             visible: false,
             isLoading: false,
             isLoaded: false,
-            type: 'grid',
-            shape: null,
             colorName: 'green',
             jsonData: null,
             processedJsonData: null,
@@ -227,8 +224,6 @@ export const useDataStore = defineStore(
             visible: false,
             isLoading: false,
             isLoaded: false,
-            type: 'point',
-            shape: null,
             colorName: 'orange',
             jsonData: null,
             processedJsonData: null,
@@ -247,8 +242,6 @@ export const useDataStore = defineStore(
             visible: false,
             isLoading: false,
             isLoaded: false,
-            type: 'point',
-            shape: null,
             colorName: 'orange',
             jsonData: null,
             processedJsonData: null,
@@ -423,7 +416,7 @@ export const useDataStore = defineStore(
      * const loadingLayers = allLayers.filter(layer => layer.isLoading);
      *
      * // 搜尋特定類型的圖層
-     * const gridLayers = allLayers.filter(layer => layer.type === 'grid');
+     * const gridLayers = allLayers.filter(layer => layer.isGridSchematic);
      * ```
      *
      * 📊 返回數據結構 (Return Data Structure):
