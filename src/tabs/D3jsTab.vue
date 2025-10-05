@@ -771,9 +771,9 @@
   ) => {
     if (!gridData.value || !gridData.value.nodes) return;
 
-    // 獲取當前圖層的 drawJsonData
-    const currentLayer = dataStore.findLayerById(activeLayerTab.value);
-    const drawJsonData = currentLayer ? currentLayer.drawJsonData : null;
+    // 獲取當前圖層的 drawJsonData（暫時保留以備將來使用）
+    // const currentLayer = dataStore.findLayerById(activeLayerTab.value);
+    // const drawJsonData = currentLayer ? currentLayer.drawJsonData : null;
 
     // 計算可見列和行的累積位置
     const visibleColumnPositions = [0];
@@ -816,7 +816,7 @@
     const nodeGroup = svg.append('g').attr('class', 'grid-nodes');
 
     // 繪製每個節點（只顯示數值文字，不顯示圓圈）
-    gridData.value.nodes.forEach((node, index) => {
+    gridData.value.nodes.forEach((node) => {
       // 檢查是否需要隱藏該節點
       if (hiddenColumnIndices.includes(node.x) || hiddenRowIndices.includes(node.y)) {
         return; // 不繪製此節點
@@ -831,11 +831,8 @@
       const x = margin.left + visibleColumnPositions[visibleColIdx] + columnWidths[node.x] / 2;
       const y = margin.top + visibleRowPositions[visibleRowIdx] + rowHeights[node.y] / 2;
 
-      // 從 drawJsonData 中獲取節點的顏色
-      let nodeColor =
-        drawJsonData && drawJsonData.nodes && drawJsonData.nodes[index]
-          ? drawJsonData.nodes[index].color
-          : '#FFFFFF'; // 預設白色
+      // 節點數字顏色固定為白色
+      const nodeColor = '#FFFFFF';
 
       // 使用固定字體大小，不受網格大小影響
       const fontSize = 14; // 固定字體大小
@@ -1416,9 +1413,9 @@
 
     // 繪製節點數值標籤
     if (linkData.value) {
-      // 獲取當前圖層的 drawJsonData
-      const currentLayer = dataStore.findLayerById(activeLayerTab.value);
-      const drawJsonData = currentLayer ? currentLayer.drawJsonData : null;
+      // 獲取當前圖層的 drawJsonData（暫時保留以備將來使用）
+      // const currentLayer = dataStore.findLayerById(activeLayerTab.value);
+      // const drawJsonData = currentLayer ? currentLayer.drawJsonData : null;
 
       const allLinks = linkData.value.flatMap((line) =>
         line.nodes.map((node) => ({
@@ -1428,12 +1425,9 @@
 
       console.log('allLinks', allLinks);
 
-      allLinks.forEach((node, index) => {
-        // 從 drawJsonData 中獲取節點的顏色
-        const nodeColor =
-          drawJsonData && drawJsonData.nodes && drawJsonData.nodes[index]
-            ? drawJsonData.nodes[index].color
-            : '#FFFFFF'; // 預設白色
+      allLinks.forEach((node) => {
+        // 節點數字顏色固定為白色
+        const nodeColor = '#FFFFFF';
 
         svg
           .append('text')
