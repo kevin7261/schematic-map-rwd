@@ -538,14 +538,8 @@
     const drawJsonData = currentLayer ? currentLayer.drawJsonData : null;
 
     if (drawJsonData && drawJsonData.statsLabels) {
-      const {
-        xRowStats,
-        yRowStats,
-        overallStats,
-        color,
-        highlightColumnIndices,
-        highlightRowIndices,
-      } = drawJsonData.statsLabels;
+      const { xRowStats, yRowStats, color, highlightColumnIndices, highlightRowIndices } =
+        drawJsonData.statsLabels;
 
       // 繪製 X 排（垂直方向）統計標籤 - 只顯示最大值
       if (xRowStats) {
@@ -601,36 +595,6 @@
             .attr('fill', textColor) // 動態顏色
             .text(`${yStat.max}`);
         });
-      }
-
-      // 繪製整體統計標籤（在網格右下角）
-      if (overallStats) {
-        const overallX = margin.left + gridDimensions.value.x * cellWidth + 10;
-        const overallY = margin.top + gridDimensions.value.y * cellHeight - 10;
-
-        // 顯示整體統計標題
-        statsGroup
-          .append('text')
-          .attr('x', overallX)
-          .attr('y', overallY - fontSize - 2)
-          .attr('text-anchor', 'start')
-          .attr('dominant-baseline', 'bottom')
-          .attr('font-size', fontSize * 0.9)
-          .attr('font-weight', 'bold')
-          .attr('fill', '#2C3E50')
-          .text('整體統計:');
-
-        // 只顯示最大值
-        statsGroup
-          .append('text')
-          .attr('x', overallX)
-          .attr('y', overallY)
-          .attr('text-anchor', 'start')
-          .attr('dominant-baseline', 'bottom')
-          .attr('font-size', fontSize * 0.8)
-          .attr('font-weight', 'bold')
-          .attr('fill', color) // 預設顏色（綠色）
-          .text(`max: ${overallStats.max}`);
       }
     }
   };
