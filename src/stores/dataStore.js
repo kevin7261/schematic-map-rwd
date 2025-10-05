@@ -662,6 +662,21 @@ export const useDataStore = defineStore(
       console.log('📏 D3jsTab 尺寸更新:', d3jsDimensions.value);
     };
 
+    // 更新當前圖層計算後的網格狀態（可見行列與單元尺寸）
+    const updateComputedGridState = (layerId, state) => {
+      if (!layerStates.value[layerId]) {
+        layerStates.value[layerId] = {};
+      }
+      layerStates.value[layerId].computedGridState = {
+        visibleX: state.visibleX,
+        visibleY: state.visibleY,
+        cellWidth: Math.round(state.cellWidth),
+        cellHeight: Math.round(state.cellHeight),
+        updatedAt: Date.now(),
+      };
+      console.log('📐 更新計算後網格狀態:', layerId, layerStates.value[layerId].computedGridState);
+    };
+
     const setSelectedFeature = (feature) => {
       // 記錄選取變化的log
       if (feature) {
@@ -712,6 +727,7 @@ export const useDataStore = defineStore(
       // D3jsTab 尺寸管理
       d3jsDimensions,
       updateD3jsDimensions,
+      updateComputedGridState,
     };
   },
   {

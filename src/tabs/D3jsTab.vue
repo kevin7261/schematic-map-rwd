@@ -388,45 +388,108 @@
       .style('background-color', COLOR_CONFIG.BACKGROUND)
       .style('transition', 'all 0.2s ease-in-out');
 
-    // 先計算初始單元格尺寸（用於判斷是否需要隱藏）
-    const initialCellWidth = width / gridDimensions.value.x;
-    const initialCellHeight = height / gridDimensions.value.y;
-
-    // 獲取當前圖層的 drawJsonData 來判斷哪些行列需要隱藏
+    // 獲取當前圖層的 drawJsonData 和統計數據
     const currentLayer = dataStore.findLayerById(activeLayerTab.value);
     const drawJsonData = currentLayer ? currentLayer.drawJsonData : null;
 
-    let highlightColumnIndices = [];
-    let highlightRowIndices = [];
+    // 獲取統計數據（用於根據 max 值排序）
+    let xRowStats = [];
+    let yRowStats = [];
 
     if (drawJsonData && drawJsonData.statsLabels) {
-      highlightColumnIndices = drawJsonData.statsLabels.highlightColumnIndices || [];
-      highlightRowIndices = drawJsonData.statsLabels.highlightRowIndices || [];
+      xRowStats = drawJsonData.statsLabels.xRowStats || [];
+      yRowStats = drawJsonData.statsLabels.yRowStats || [];
     }
 
-    // 計算實際顯示的列數和行數
-    let visibleColumns = gridDimensions.value.x;
-    let visibleRows = gridDimensions.value.y;
+    // 遞歸計算需要隱藏的行列，直到所有單元格 >= 80px
+    const computeHiddenIndices = () => {
+      const hiddenCols = new Set();
+      const hiddenRows = new Set();
 
-    if (initialCellWidth < 80) {
-      visibleColumns = gridDimensions.value.x - highlightColumnIndices.length;
-    }
+      // 最多迭代次數，避免無限循環
+      const maxIterations = Math.max(gridDimensions.value.x, gridDimensions.value.y);
+      let iteration = 0;
 
-    if (initialCellHeight < 80) {
-      visibleRows = gridDimensions.value.y - highlightRowIndices.length;
-    }
+      while (iteration < maxIterations) {
+        iteration++;
 
-    // 根據實際顯示的行列數重新計算單元格尺寸
-    const cellWidth = visibleColumns > 0 ? width / visibleColumns : initialCellWidth;
-    const cellHeight = visibleRows > 0 ? height / visibleRows : initialCellHeight;
+        // 計算當前可見的行列數
+        const visibleCols = gridDimensions.value.x - hiddenCols.size;
+        const visibleRows = gridDimensions.value.y - hiddenRows.size;
+
+        // 計算當前單元格尺寸
+        const currentCellWidth =
+          visibleCols > 0 ? width / visibleCols : width / gridDimensions.value.x;
+        const currentCellHeight =
+          visibleRows > 0 ? height / visibleRows : height / gridDimensions.value.y;
+
+        let needAdjust = false;
+
+        // 如果寬度 < 80，找出未隱藏的列中 max 最小的並隱藏
+        if (
+          currentCellWidth < 80 &&
+          visibleCols > 1 &&
+          xRowStats.length === gridDimensions.value.x
+        ) {
+          const availableStats = xRowStats
+            .map((stat, index) => ({ index, max: stat.max }))
+            .filter((item) => !hiddenCols.has(item.index))
+            .sort((a, b) => a.max - b.max);
+
+          if (availableStats.length > 0) {
+            hiddenCols.add(availableStats[0].index);
+            needAdjust = true;
+          }
+        }
+
+        // 如果高度 < 80，找出未隱藏的行中 max 最小的並隱藏
+        if (
+          currentCellHeight < 80 &&
+          visibleRows > 1 &&
+          yRowStats.length === gridDimensions.value.y
+        ) {
+          const availableStats = yRowStats
+            .map((stat, index) => ({ index, max: stat.max }))
+            .filter((item) => !hiddenRows.has(item.index))
+            .sort((a, b) => a.max - b.max);
+
+          if (availableStats.length > 0) {
+            hiddenRows.add(availableStats[0].index);
+            needAdjust = true;
+          }
+        }
+
+        // 如果這次迭代沒有調整，說明已達到穩定狀態
+        if (!needAdjust) {
+          break;
+        }
+      }
+
+      return {
+        hiddenColumnIndices: Array.from(hiddenCols),
+        hiddenRowIndices: Array.from(hiddenRows),
+      };
+    };
+
+    const { hiddenColumnIndices, hiddenRowIndices } = computeHiddenIndices();
+
+    // 計算最終顯示的列數和行數
+    const visibleColumns = gridDimensions.value.x - hiddenColumnIndices.length;
+    const visibleRows = gridDimensions.value.y - hiddenRowIndices.length;
+
+    // 根據實際顯示的行列數計算最終單元格尺寸
+    const cellWidth = visibleColumns > 0 ? width / visibleColumns : width / gridDimensions.value.x;
+    const cellHeight = visibleRows > 0 ? height / visibleRows : height / gridDimensions.value.y;
 
     console.log('📊 網格單元格尺寸:', {
-      initialCellWidth,
-      initialCellHeight,
       cellWidth,
       cellHeight,
-      hiddenColumns: highlightColumnIndices.length,
-      hiddenRows: highlightRowIndices.length,
+      visibleColumns,
+      visibleRows,
+      hiddenColumns: hiddenColumnIndices.length,
+      hiddenRows: hiddenRowIndices.length,
+      hiddenColumnIndices,
+      hiddenRowIndices,
     });
 
     // 繪製網格線
@@ -437,12 +500,22 @@
       cellWidth,
       cellHeight,
       margin,
-      initialCellWidth,
-      initialCellHeight
+      hiddenColumnIndices,
+      hiddenRowIndices
     );
 
     // 繪製網格節點
-    drawGridNodes(svg, cellWidth, cellHeight, margin, initialCellWidth, initialCellHeight);
+    drawGridNodes(svg, cellWidth, cellHeight, margin, hiddenColumnIndices, hiddenRowIndices);
+
+    // 將此次重繪後的可見行列與單元尺寸寫入 store，供其他 Tab 讀取
+    if (activeLayerTab.value) {
+      dataStore.updateComputedGridState(activeLayerTab.value, {
+        visibleX: visibleColumns,
+        visibleY: visibleRows,
+        cellWidth,
+        cellHeight,
+      });
+    }
   };
 
   /**
@@ -453,6 +526,8 @@
    * @param {number} cellWidth - 單元格寬度
    * @param {number} cellHeight - 單元格高度
    * @param {Object} margin - 邊距配置
+   * @param {Array} hiddenColumnIndices - 需要隱藏的列索引
+   * @param {Array} hiddenRowIndices - 需要隱藏的行索引
    */
   const drawGridLines = (
     svg,
@@ -461,22 +536,9 @@
     cellWidth,
     cellHeight,
     margin,
-    initialCellWidth,
-    initialCellHeight
+    hiddenColumnIndices,
+    hiddenRowIndices
   ) => {
-    // 獲取當前圖層的 drawJsonData
-    const currentLayer = dataStore.findLayerById(activeLayerTab.value);
-    const drawJsonData = currentLayer ? currentLayer.drawJsonData : null;
-
-    // 獲取需要隱藏的行列索引
-    let highlightColumnIndices = [];
-    let highlightRowIndices = [];
-
-    if (drawJsonData && drawJsonData.statsLabels) {
-      highlightColumnIndices = drawJsonData.statsLabels.highlightColumnIndices || [];
-      highlightRowIndices = drawJsonData.statsLabels.highlightRowIndices || [];
-    }
-
     // 建立顯示索引映射（原始索引 -> 顯示索引）
     const visibleColumnMap = [];
     const visibleRowMap = [];
@@ -484,13 +546,13 @@
     let visibleRowIndex = 0;
 
     for (let i = 0; i < gridDimensions.value.x; i++) {
-      if (!(initialCellWidth < 80 && highlightColumnIndices.includes(i))) {
+      if (!hiddenColumnIndices.includes(i)) {
         visibleColumnMap[i] = visibleColIndex++;
       }
     }
 
     for (let i = 0; i < gridDimensions.value.y; i++) {
-      if (!(initialCellHeight < 80 && highlightRowIndices.includes(i))) {
+      if (!hiddenRowIndices.includes(i)) {
         visibleRowMap[i] = visibleRowIndex++;
       }
     }
@@ -499,7 +561,7 @@
     let drawnX = 0;
     for (let i = 0; i <= gridDimensions.value.x; i++) {
       // 檢查是否需要隱藏此列
-      const isHidden = initialCellWidth < 80 && highlightColumnIndices.includes(i);
+      const isHidden = hiddenColumnIndices.includes(i);
 
       if (!isHidden || i === gridDimensions.value.x) {
         svg
@@ -521,7 +583,7 @@
     let drawnY = 0;
     for (let i = 0; i <= gridDimensions.value.y; i++) {
       // 檢查是否需要隱藏此行
-      const isHidden = initialCellHeight < 80 && highlightRowIndices.includes(i);
+      const isHidden = hiddenRowIndices.includes(i);
 
       if (!isHidden || i === gridDimensions.value.y) {
         svg
@@ -542,7 +604,7 @@
     // 繪製次要網格線（網格中心線）
     for (let i = 0; i < gridDimensions.value.x; i++) {
       // 檢查是否需要隱藏此列的中心線
-      if (initialCellWidth < 80 && highlightColumnIndices.includes(i)) continue;
+      if (hiddenColumnIndices.includes(i)) continue;
 
       const displayX = visibleColumnMap[i];
       if (displayX === undefined) continue;
@@ -559,7 +621,7 @@
 
     for (let i = 0; i < gridDimensions.value.y; i++) {
       // 檢查是否需要隱藏此行的中心線
-      if (initialCellHeight < 80 && highlightRowIndices.includes(i)) continue;
+      if (hiddenRowIndices.includes(i)) continue;
 
       const displayY = visibleRowMap[i];
       if (displayY === undefined) continue;
@@ -581,29 +643,22 @@
    * @param {number} cellWidth - 單元格寬度
    * @param {number} cellHeight - 單元格高度
    * @param {Object} margin - 邊距配置
+   * @param {Array} hiddenColumnIndices - 需要隱藏的列索引
+   * @param {Array} hiddenRowIndices - 需要隱藏的行索引
    */
   const drawGridNodes = (
     svg,
     cellWidth,
     cellHeight,
     margin,
-    initialCellWidth,
-    initialCellHeight
+    hiddenColumnIndices,
+    hiddenRowIndices
   ) => {
     if (!gridData.value || !gridData.value.nodes) return;
 
     // 獲取當前圖層的 drawJsonData
     const currentLayer = dataStore.findLayerById(activeLayerTab.value);
     const drawJsonData = currentLayer ? currentLayer.drawJsonData : null;
-
-    // 獲取需要隱藏的行列索引
-    let highlightColumnIndices = [];
-    let highlightRowIndices = [];
-
-    if (drawJsonData && drawJsonData.statsLabels) {
-      highlightColumnIndices = drawJsonData.statsLabels.highlightColumnIndices || [];
-      highlightRowIndices = drawJsonData.statsLabels.highlightRowIndices || [];
-    }
 
     // 建立顯示索引映射（原始索引 -> 顯示索引）
     const visibleColumnMap = [];
@@ -612,13 +667,13 @@
     let visibleRowIndex = 0;
 
     for (let i = 0; i < gridDimensions.value.x; i++) {
-      if (!(initialCellWidth < 80 && highlightColumnIndices.includes(i))) {
+      if (!hiddenColumnIndices.includes(i)) {
         visibleColumnMap[i] = visibleColIndex++;
       }
     }
 
     for (let i = 0; i < gridDimensions.value.y; i++) {
-      if (!(initialCellHeight < 80 && highlightRowIndices.includes(i))) {
+      if (!hiddenRowIndices.includes(i)) {
         visibleRowMap[i] = visibleRowIndex++;
       }
     }
@@ -629,10 +684,7 @@
     // 繪製每個節點（只顯示數值文字，不顯示圓圈）
     gridData.value.nodes.forEach((node, index) => {
       // 檢查是否需要隱藏該節點
-      if (
-        (initialCellWidth < 80 && highlightColumnIndices.includes(node.x)) ||
-        (initialCellHeight < 80 && highlightRowIndices.includes(node.y))
-      ) {
+      if (hiddenColumnIndices.includes(node.x) || hiddenRowIndices.includes(node.y)) {
         return; // 不繪製此節點
       }
 
@@ -665,7 +717,7 @@
     });
 
     // 繪製統計數據標籤
-    drawStatisticsLabels(svg, cellWidth, cellHeight, margin, initialCellWidth, initialCellHeight);
+    drawStatisticsLabels(svg, cellWidth, cellHeight, margin, hiddenColumnIndices, hiddenRowIndices);
   };
 
   /**
@@ -674,14 +726,16 @@
    * @param {number} cellWidth - 單元格寬度
    * @param {number} cellHeight - 單元格高度
    * @param {Object} margin - 邊距配置
+   * @param {Array} hiddenColumnIndices - 需要隱藏的列索引
+   * @param {Array} hiddenRowIndices - 需要隱藏的行索引
    */
   const drawStatisticsLabels = (
     svg,
     cellWidth,
     cellHeight,
     margin,
-    initialCellWidth,
-    initialCellHeight
+    hiddenColumnIndices,
+    hiddenRowIndices
   ) => {
     if (!gridData.value || !gridData.value.xRowStats || !gridData.value.yRowStats) return;
 
@@ -696,8 +750,7 @@
     const drawJsonData = currentLayer ? currentLayer.drawJsonData : null;
 
     if (drawJsonData && drawJsonData.statsLabels) {
-      const { xRowStats, yRowStats, color, highlightColumnIndices, highlightRowIndices } =
-        drawJsonData.statsLabels;
+      const { xRowStats, yRowStats, color } = drawJsonData.statsLabels;
 
       // 建立顯示索引映射（原始索引 -> 顯示索引）
       const visibleColumnMap = [];
@@ -706,13 +759,13 @@
       let visibleRowIndex = 0;
 
       for (let i = 0; i < gridDimensions.value.x; i++) {
-        if (!(initialCellWidth < 80 && highlightColumnIndices.includes(i))) {
+        if (!hiddenColumnIndices.includes(i)) {
           visibleColumnMap[i] = visibleColIndex++;
         }
       }
 
       for (let i = 0; i < gridDimensions.value.y; i++) {
-        if (!(initialCellHeight < 80 && highlightRowIndices.includes(i))) {
+        if (!hiddenRowIndices.includes(i)) {
           visibleRowMap[i] = visibleRowIndex++;
         }
       }
@@ -720,8 +773,8 @@
       // 繪製 X 排（垂直方向）統計標籤 - 只顯示最大值
       if (xRowStats) {
         xRowStats.forEach((xStat, index) => {
-          // 當 cellWidth < 80px 且是需要高亮的 column 時，不顯示此標籤
-          if (initialCellWidth < 80 && highlightColumnIndices.includes(index)) {
+          // 當該列被隱藏時，不顯示此標籤
+          if (hiddenColumnIndices.includes(index)) {
             return; // 不繪製此標籤
           }
 
@@ -748,8 +801,8 @@
       // 繪製 Y 排（水平方向）統計標籤 - 只顯示最大值
       if (yRowStats) {
         yRowStats.forEach((yStat, index) => {
-          // 當 cellHeight < 80px 且是需要高亮的 row 時，不顯示此標籤
-          if (initialCellHeight < 80 && highlightRowIndices.includes(index)) {
+          // 當該行被隱藏時，不顯示此標籤
+          if (hiddenRowIndices.includes(index)) {
             return; // 不繪製此標籤
           }
 

@@ -250,6 +250,24 @@
   };
 
   /**
+   * 取得目前圖層的 layerInfoData（過濾掉 gridX/gridY，避免與有效值重覆顯示）
+   */
+  const currentLayerInfoEntries = computed(() => {
+    const data = getCurrentLayerInfoData();
+    if (!data) return [];
+    return Object.entries(data).filter(([key]) => key !== 'gridX' && key !== 'gridY');
+  });
+
+  /**
+   * 取得當前圖層在重繪後的實際網格狀態（可見行列與單元尺寸）
+   */
+  const getComputedGridState = () => {
+    if (!activeLayerTab.value) return null;
+    const layerState = dataStore.layerStates?.[activeLayerTab.value];
+    return layerState && layerState.computedGridState ? layerState.computedGridState : null;
+  };
+
+  /**
    * 📏 計算網格寬度 (Calculate Grid Width)
    * 根據 D3js 容器尺寸和網格配置計算每個網格單元的寬度
    *
@@ -264,6 +282,12 @@
     const currentLayer = visibleLayers.value.find(
       (layer) => layer.layerId === activeLayerTab.value
     );
+
+    // 優先使用重繪後計算出的 cellWidth
+    const computedState = getComputedGridState();
+    if (computedState && computedState.cellWidth > 0) {
+      return computedState.cellWidth;
+    }
 
     if (!dataStore.d3jsDimensions.width) {
       return 0;
@@ -371,6 +395,12 @@
       (layer) => layer.layerId === activeLayerTab.value
     );
 
+    // 優先使用重繪後計算出的 cellHeight
+    const computedState = getComputedGridState();
+    if (computedState && computedState.cellHeight > 0) {
+      return computedState.cellHeight;
+    }
+
     if (!dataStore.d3jsDimensions.height) {
       return 0;
     }
@@ -459,6 +489,50 @@
     });
 
     return cellHeight;
+  };
+
+  /**
+   * 取得有效的 Grid X（顯示中的欄數）
+   */
+  const getEffectiveGridX = () => {
+    const computedState = getComputedGridState();
+    if (computedState && computedState.visibleX) return computedState.visibleX;
+
+    // 後備：沿用原本的 gridX 推導邏輯
+    const layerInfoData = getCurrentLayerInfoData();
+    const currentLayer = visibleLayers.value.find(
+      (layer) => layer.layerId === activeLayerTab.value
+    );
+
+    let gridX = null;
+    if (layerInfoData && layerInfoData.gridX) gridX = layerInfoData.gridX;
+    else if (currentLayer && currentLayer.processedJsonData && currentLayer.processedJsonData.gridX)
+      gridX = currentLayer.processedJsonData.gridX;
+    else if (currentLayer && currentLayer.dashboardData && currentLayer.dashboardData.gridX)
+      gridX = currentLayer.dashboardData.gridX;
+    return gridX || 0;
+  };
+
+  /**
+   * 取得有效的 Grid Y（顯示中的列數）
+   */
+  const getEffectiveGridY = () => {
+    const computedState = getComputedGridState();
+    if (computedState && computedState.visibleY) return computedState.visibleY;
+
+    // 後備：沿用原本的 gridY 推導邏輯
+    const layerInfoData = getCurrentLayerInfoData();
+    const currentLayer = visibleLayers.value.find(
+      (layer) => layer.layerId === activeLayerTab.value
+    );
+
+    let gridY = null;
+    if (layerInfoData && layerInfoData.gridY) gridY = layerInfoData.gridY;
+    else if (currentLayer && currentLayer.processedJsonData && currentLayer.processedJsonData.gridY)
+      gridY = currentLayer.processedJsonData.gridY;
+    else if (currentLayer && currentLayer.dashboardData && currentLayer.dashboardData.gridY)
+      gridY = currentLayer.dashboardData.gridY;
+    return gridY || 0;
   };
 
   // ==================== 👀 響應式監聽器 (Reactive Watchers) ====================
@@ -665,7 +739,7 @@
           <!-- 圖層資訊顯示區域 -->
           <template v-if="visibleLayers.length > 0 && getCurrentLayerInfoData()">
             <!-- 顯示 layerInfoData 的所有內容 -->
-            <div v-for="(value, key) in getCurrentLayerInfoData()" :key="key" class="pb-2">
+            <div v-for="[key, value] in currentLayerInfoEntries" :key="key" class="pb-2">
               <div class="my-title-xs-gray pb-1">{{ key }}</div>
               <div class="my-content-sm-black pb-1">
                 {{ formatDisplayValue(value) }}
@@ -684,6 +758,16 @@
             <DetailItem
               label="Grid Height"
               :value="getGridHeight() > 0 ? getGridHeight() + 'px' : 'N/A'"
+            />
+
+            <!-- Grid 維度（顯示中的 gridX / gridY） -->
+            <DetailItem
+              label="gridX"
+              :value="getEffectiveGridX() > 0 ? getEffectiveGridX() : 'N/A'"
+            />
+            <DetailItem
+              label="gridY"
+              :value="getEffectiveGridY() > 0 ? getEffectiveGridY() : 'N/A'"
             />
           </template>
 
