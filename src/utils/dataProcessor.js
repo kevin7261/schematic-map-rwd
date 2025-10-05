@@ -1060,6 +1060,69 @@ export function processGridToDrawData(processedData) {
     }
   }
 
+  // 計算統計標籤數據
+  const xRowStats = [];
+  const yRowStats = [];
+
+  // 計算 X 排（垂直方向）統計
+  for (let x = 0; x < gridX; x++) {
+    const values = [];
+    for (let y = 0; y < gridY; y++) {
+      const nodeIndex = y * gridX + x;
+      if (drawNodes[nodeIndex]) {
+        values.push(drawNodes[nodeIndex].value);
+      }
+    }
+
+    if (values.length > 0) {
+      xRowStats.push({
+        row: x,
+        min: Math.min(...values),
+        max: Math.max(...values),
+        avg: values.reduce((sum, val) => sum + val, 0) / values.length,
+        count: values.length,
+      });
+    }
+  }
+
+  // 計算 Y 排（水平方向）統計
+  for (let y = 0; y < gridY; y++) {
+    const values = [];
+    for (let x = 0; x < gridX; x++) {
+      const nodeIndex = y * gridX + x;
+      if (drawNodes[nodeIndex]) {
+        values.push(drawNodes[nodeIndex].value);
+      }
+    }
+
+    if (values.length > 0) {
+      yRowStats.push({
+        row: y,
+        min: Math.min(...values),
+        max: Math.max(...values),
+        avg: values.reduce((sum, val) => sum + val, 0) / values.length,
+        count: values.length,
+      });
+    }
+  }
+
+  // 計算整體統計
+  const allValues = drawNodes.map((node) => node.value);
+  const overallStats = {
+    min: Math.min(...allValues),
+    max: Math.max(...allValues),
+    avg: allValues.reduce((sum, val) => sum + val, 0) / allValues.length,
+    count: allValues.length,
+  };
+
+  // 計算需要高亮的 column（基於最大值最小的 column）
+  const columnMaxValues = xRowStats.map((stat) => stat.max);
+  const minColumnMax = Math.min(...columnMaxValues);
+  const highlightColumnIndices = xRowStats
+    .map((stat, index) => ({ stat, index }))
+    .filter(({ stat }) => stat.max === minColumnMax)
+    .map(({ index }) => index);
+
   return {
     type: 'grid',
     gridX,
@@ -1068,6 +1131,15 @@ export function processGridToDrawData(processedData) {
     links: drawLinks,
     totalNodes: drawNodes.length,
     totalLinks: drawLinks.length,
+    // 統計標籤數據
+    statsLabels: {
+      xRowStats, // X 排統計數據
+      yRowStats, // Y 排統計數據
+      overallStats, // 整體統計數據
+      // 簡化的顏色配置
+      color: '#4CAF50', // 預設綠色
+      highlightColumnIndices, // 需要高亮的 column 索引（紅色）
+    },
   };
 }
 

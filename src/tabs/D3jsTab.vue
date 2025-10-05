@@ -520,69 +520,91 @@
     const fontSize = Math.min(cellWidth, cellHeight) * 0.25;
     const labelOffset = 5;
 
-    // 繪製 X 排（垂直方向）統計標籤 - 只顯示最大值
-    gridData.value.xRowStats.forEach((xStat) => {
-      const x = margin.left + (xStat.row + 0.5) * cellWidth;
-      const y = margin.top - labelOffset;
+    // 從 drawJsonData 中獲取統計標籤數據
+    const currentLayer = dataStore.findLayerById(activeLayerTab.value);
+    const drawJsonData = currentLayer ? currentLayer.drawJsonData : null;
 
-      // 只顯示最大值標籤
-      statsGroup
-        .append('text')
-        .attr('x', x)
-        .attr('y', y)
-        .attr('text-anchor', 'middle')
-        .attr('dominant-baseline', 'bottom')
-        .attr('font-size', fontSize)
-        .attr('font-weight', 'bold')
-        .attr('fill', '#4ECDC4') // 青色表示最大值
-        .text(`${xStat.max}`);
-    });
+    if (drawJsonData && drawJsonData.statsLabels) {
+      const { xRowStats, yRowStats, overallStats, color, highlightColumnIndices } =
+        drawJsonData.statsLabels;
 
-    // 繪製 Y 排（水平方向）統計標籤 - 只顯示最大值
-    gridData.value.yRowStats.forEach((yStat) => {
-      const x = margin.left - labelOffset;
-      const y = margin.top + (yStat.row + 0.5) * cellHeight;
+      // 繪製 X 排（垂直方向）統計標籤 - 只顯示最大值
+      if (xRowStats) {
+        xRowStats.forEach((xStat, index) => {
+          const x = margin.left + (xStat.row + 0.5) * cellWidth;
+          const y = margin.top - labelOffset;
 
-      // 只顯示最大值標籤
-      statsGroup
-        .append('text')
-        .attr('x', x)
-        .attr('y', y)
-        .attr('text-anchor', 'end')
-        .attr('dominant-baseline', 'middle')
-        .attr('font-size', fontSize)
-        .attr('font-weight', 'bold')
-        .attr('fill', '#4ECDC4') // 青色表示最大值
-        .text(`${yStat.max}`);
-    });
+          // 根據 cellWidth 和是否需要高亮決定顏色
+          let textColor = color; // 預設顏色（綠色）
 
-    // 繪製整體統計標籤（在網格右下角）
-    if (gridData.value.overallStats) {
-      const overallX = margin.left + gridDimensions.value.x * cellWidth + 10;
-      const overallY = margin.top + gridDimensions.value.y * cellHeight - 10;
+          // 當 cellWidth < 40px 且是需要高亮的 column 時，使用紅色
+          if (cellWidth < 40 && highlightColumnIndices.includes(index)) {
+            textColor = '#F44336'; // 紅色
+          }
 
-      statsGroup
-        .append('text')
-        .attr('x', overallX)
-        .attr('y', overallY)
-        .attr('text-anchor', 'start')
-        .attr('dominant-baseline', 'bottom')
-        .attr('font-size', fontSize * 0.8)
-        .attr('font-weight', 'bold')
-        .attr('fill', '#95A5A6') // 灰色表示整體統計
-        .text(`整體 max:${gridData.value.overallStats.max}`);
+          // 只顯示最大值標籤
+          statsGroup
+            .append('text')
+            .attr('x', x)
+            .attr('y', y)
+            .attr('text-anchor', 'middle')
+            .attr('dominant-baseline', 'bottom')
+            .attr('font-size', fontSize)
+            .attr('font-weight', 'bold')
+            .attr('fill', textColor) // 動態顏色
+            .text(`${xStat.max}`);
+        });
+      }
 
-      // 添加整體統計標題
-      statsGroup
-        .append('text')
-        .attr('x', overallX)
-        .attr('y', overallY - fontSize - 2)
-        .attr('text-anchor', 'start')
-        .attr('dominant-baseline', 'bottom')
-        .attr('font-size', fontSize * 0.9)
-        .attr('font-weight', 'bold')
-        .attr('fill', '#2C3E50')
-        .text('整體統計:');
+      // 繪製 Y 排（水平方向）統計標籤 - 只顯示最大值
+      if (yRowStats) {
+        yRowStats.forEach((yStat) => {
+          const x = margin.left - labelOffset;
+          const y = margin.top + (yStat.row + 0.5) * cellHeight;
+
+          // 只顯示最大值標籤（使用預設顏色）
+          statsGroup
+            .append('text')
+            .attr('x', x)
+            .attr('y', y)
+            .attr('text-anchor', 'end')
+            .attr('dominant-baseline', 'middle')
+            .attr('font-size', fontSize)
+            .attr('font-weight', 'bold')
+            .attr('fill', color) // 預設顏色（綠色）
+            .text(`${yStat.max}`);
+        });
+      }
+
+      // 繪製整體統計標籤（在網格右下角）
+      if (overallStats) {
+        const overallX = margin.left + gridDimensions.value.x * cellWidth + 10;
+        const overallY = margin.top + gridDimensions.value.y * cellHeight - 10;
+
+        // 顯示整體統計標題
+        statsGroup
+          .append('text')
+          .attr('x', overallX)
+          .attr('y', overallY - fontSize - 2)
+          .attr('text-anchor', 'start')
+          .attr('dominant-baseline', 'bottom')
+          .attr('font-size', fontSize * 0.9)
+          .attr('font-weight', 'bold')
+          .attr('fill', '#2C3E50')
+          .text('整體統計:');
+
+        // 只顯示最大值
+        statsGroup
+          .append('text')
+          .attr('x', overallX)
+          .attr('y', overallY)
+          .attr('text-anchor', 'start')
+          .attr('dominant-baseline', 'bottom')
+          .attr('font-size', fontSize * 0.8)
+          .attr('font-weight', 'bold')
+          .attr('fill', color) // 預設顏色（綠色）
+          .text(`max: ${overallStats.max}`);
+      }
     }
   };
 
