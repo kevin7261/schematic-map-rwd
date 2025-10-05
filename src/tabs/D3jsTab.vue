@@ -405,7 +405,7 @@
       });
     }
 
-    // 遞歸計算需要隱藏的行列，直到所有單元格 >= 20px
+    // 遞歸計算需要隱藏的行列，直到所有單元格 >= 40px
     const computeHiddenIndices = () => {
       const hiddenCols = new Set();
       const hiddenRows = new Set();
@@ -443,10 +443,10 @@
 
         let needAdjust = false;
 
-        // 🎯 找出實際寬度 < 20 的列中，max 值最小的並隱藏
+        // 🎯 找出實際寬度 < 40 的列中，max 值最小的並隱藏
         const narrowColumns = columnMaxValues
           .map((max, index) => ({ index, max, width: actualColumnWidths[index] }))
-          .filter((item) => !hiddenCols.has(item.index) && item.width < 20)
+          .filter((item) => !hiddenCols.has(item.index) && item.width < 40)
           .sort((a, b) => a.max - b.max);
 
         if (narrowColumns.length > 0 && visibleColumnMaxValues.length > 1) {
@@ -462,10 +462,10 @@
           );
         }
 
-        // 🎯 找出實際高度 < 20 的行中，max 值最小的並隱藏
+        // 🎯 找出實際高度 < 40 的行中，max 值最小的並隱藏
         const shortRows = rowMaxValues
           .map((max, index) => ({ index, max, height: actualRowHeights[index] }))
-          .filter((item) => !hiddenRows.has(item.index) && item.height < 20)
+          .filter((item) => !hiddenRows.has(item.index) && item.height < 40)
           .sort((a, b) => a.max - b.max);
 
         if (shortRows.length > 0 && visibleRowMaxValues.length > 1) {
