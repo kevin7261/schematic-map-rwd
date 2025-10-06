@@ -5,6 +5,7 @@
   const dataStore = useDataStore();
 
   const activeLayerTab = ref(null); /** 📑 當前作用中的圖層分頁 */
+  const copySuccessMessage = ref(''); /** 📋 複製成功訊息 */
 
   // 獲取所有開啟且有資料的圖層
   const visibleLayers = computed(() => {
@@ -96,6 +97,36 @@
   );
 
   /**
+   * 📋 複製 JSON 數據到剪貼簿 (Copy JSON Data to Clipboard)
+   */
+  const copyJsonToClipboard = async () => {
+    try {
+      const jsonData = getCurrentLayerDrawJsonData();
+      if (!jsonData) {
+        copySuccessMessage.value = '❌ 沒有可複製的 JSON 數據';
+        return;
+      }
+
+      const jsonString = JSON.stringify(jsonData, null, 2);
+      await navigator.clipboard.writeText(jsonString);
+      copySuccessMessage.value = '✅ JSON 數據已複製到剪貼簿';
+
+      // 3秒後清除成功訊息
+      setTimeout(() => {
+        copySuccessMessage.value = '';
+      }, 3000);
+    } catch (error) {
+      console.error('複製失敗:', error);
+      copySuccessMessage.value = '❌ 複製失敗，請手動複製';
+
+      // 3秒後清除錯誤訊息
+      setTimeout(() => {
+        copySuccessMessage.value = '';
+      }, 3000);
+    }
+  };
+
+  /**
    * 🚀 組件掛載事件 (Component Mounted Event)
    */
   onMounted(() => {
@@ -148,8 +179,35 @@
 
       <!-- 📊 繪製 JSON 數據 -->
       <div v-if="getCurrentLayerDrawJsonData()">
+        <!-- 📋 複製按鈕和狀態訊息 -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h6 class="mb-0">繪製 JSON 數據</h6>
+          <div class="d-flex align-items-center gap-2">
+            <button
+              @click="copyJsonToClipboard"
+              class="btn btn-outline-primary btn-sm d-flex align-items-center gap-1"
+              :disabled="!getCurrentLayerDrawJsonData()"
+            >
+              <i class="fas fa-copy"></i>
+              一鍵複製 JSON
+            </button>
+          </div>
+        </div>
+
+        <!-- 📋 複製狀態訊息 -->
+        <div
+          v-if="copySuccessMessage"
+          class="alert alert-sm mb-3"
+          :class="{
+            'alert-success': copySuccessMessage.includes('✅'),
+            'alert-danger': copySuccessMessage.includes('❌'),
+          }"
+          style="padding: 0.5rem 0.75rem; font-size: 0.875rem"
+        >
+          {{ copySuccessMessage }}
+        </div>
+
         <div class="rounded-4 my-bgcolor-gray-100 p-4 mb-3">
-          <h6 class="mb-3">繪製 JSON 數據</h6>
           <pre
             class="my-font-size-sm"
             style="
