@@ -1808,17 +1808,21 @@
     </div>
 
     <!-- 有開啟圖層時的內容 -->
-    <div v-if="visibleLayers.length > 0" class="flex-grow-1 d-flex flex-column my-bgcolor-white">
+    <div
+      v-if="visibleLayers.length > 0"
+      class="flex-grow-1 d-flex flex-column my-bgcolor-white"
+      style="min-height: 0"
+    >
       <!-- 📊 圖層摘要資料 -->
-      <div v-if="currentLayerSummary" class="flex-grow-1 d-flex flex-column">
+      <div v-if="currentLayerSummary" class="flex-grow-1 d-flex flex-column" style="min-height: 0">
         <!-- D3.js 示意圖 - 以彈性高度填滿可用空間 -->
-        <div class="flex-grow-1 d-flex flex-column">
-          <div class="flex-grow-1" style="min-height: 300px">
+        <div class="flex-grow-1 d-flex flex-column" style="min-height: 0">
+          <div class="flex-grow-1" style="min-height: 0">
             <!-- 🎨 統一示意圖容器 (Unified Schematic Container) -->
             <div
               id="schematic-container"
               class="w-100 h-100"
-              style="min-height: 300px; overflow: hidden"
+              style="min-height: 0; overflow: hidden"
             ></div>
           </div>
         </div>

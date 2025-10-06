@@ -334,6 +334,7 @@ Cheng * @since 1.0.0 */
         pointerEvents: isOverallDragging ? 'none' : 'auto',
         height: contentHeight + 'px',
         overflow: 'hidden',
+        minHeight: '0',
       }"
     >
       <!-- 🗺️ 上層視圖組件 (Upper View Component) -->
