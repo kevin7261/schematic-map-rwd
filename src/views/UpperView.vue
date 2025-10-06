@@ -321,83 +321,77 @@ Features): * - 使用 Vue 2 Options API 進行組件管理 * - 整合多個分�
 </script>
 
 <template>
-  <div class="d-flex flex-column my-bgcolor-gray-200 h-100">
-    <div class="flex-grow-1 overflow-hidden position-relative">
-      <!-- 統一的導航按鈕組 -->
-      <div class="position-absolute top-0 start-0 m-3" style="z-index: 1000">
-        <div class="d-flex align-items-center rounded-pill shadow my-blur gap-1 p-2">
-          <!-- 📈 D3.js 按鈕 (D3.js Button) -->
-          <button
-            class="btn rounded-circle border-0 d-flex align-items-center justify-content-center my-btn-transparent my-font-size-xs"
-            :class="{
-              'my-btn-blue': activeUpperTab === 'd3js',
-            }"
-            @click="$emit('update:activeUpperTab', 'd3js')"
-            style="width: 30px; height: 30px"
-            title="D3.js 數據視覺化"
-          >
-            <i :class="getIcon('chart_line').icon"></i>
-          </button>
-          <!-- 📊 儀表板按鈕 (Dashboard Button) -->
-          <button
-            class="btn rounded-circle border-0 d-flex align-items-center justify-content-center my-btn-transparent my-font-size-xs"
-            :class="{
-              'my-btn-blue': activeUpperTab === 'dashboard',
-            }"
-            @click="$emit('update:activeUpperTab', 'dashboard')"
-            style="width: 30px; height: 30px"
-            title="資料儀表板"
-          >
-            <i :class="getIcon('chart_bar').icon"></i>
-          </button>
-          <!-- 📄 處理後 JSON 數據按鈕 (Processed JSON Data Button) -->
-          <button
-            class="btn rounded-circle border-0 d-flex align-items-center justify-content-center my-btn-transparent my-font-size-xs"
-            :class="{
-              'my-btn-blue': activeUpperTab === 'processed-json-data',
-            }"
-            @click="$emit('update:activeUpperTab', 'processed-json-data')"
-            style="width: 30px; height: 30px"
-            title="處理後 JSON 數據"
-          >
-            <i class="fas fa-code"></i>
-          </button>
-          <!-- 📄 原始 JSON 數據按鈕 (Original JSON Data Button) -->
-          <button
-            class="btn rounded-circle border-0 d-flex align-items-center justify-content-center my-btn-transparent my-font-size-xs"
-            :class="{
-              'my-btn-blue': activeUpperTab === 'json-data',
-            }"
-            @click="$emit('update:activeUpperTab', 'json-data')"
-            style="width: 30px; height: 30px"
-            title="原始 JSON 數據"
-          >
-            <i class="fas fa-file-code"></i>
-          </button>
-          <!-- 🎨 繪製數據按鈕 (Draw Data Button) -->
-          <button
-            class="btn rounded-circle border-0 d-flex align-items-center justify-content-center my-btn-transparent my-font-size-xs"
-            :class="{
-              'my-btn-blue': activeUpperTab === 'draw-json-data',
-            }"
-            @click="$emit('update:activeUpperTab', 'draw-json-data')"
-            style="width: 30px; height: 30px"
-            title="繪製數據"
-          >
-            <i class="fas fa-paint-brush"></i>
-          </button>
-        </div>
+  <div class="d-flex flex-column h-100 overflow-hidden">
+    <!-- 📑 分頁導航按鈕 -->
+    <div class="d-flex justify-content-start my-bgcolor-gray-200 p-3">
+      <div class="d-flex align-items-center rounded-pill shadow my-blur gap-1 p-2">
+        <!-- 📈 D3.js 按鈕 (D3.js Button) -->
+        <button
+          class="btn rounded-circle border-0 d-flex align-items-center justify-content-center my-btn-transparent my-font-size-xs"
+          :class="{
+            'my-btn-blue': activeUpperTab === 'd3js',
+          }"
+          @click="$emit('update:activeUpperTab', 'd3js')"
+          style="width: 30px; height: 30px"
+          title="D3.js 數據視覺化"
+        >
+          <i :class="getIcon('chart_line').icon"></i>
+        </button>
+        <!-- 📊 儀表板按鈕 (Dashboard Button) -->
+        <button
+          class="btn rounded-circle border-0 d-flex align-items-center justify-content-center my-btn-transparent my-font-size-xs"
+          :class="{
+            'my-btn-blue': activeUpperTab === 'dashboard',
+          }"
+          @click="$emit('update:activeUpperTab', 'dashboard')"
+          style="width: 30px; height: 30px"
+          title="資料儀表板"
+        >
+          <i :class="getIcon('chart_bar').icon"></i>
+        </button>
+        <!-- 📄 處理後 JSON 數據按鈕 (Processed JSON Data Button) -->
+        <button
+          class="btn rounded-circle border-0 d-flex align-items-center justify-content-center my-btn-transparent my-font-size-xs"
+          :class="{
+            'my-btn-blue': activeUpperTab === 'processed-json-data',
+          }"
+          @click="$emit('update:activeUpperTab', 'processed-json-data')"
+          style="width: 30px; height: 30px"
+          title="處理後 JSON 數據"
+        >
+          <i class="fas fa-code"></i>
+        </button>
+        <!-- 📄 原始 JSON 數據按鈕 (Original JSON Data Button) -->
+        <button
+          class="btn rounded-circle border-0 d-flex align-items-center justify-content-center my-btn-transparent my-font-size-xs"
+          :class="{
+            'my-btn-blue': activeUpperTab === 'json-data',
+          }"
+          @click="$emit('update:activeUpperTab', 'json-data')"
+          style="width: 30px; height: 30px"
+          title="原始 JSON 數據"
+        >
+          <i class="fas fa-file-code"></i>
+        </button>
+        <!-- 🎨 繪製數據按鈕 (Draw Data Button) -->
+        <button
+          class="btn rounded-circle border-0 d-flex align-items-center justify-content-center my-btn-transparent my-font-size-xs"
+          :class="{
+            'my-btn-blue': activeUpperTab === 'draw-json-data',
+          }"
+          @click="$emit('update:activeUpperTab', 'draw-json-data')"
+          style="width: 30px; height: 30px"
+          title="繪製數據"
+        >
+          <i class="fas fa-paint-brush"></i>
+        </button>
       </div>
+    </div>
 
+    <!-- 📄 分頁內容區域 -->
+    <div class="flex-grow-1 overflow-auto">
       <!-- D3.js 分頁內容 -->
-      <div
-        v-show="activeUpperTab === 'd3js'"
-        ref="d3jsContainerRef"
-        class="h-100 overflow-hidden pt-5 d-flex flex-column"
-        style="min-height: 0"
-      >
-        <!-- 🎛️ 為導航按鈕組預留空間 (Reserve Space for Navigation Buttons) -->
-        <div style="height: 40px"></div>
+      <div v-show="activeUpperTab === 'd3js'" ref="d3jsContainerRef" class="h-100">
         <D3jsTab
           ref="D3jsTab"
           class="flex-grow-1 d-flex flex-column"
@@ -408,13 +402,7 @@ Features): * - 使用 Vue 2 Options API 進行組件管理 * - 整合多個分�
       </div>
 
       <!-- 儀表板分頁內容 -->
-      <div
-        v-show="activeUpperTab === 'dashboard'"
-        ref="dashboardContainerRef"
-        class="h-100 overflow-hidden pt-5"
-      >
-        <!-- 🎛️ 為導航按鈕組預留空間 (Reserve Space for Navigation Buttons) -->
-        <div style="height: 40px"></div>
+      <div v-show="activeUpperTab === 'dashboard'" ref="dashboardContainerRef" class="h-100">
         <DashboardTab
           ref="DashboardTab"
           :containerHeight="contentHeight"
@@ -427,10 +415,8 @@ Features): * - 使用 Vue 2 Options API 進行組件管理 * - 整合多個分�
       <div
         v-show="activeUpperTab === 'processed-json-data'"
         ref="processedJsonDataContainerRef"
-        class="h-100 overflow-hidden pt-5"
+        class="h-100"
       >
-        <!-- 🎛️ 為導航按鈕組預留空間 (Reserve Space for Navigation Buttons) -->
-        <div style="height: 40px"></div>
         <ProcessedJsonDataTab
           ref="ProcessedJsonDataTab"
           :containerHeight="contentHeight"
@@ -440,13 +426,7 @@ Features): * - 使用 Vue 2 Options API 進行組件管理 * - 整合多個分�
       </div>
 
       <!-- 原始 JSON 數據分頁內容 -->
-      <div
-        v-show="activeUpperTab === 'json-data'"
-        ref="jsonDataContainerRef"
-        class="h-100 overflow-hidden pt-5"
-      >
-        <!-- 🎛️ 為導航按鈕組預留空間 (Reserve Space for Navigation Buttons) -->
-        <div style="height: 40px"></div>
+      <div v-show="activeUpperTab === 'json-data'" ref="jsonDataContainerRef" class="h-100">
         <JsonDataTab
           ref="JsonDataTab"
           :containerHeight="contentHeight"
@@ -459,10 +439,8 @@ Features): * - 使用 Vue 2 Options API 進行組件管理 * - 整合多個分�
       <div
         v-show="activeUpperTab === 'draw-json-data'"
         ref="drawJsonDataContainerRef"
-        class="h-100 overflow-hidden pt-5"
+        class="h-100"
       >
-        <!-- 🎛️ 為導航按鈕組預留空間 (Reserve Space for Navigation Buttons) -->
-        <div style="height: 40px"></div>
         <DrawJsonDataTab
           ref="DrawJsonDataTab"
           :containerHeight="contentHeight"
