@@ -177,3 +177,177 @@ export function getIconHtml(iconKey, additionalClasses = '') {
 
   return iconInfo.icon;
 }
+
+// ==================== 📋 剪貼簿操作工具函數 (Clipboard Utility Functions) ====================
+
+/**
+ * 📋 複製文字到剪貼簿 (Copy Text to Clipboard)
+ *
+ * 提供統一的剪貼簿複製功能，支援錯誤處理和成功回調
+ * 使用現代瀏覽器的 Clipboard API，並提供備用方案
+ *
+ * 功能說明：
+ * - 支援現代瀏覽器的 navigator.clipboard API
+ * - 自動格式化 JSON 數據（如果傳入物件）
+ * - 提供完整的錯誤處理機制
+ * - 支援自定義成功和失敗訊息
+ * - 自動清除狀態訊息（可選）
+ *
+ * @param {string|Object} data - 要複製的資料，可以是字串或物件
+ * @param {Object} [options] - 選項配置
+ * @param {string} [options.successMessage='✅ 已複製到剪貼簿'] - 成功訊息
+ * @param {string} [options.errorMessage='❌ 複製失敗，請手動複製'] - 錯誤訊息
+ * @param {number} [options.clearDelay=3000] - 清除訊息的延遲時間（毫秒），0 表示不清除
+ * @param {Function} [options.onSuccess] - 成功回調函數
+ * @param {Function} [options.onError] - 錯誤回調函數
+ * @returns {Promise<Object>} 複製結果物件
+ * @returns {boolean} returns.success - 是否複製成功
+ * @returns {string} returns.message - 狀態訊息
+ * @returns {string} returns.data - 實際複製的資料
+ *
+ * @description 用於複製各種資料到剪貼簿，特別適用於 JSON 數據複製
+ *
+ * @example
+ * // 複製簡單文字
+ * const result = await copyToClipboard('Hello World');
+ * console.log(result.message); // '✅ 已複製到剪貼簿'
+ *
+ * // 複製 JSON 物件（自動格式化）
+ * const jsonData = { name: 'test', value: 123 };
+ * const result = await copyToClipboard(jsonData);
+ *
+ * // 自定義訊息和回調
+ * const result = await copyToClipboard(data, {
+ *   successMessage: '✅ 數據已複製',
+ *   errorMessage: '❌ 複製失敗',
+ *   clearDelay: 5000,
+ *   onSuccess: (message) => console.log('成功:', message),
+ *   onError: (error) => console.error('失敗:', error)
+ * });
+ */
+export async function copyToClipboard(data, options = {}) {
+  const {
+    successMessage = '✅ 已複製到剪貼簿',
+    errorMessage = '❌ 複製失敗，請手動複製',
+    onSuccess,
+    onError,
+  } = options;
+
+  try {
+    // 格式化資料
+    let textToCopy;
+    if (typeof data === 'string') {
+      textToCopy = data;
+    } else if (typeof data === 'object' && data !== null) {
+      textToCopy = JSON.stringify(data, null, 2);
+    } else {
+      textToCopy = String(data);
+    }
+
+    // 檢查是否有可複製的資料
+    if (!textToCopy || textToCopy.trim() === '') {
+      const errorResult = {
+        success: false,
+        message: '❌ 沒有可複製的資料',
+        data: textToCopy,
+      };
+      if (onError) onError(new Error('沒有可複製的資料'));
+      return errorResult;
+    }
+
+    // 嘗試使用 Clipboard API
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(textToCopy);
+    } else {
+      // 備用方案：使用傳統的 document.execCommand
+      const textArea = document.createElement('textarea');
+      textArea.value = textToCopy;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-999999px';
+      textArea.style.top = '-999999px';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+
+      const successful = document.execCommand('copy');
+      document.body.removeChild(textArea);
+
+      if (!successful) {
+        throw new Error('document.execCommand 複製失敗');
+      }
+    }
+
+    const successResult = {
+      success: true,
+      message: successMessage,
+      data: textToCopy,
+    };
+
+    if (onSuccess) onSuccess(successResult);
+    return successResult;
+  } catch (error) {
+    console.error('複製失敗:', error);
+    const errorResult = {
+      success: false,
+      message: errorMessage,
+      data: typeof data === 'string' ? data : JSON.stringify(data, null, 2),
+    };
+    if (onError) onError(error);
+    return errorResult;
+  }
+}
+
+/**
+ * 📋 建立帶狀態管理的複製功能 (Create Copy Function with State Management)
+ *
+ * 建立一個包含狀態管理的複製功能，適用於 Vue 組件
+ * 自動處理狀態訊息的生命週期管理
+ *
+ * 功能說明：
+ * - 自動管理複製狀態訊息
+ * - 支援自動清除狀態訊息
+ * - 提供 Vue 響應式狀態管理
+ * - 適用於組件中的複製按鈕
+ *
+ * @param {Object} stateRef - Vue 響應式狀態引用
+ * @param {string} [stateKey='copyMessage'] - 狀態鍵名
+ * @param {Object} [options] - 複製選項
+ * @returns {Function} 複製函數
+ *
+ * @example
+ * // 在 Vue 組件中使用
+ * import { ref } from 'vue';
+ * import { createCopyFunction } from '@/utils/utils.js';
+ *
+ * const copyMessage = ref('');
+ * const copyFunction = createCopyFunction({ copyMessage });
+ *
+ * // 使用複製功能
+ * await copyFunction(jsonData);
+ */
+export function createCopyFunction(stateRef, stateKey = 'copyMessage', options = {}) {
+  return async (data) => {
+    const result = await copyToClipboard(data, {
+      ...options,
+      onSuccess: (result) => {
+        stateRef[stateKey] = result.message;
+        if (options.clearDelay !== 0) {
+          setTimeout(() => {
+            stateRef[stateKey] = '';
+          }, options.clearDelay || 3000);
+        }
+        if (options.onSuccess) options.onSuccess(result);
+      },
+      onError: (error) => {
+        stateRef[stateKey] = error.message || '❌ 複製失敗';
+        if (options.clearDelay !== 0) {
+          setTimeout(() => {
+            stateRef[stateKey] = '';
+          }, options.clearDelay || 3000);
+        }
+        if (options.onError) options.onError(error);
+      },
+    });
+    return result;
+  };
+}

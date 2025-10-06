@@ -1,6 +1,7 @@
 <script setup>
   import { ref, computed, watch, onMounted } from 'vue';
   import { useDataStore } from '@/stores/dataStore.js';
+  import { createCopyFunction } from '@/utils/utils.js';
 
   const dataStore = useDataStore();
 
@@ -98,33 +99,13 @@
 
   /**
    * 📋 複製 JSON 數據到剪貼簿 (Copy JSON Data to Clipboard)
+   * 使用 utils 中的通用複製功能
    */
-  const copyJsonToClipboard = async () => {
-    try {
-      const jsonData = getCurrentLayerDrawJsonData();
-      if (!jsonData) {
-        copySuccessMessage.value = '❌ 沒有可複製的 JSON 數據';
-        return;
-      }
-
-      const jsonString = JSON.stringify(jsonData, null, 2);
-      await navigator.clipboard.writeText(jsonString);
-      copySuccessMessage.value = '✅ JSON 數據已複製到剪貼簿';
-
-      // 3秒後清除成功訊息
-      setTimeout(() => {
-        copySuccessMessage.value = '';
-      }, 3000);
-    } catch (error) {
-      console.error('複製失敗:', error);
-      copySuccessMessage.value = '❌ 複製失敗，請手動複製';
-
-      // 3秒後清除錯誤訊息
-      setTimeout(() => {
-        copySuccessMessage.value = '';
-      }, 3000);
-    }
-  };
+  const copyJsonToClipboard = createCopyFunction({ copySuccessMessage }, 'copySuccessMessage', {
+    successMessage: '✅ JSON 數據已複製到剪貼簿',
+    errorMessage: '❌ 複製失敗，請手動複製',
+    clearDelay: 3000,
+  });
 
   /**
    * 🚀 組件掛載事件 (Component Mounted Event)
@@ -184,12 +165,12 @@
           <h6 class="mb-0">繪製 JSON 數據</h6>
           <div class="d-flex align-items-center gap-2">
             <button
-              @click="copyJsonToClipboard"
-              class="btn btn-outline-primary btn-sm d-flex align-items-center gap-1"
+              @click="copyJsonToClipboard(getCurrentLayerDrawJsonData())"
+              class="btn rounded-circle border-0 d-flex align-items-center justify-content-center my-btn-transparent my-font-size-xs"
               :disabled="!getCurrentLayerDrawJsonData()"
+              title="複製 JSON 數據"
             >
               <i class="fas fa-copy"></i>
-              一鍵複製 JSON
             </button>
           </div>
         </div>

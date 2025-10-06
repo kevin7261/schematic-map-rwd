@@ -636,7 +636,122 @@
         cellWidth: avgCellWidth,
         cellHeight: avgCellHeight,
       });
+
+      // 🔄 更新 drawJsonData，刪除被隱藏的行列
+      updateDrawJsonData(hiddenColumnIndices, hiddenRowIndices);
     }
+  };
+
+  /**
+   * 🔄 更新 drawJsonData（刪除被隱藏的行列）
+   * @param {Array} hiddenColumnIndices - 被隱藏的列索引
+   * @param {Array} hiddenRowIndices - 被隱藏的行索引
+   */
+  const updateDrawJsonData = (hiddenColumnIndices, hiddenRowIndices) => {
+    if (!activeLayerTab.value || !gridData.value) return;
+
+    const currentLayer = dataStore.findLayerById(activeLayerTab.value);
+    if (!currentLayer || !currentLayer.drawJsonData) return;
+
+    // 建立列和行的映射（原始索引 -> 新索引）
+    const columnMapping = new Map();
+    const rowMapping = new Map();
+    let newColIndex = 0;
+    let newRowIndex = 0;
+
+    for (let i = 0; i < gridDimensions.value.x; i++) {
+      if (!hiddenColumnIndices.includes(i)) {
+        columnMapping.set(i, newColIndex++);
+      }
+    }
+
+    for (let i = 0; i < gridDimensions.value.y; i++) {
+      if (!hiddenRowIndices.includes(i)) {
+        rowMapping.set(i, newRowIndex++);
+      }
+    }
+
+    // 過濾並重新映射節點
+    const newNodes = gridData.value.nodes
+      .filter((node) => !hiddenColumnIndices.includes(node.x) && !hiddenRowIndices.includes(node.y))
+      .map((node) => ({
+        ...node,
+        x: columnMapping.get(node.x),
+        y: rowMapping.get(node.y),
+        coord: {
+          x: columnMapping.get(node.x),
+          y: rowMapping.get(node.y),
+        },
+      }));
+
+    // 重新計算統計數據
+    const newGridX = gridDimensions.value.x - hiddenColumnIndices.length;
+    const newGridY = gridDimensions.value.y - hiddenRowIndices.length;
+
+    // 計算 X 排統計
+    const xRowStats = [];
+    for (let x = 0; x < newGridX; x++) {
+      const values = newNodes.filter((node) => node.x === x).map((node) => node.value);
+      if (values.length > 0) {
+        xRowStats.push({
+          row: x,
+          min: Math.min(...values),
+          max: Math.max(...values),
+          avg: values.reduce((sum, val) => sum + val, 0) / values.length,
+          count: values.length,
+        });
+      }
+    }
+
+    // 計算 Y 排統計
+    const yRowStats = [];
+    for (let y = 0; y < newGridY; y++) {
+      const values = newNodes.filter((node) => node.y === y).map((node) => node.value);
+      if (values.length > 0) {
+        yRowStats.push({
+          row: y,
+          min: Math.min(...values),
+          max: Math.max(...values),
+          avg: values.reduce((sum, val) => sum + val, 0) / values.length,
+          count: values.length,
+        });
+      }
+    }
+
+    // 計算整體統計
+    const allValues = newNodes.map((node) => node.value);
+    const overallStats = {
+      min: Math.min(...allValues),
+      max: Math.max(...allValues),
+      avg: allValues.reduce((sum, val) => sum + val, 0) / allValues.length,
+      count: allValues.length,
+    };
+
+    // 更新 drawJsonData
+    currentLayer.drawJsonData = {
+      ...currentLayer.drawJsonData,
+      gridX: newGridX,
+      gridY: newGridY,
+      nodes: newNodes,
+      totalNodes: newNodes.length,
+      statsLabels: {
+        xRowStats,
+        yRowStats,
+        overallStats,
+        color: currentLayer.drawJsonData.statsLabels?.color || '#4CAF50',
+        highlightColumnIndices: [],
+        highlightRowIndices: [],
+      },
+    };
+
+    console.log('🔄 已更新 drawJsonData:', {
+      原始尺寸: `${gridDimensions.value.x}x${gridDimensions.value.y}`,
+      新尺寸: `${currentLayer.drawJsonData.gridX}x${currentLayer.drawJsonData.gridY}`,
+      隱藏列: hiddenColumnIndices,
+      隱藏行: hiddenRowIndices,
+      原始節點數: gridData.value.nodes.length,
+      新節點數: newNodes.length,
+    });
   };
 
   /**
