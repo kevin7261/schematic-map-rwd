@@ -1116,20 +1116,26 @@ export function processGridToDrawData(processedData) {
   };
 
   // 計算需要高亮的 column（基於最大值最小的 column）
+  // 步驟 1: 提取每個 column 的最大值，形成陣列 [max1, max2, max3, ...]
   const columnMaxValues = xRowStats.map((stat) => stat.max);
+  // 步驟 2: 找出所有 column 最大值中的最小值（min of max）
   const minColumnMax = Math.min(...columnMaxValues);
+  // 步驟 3: 找出哪些 column 的最大值等於這個最小值，並取得它們的索引
   const highlightColumnIndices = xRowStats
-    .map((stat, index) => ({ stat, index }))
-    .filter(({ stat }) => stat.max === minColumnMax)
-    .map(({ index }) => index);
+    .map((stat, index) => ({ stat, index })) // 將統計數據與索引配對
+    .filter(({ stat }) => stat.max === minColumnMax) // 篩選出最大值等於 minColumnMax 的 column
+    .map(({ index }) => index); // 只保留索引值
 
   // 計算需要高亮的 row（基於最大值最小的 row）
+  // 步驟 1: 提取每個 row 的最大值，形成陣列 [max1, max2, max3, ...]
   const rowMaxValues = yRowStats.map((stat) => stat.max);
+  // 步驟 2: 找出所有 row 最大值中的最小值（min of max）
   const minRowMax = Math.min(...rowMaxValues);
+  // 步驟 3: 找出哪些 row 的最大值等於這個最小值，並取得它們的索引
   const highlightRowIndices = yRowStats
-    .map((stat, index) => ({ stat, index }))
-    .filter(({ stat }) => stat.max === minRowMax)
-    .map(({ index }) => index);
+    .map((stat, index) => ({ stat, index })) // 將統計數據與索引配對
+    .filter(({ stat }) => stat.max === minRowMax) // 篩選出最大值等於 minRowMax 的 row
+    .map(({ index }) => index); // 只保留索引值
 
   return {
     type: 'grid',
