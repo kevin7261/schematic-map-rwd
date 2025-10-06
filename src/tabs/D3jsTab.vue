@@ -1470,6 +1470,25 @@
    */
   const resize = () => {
     console.log('📏 D3jsTab: 觸發 resize，重新繪製示意圖');
+
+    // 確保容器存在且可見
+    const container = document.getElementById('schematic-container');
+    if (!container) {
+      console.log('❌ D3jsTab: 找不到示意圖容器，跳過 resize');
+      return;
+    }
+
+    // 檢查容器是否可見（寬度和高度都大於 0）
+    const rect = container.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) {
+      console.log('❌ D3jsTab: 容器不可見，延遲執行 resize');
+      // 如果容器不可見，延遲執行
+      setTimeout(() => {
+        resize();
+      }, 100);
+      return;
+    }
+
     // 先更新尺寸狀態，再重新繪製
     getDimensions();
     drawSchematic();

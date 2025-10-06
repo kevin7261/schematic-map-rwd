@@ -217,6 +217,18 @@ Features): * - 使用 Vue 2 Options API 進行組件管理 * - 整合多個分�
         () => props.activeUpperTab,
         (newTab, oldTab) => {
           console.log('🔄 UpperView: Tab changed from', oldTab, 'to', newTab);
+
+          // 當切換到 D3.js 分頁時，延遲觸發 resize 以確保容器已顯示
+          if (newTab === 'd3js') {
+            nextTick(() => {
+              setTimeout(() => {
+                if (D3jsTab.value && D3jsTab.value.resize) {
+                  console.log('🔄 UpperView: 切換到 D3.js 分頁，觸發 resize');
+                  D3jsTab.value.resize();
+                }
+              }, 100); // 給容器一些時間來完成顯示動畫
+            });
+          }
         }
       );
 
@@ -267,16 +279,24 @@ Features): * - 使用 Vue 2 Options API 進行組件管理 * - 整合多個分�
       };
 
       /**
-       * 📏 手動刷新地圖尺寸 (Manually Refresh Map Size)
-       * 當容器大小變化但自動偵測失效時使用
-       * 現在用於觸發 D3jsTab 重新繪製
+       * 📏 使地圖尺寸失效 (Invalidate Map Size)
+       * 強制重新計算地圖尺寸並重繪示意圖
+       * 用於響應容器尺寸變化
        */
       const invalidateMapSize = () => {
-        console.log('🔄 invalidateMapSize: 觸發 D3jsTab 重新繪製');
-        // 觸發 D3jsTab 重新繪製以適應新的容器尺寸
+        console.log('📏 UpperView: invalidateMapSize 被調用');
+
+        // 觸發 D3jsTab 重新繪製
         if (D3jsTab.value && D3jsTab.value.resize) {
+          console.log('📏 UpperView: 觸發 D3jsTab resize');
           D3jsTab.value.resize();
         }
+
+        // 觸發全域 resize 事件作為備用方案
+        setTimeout(() => {
+          const event = new Event('resize');
+          window.dispatchEvent(event);
+        }, 50);
       };
 
       return {
