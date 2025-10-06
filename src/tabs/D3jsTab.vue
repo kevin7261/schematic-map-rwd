@@ -1811,15 +1811,9 @@
     <div v-if="visibleLayers.length > 0" class="flex-grow-1 d-flex flex-column my-bgcolor-white">
       <!-- 📊 圖層摘要資料 -->
       <div v-if="currentLayerSummary" class="flex-grow-1 d-flex flex-column">
-        <!-- D3.js 示意圖 - 根據容器高度動態調整 -->
+        <!-- D3.js 示意圖 - 以彈性高度填滿可用空間 -->
         <div class="flex-grow-1 d-flex flex-column">
-          <div
-            class="flex-grow-1"
-            :style="{
-              height: Math.max(props.containerHeight - 100, 300) + 'px',
-              minHeight: '300px',
-            }"
-          >
+          <div class="flex-grow-1" style="min-height: 300px">
             <!-- 🎨 統一示意圖容器 (Unified Schematic Container) -->
             <div
               id="schematic-container"
