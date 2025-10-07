@@ -89,46 +89,46 @@
    * @param {string} layerId - 圖層 ID
    */
   const setActiveLayerTab = (layerId) => {
-    console.log('🔄 圖層切換按鈕點擊:', activeLayerTab.value, '->', layerId);
+    
 
     // 如果切換到相同圖層，不需要重新處理
     if (activeLayerTab.value === layerId) {
-      console.log('🔄 相同圖層，跳過切換');
+      
       return;
     }
 
     // 立即清除 SVG 內容，避免重疊
     d3.select('#schematic-container').selectAll('svg').remove();
-    console.log('🗑️ 已清除 SVG 內容');
+    
 
     // 清除數據狀態
     gridData.value = null;
     nodeData.value = null;
     linkData.value = null;
-    console.log('🗑️ 已清除數據狀態');
+    
 
     // 設置新的活動圖層
     activeLayerTab.value = layerId;
-    console.log('✅ 已設置新圖層:', layerId);
+    
   };
 
   /**
    * 📊 當前圖層摘要 (Current Layer Summary)
    */
   const currentLayerSummary = computed(() => {
-    console.log('currentLayerSummary computed - activeLayerTab:', activeLayerTab.value);
-    console.log('currentLayerSummary computed - visibleLayers:', visibleLayers.value);
+    
+    
 
     if (!activeLayerTab.value) {
-      console.log('currentLayerSummary - no activeLayerTab, returning null');
+      
       return null;
     }
 
     const layer = visibleLayers.value.find((l) => l.layerId === activeLayerTab.value);
-    console.log('currentLayerSummary - found layer:', layer);
+    
 
     const result = layer ? layer.dashboardData || null : null;
-    console.log('currentLayerSummary - returning:', result);
+    
     return result;
   });
 
@@ -169,19 +169,8 @@
         throw new Error(`找不到圖層配置: ${layerId}`);
       }
 
-      console.log('🔄 使用圖層已載入的數據:', targetLayer.jsonFileName);
-      console.log('🔍 調試圖層數據:', {
-        hasProcessedJsonData: !!targetLayer.processedJsonData,
-        hasDataTableData: !!targetLayer.dataTableData,
-        processedJsonDataType: targetLayer.processedJsonData
-          ? typeof targetLayer.processedJsonData
-          : 'undefined',
-        processedJsonDataKeys: targetLayer.processedJsonData
-          ? Object.keys(targetLayer.processedJsonData)
-          : [],
-        isGridSchematic: targetLayer.isGridSchematic,
-        dataTableDataLength: targetLayer.dataTableData ? targetLayer.dataTableData.length : 0,
-      });
+      
+      
 
       // 🎯 直接使用圖層已經載入的 processedJsonData，不重新載入
       // 這樣可以確保與網格預覽使用相同的數據
@@ -193,16 +182,16 @@
             x: targetLayer.processedJsonData.gridX,
             y: targetLayer.processedJsonData.gridY,
           };
-          console.log('✅ 網格數據載入成功:', gridData.value);
+          
         } else if (Array.isArray(targetLayer.processedJsonData)) {
           // 行政區示意圖數據（陣列格式）
           nodeData.value = targetLayer.processedJsonData;
-          console.log('✅ 行政區數據載入成功:', nodeData.value);
+          
           setLinkData();
         } else {
           // 其他格式的 processedJsonData
           nodeData.value = targetLayer.processedJsonData;
-          console.log('✅ 數據載入成功:', nodeData.value);
+          
           setLinkData();
         }
       } else if (targetLayer.dataTableData && targetLayer.dataTableData.length > 0) {
@@ -214,7 +203,7 @@
         }));
 
         nodeData.value = schematicData;
-        console.log('✅ 表格數據轉換成功:', nodeData.value);
+        
         setLinkData();
       } else {
         console.error('❌ 無法找到圖層數據:', {
@@ -293,7 +282,7 @@
       linkData.value.push(data);
     });
 
-    console.log('linkData', linkData.value);
+    
   };
 
   // ==================== 📏 容器尺寸和繪製函數 (Container Dimensions and Drawing Functions) ====================
@@ -304,7 +293,7 @@
    */
   const getDimensions = () => {
     const container = document.getElementById('schematic-container');
-    console.log('📏 查找示意圖容器:', container);
+    
 
     if (container) {
       // 獲取容器的實際可用尺寸
@@ -312,14 +301,7 @@
       const width = container.clientWidth || rect.width;
       const height = container.clientHeight || rect.height;
 
-      console.log('📏 容器尺寸:', {
-        width,
-        height,
-        clientWidth: container.clientWidth,
-        clientHeight: container.clientHeight,
-        rectWidth: rect.width,
-        rectHeight: rect.height,
-      });
+      
 
       const dimensions = {
         width: Math.max(width, 40),
@@ -332,7 +314,7 @@
       return dimensions;
     }
 
-    console.log('❌ 找不到示意圖容器，使用預設尺寸');
+    
     // 如果找不到容器，使用預設尺寸
     const defaultDimensions = {
       width: 800,
@@ -349,9 +331,9 @@
    * 🎨 繪製網格示意圖 (Draw Grid Schematic)
    */
   const drawGridSchematic = () => {
-    console.log('🎨 drawGridSchematic 開始執行，gridData.value:', gridData.value);
+    
     if (!gridData.value) {
-      console.log('❌ gridData.value 為空，跳過繪製');
+      
       return;
     }
 
@@ -375,7 +357,7 @@
         Math.abs(existingWidth - (width + margin.left + margin.right)) < 2 &&
         Math.abs(existingHeight - (height + margin.top + margin.bottom)) < 2
       ) {
-        console.log('📏 示意圖尺寸變化太小，跳過重繪');
+        
         return;
       }
     }
@@ -452,14 +434,7 @@
         if (narrowColumns.length > 0 && visibleColumnMaxValues.length > 1) {
           hiddenCols.add(narrowColumns[0].index);
           needAdjust = true;
-          console.log(
-            '🗑️ 隱藏列:',
-            narrowColumns[0].index,
-            'max值:',
-            narrowColumns[0].max,
-            '實際寬度:',
-            narrowColumns[0].width.toFixed(2)
-          );
+          
         }
 
         // 🎯 找出實際高度 < 40 的行中，max 值最小的並隱藏
@@ -471,14 +446,7 @@
         if (shortRows.length > 0 && visibleRowMaxValues.length > 1) {
           hiddenRows.add(shortRows[0].index);
           needAdjust = true;
-          console.log(
-            '🗑️ 隱藏行:',
-            shortRows[0].index,
-            'max值:',
-            shortRows[0].max,
-            '實際高度:',
-            shortRows[0].height.toFixed(2)
-          );
+          
         }
 
         // 如果這次迭代沒有調整，說明已達到穩定狀態
@@ -544,57 +512,15 @@
       rowPositions.push(rowPositions[i] + rowHeights[i]);
     }
 
-    console.log('📊 網格單元格尺寸（依最大值分配）:', {
-      columnMaxValues,
-      rowMaxValues,
-      visibleColumnMaxValues,
-      visibleRowMaxValues,
-      totalVisibleColumnValue,
-      totalVisibleRowValue,
-      columnWidths,
-      rowHeights,
-      visibleColumns,
-      visibleRows,
-      hiddenColumns: hiddenColumnIndices.length,
-      hiddenRows: hiddenRowIndices.length,
-      hiddenColumnIndices,
-      hiddenRowIndices,
-    });
+    
 
-    console.log('🔍 列最大值檢查:', {
-      columnMaxValues,
-      hiddenColumnIndices,
-      deletionOrder: columnMaxValues
-        .map((max, index) => ({ index, max }))
-        .sort((a, b) => a.max - b.max),
-    });
+    
 
-    console.log(
-      '📊 所有列的詳細信息:',
-      columnMaxValues.map((max, index) => ({
-        index,
-        max,
-        isHidden: hiddenColumnIndices.includes(index),
-        width: columnWidths[index],
-      }))
-    );
+    
 
-    console.log(
-      '📊 所有行的詳細信息:',
-      rowMaxValues.map((max, index) => ({
-        index,
-        max,
-        isHidden: hiddenRowIndices.includes(index),
-        height: rowHeights[index],
-      }))
-    );
+    
 
-    console.log('🔍 第二列數據檢查:', {
-      columnIndex: 1,
-      maxValue: columnMaxValues[1],
-      width: columnWidths[1],
-      isHidden: hiddenColumnIndices.includes(1),
-    });
+    
 
     // 繪製網格線
     drawGridLines(
@@ -744,14 +670,7 @@
       },
     };
 
-    console.log('🔄 已更新 drawJsonData:', {
-      原始尺寸: `${gridDimensions.value.x}x${gridDimensions.value.y}`,
-      新尺寸: `${currentLayer.drawJsonData.gridX}x${currentLayer.drawJsonData.gridY}`,
-      隱藏列: hiddenColumnIndices,
-      隱藏行: hiddenRowIndices,
-      原始節點數: gridData.value.nodes.length,
-      新節點數: newNodes.length,
-    });
+    
   };
 
   /**
@@ -1151,14 +1070,14 @@
       }))
     );
 
-    console.log('allPoints', allPoints);
+    
 
     // 找到點的最大最小值
     let xMax = d3.max(allPoints, (d) => d.x);
     let yMax = d3.max(allPoints, (d) => d.y);
 
-    console.log('Maximum x: ', xMax);
-    console.log('Maximum y: ', yMax);
+    
+    
 
     // 檢查是否已存在 SVG，如果存在且尺寸相同則不需要重繪
     const existingSvg = d3.select('#schematic-container').select('svg');
@@ -1172,7 +1091,7 @@
         Math.abs(existingWidth - (width + margin.left + margin.right)) < 2 &&
         Math.abs(existingHeight - (height + margin.top + margin.bottom)) < 2
       ) {
-        console.log('📏 示意圖尺寸變化太小，跳過重繪');
+        
         return;
       }
     }
@@ -1260,7 +1179,7 @@
         let dString = '';
         let nodes = [];
 
-        console.log('node.coord.type', node.type);
+        
 
         switch (node.type) {
           case 1:
@@ -1342,13 +1261,13 @@
               ];
             }
 
-            console.log('xWidth yHeight arcWidth', xWidth, yHeight, arcWidth);
+            
 
-            console.log('nodes', nodes);
+            
 
             dString = lineGenerator(nodes);
 
-            console.log('dString', dString);
+            
 
             const arc = d3
               .arc()
@@ -1390,13 +1309,13 @@
               ];
             }
 
-            console.log('xWidth yHeight arcWidth', xWidth, yHeight, arcWidth);
+            
 
-            console.log('nodes', nodes);
+            
 
             dString = lineGenerator(nodes);
 
-            console.log('dString', dString);
+            
 
             const arc = d3
               .arc()
@@ -1438,13 +1357,13 @@
               ];
             }
 
-            console.log('xWidth yHeight arcWidth', xWidth, yHeight, arcWidth);
+            
 
-            console.log('nodes', nodes);
+            
 
             dString = lineGenerator(nodes);
 
-            console.log('dString', dString);
+            
 
             const arc = d3
               .arc()
@@ -1486,13 +1405,13 @@
               ];
             }
 
-            console.log('xWidth yHeight arcWidth', xWidth, yHeight, arcWidth);
+            
 
-            console.log('nodes', nodes);
+            
 
             dString = lineGenerator(nodes);
 
-            console.log('dString', dString);
+            
 
             const arc = d3
               .arc()
@@ -1538,7 +1457,7 @@
         }))
       );
 
-      console.log('allLinks', allLinks);
+      
 
       allLinks.forEach((node) => {
         // 節點數字顏色固定為白色
@@ -1562,19 +1481,14 @@
    * 根據圖層類型選擇相應的繪製方法
    */
   const drawSchematic = () => {
-    console.log('🎨 drawSchematic 開始執行，activeLayerTab:', activeLayerTab.value);
-    console.log('🔍 圖層類型檢查:', {
-      activeLayerTab: activeLayerTab.value,
-      isGridSchematic: isGridSchematicLayer(activeLayerTab.value),
-      gridData: gridData.value,
-      nodeData: nodeData.value,
-    });
+    
+    
 
     if (isGridSchematicLayer(activeLayerTab.value)) {
-      console.log('📊 繪製網格示意圖');
+      
       drawGridSchematic();
     } else {
-      console.log('🚇 繪製行政區示意圖');
+      
       drawAdministrativeSchematic();
     }
   };
@@ -1584,19 +1498,19 @@
    * 響應容器尺寸變化，重新繪製示意圖
    */
   const resize = () => {
-    console.log('📏 D3jsTab: 觸發 resize，重新繪製示意圖');
+    
 
     // 確保容器存在且可見
     const container = document.getElementById('schematic-container');
     if (!container) {
-      console.log('❌ D3jsTab: 找不到示意圖容器，跳過 resize');
+      
       return;
     }
 
     // 檢查容器是否可見（寬度和高度都大於 0）
     const rect = container.getBoundingClientRect();
     if (rect.width <= 0 || rect.height <= 0) {
-      console.log('❌ D3jsTab: 容器不可見，延遲執行 resize');
+      
       // 如果容器不可見，延遲執行
       setTimeout(() => {
         resize();
@@ -1656,27 +1570,27 @@
     () => activeLayerTab.value,
     async (newLayerId, oldLayerId) => {
       if (newLayerId && newLayerId !== oldLayerId) {
-        console.log('🔄 監聽器觸發圖層切換:', oldLayerId, '->', newLayerId);
+        
 
         // 確保 SVG 內容已清除（雙重保險）
         d3.select('#schematic-container').selectAll('svg').remove();
-        console.log('🗑️ 監聽器：已清除 SVG 內容');
+        
 
         // 清除舊數據（雙重保險）
         gridData.value = null;
         nodeData.value = null;
         linkData.value = null;
-        console.log('🗑️ 監聽器：已清除數據狀態');
+        
 
         // 載入新圖層數據
-        console.log('📊 開始載入新圖層數據:', newLayerId);
+        
         await loadLayerData(newLayerId);
 
         // 等待 DOM 更新後繪製
         await nextTick();
-        console.log('🎨 開始繪製新圖層示意圖');
+        
         drawSchematic();
-        console.log('✅ 圖層切換完成');
+        
       }
     }
   );
@@ -1693,7 +1607,7 @@
     },
     async (newProcessedData) => {
       if (newProcessedData && activeLayerTab.value) {
-        console.log('🔄 檢測到圖層數據變化，重新載入並繪製');
+        
         await loadLayerData(activeLayerTab.value);
         await nextTick();
         drawSchematic();
@@ -1719,13 +1633,13 @@
    * 🚀 組件掛載事件 (Component Mounted Event)
    */
   onMounted(async () => {
-    console.log('D3jsTab mounted - visibleLayers:', visibleLayers.value);
-    console.log('D3jsTab mounted - activeLayerTab:', activeLayerTab.value);
+    
+    
 
     // 初始化第一個可見圖層為作用中分頁
     if (visibleLayers.value.length > 0 && !activeLayerTab.value) {
       activeLayerTab.value = visibleLayers.value[0].layerId;
-      console.log('D3jsTab - Set initial activeLayerTab to:', activeLayerTab.value);
+      
 
       // 載入初始數據
       await loadLayerData(activeLayerTab.value);

@@ -223,7 +223,7 @@ const PATH_CONFIG = {
  * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/Response} Response 文檔
  */
 async function loadFile(primaryPath, fallbackPath = null) {
-  console.log(`📁 嘗試載入檔案: ${primaryPath}`);
+  
 
   try {
     // 嘗試載入主要路徑
@@ -233,14 +233,14 @@ async function loadFile(primaryPath, fallbackPath = null) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
 
-    console.log(`✅ 檔案載入成功: ${primaryPath}`);
+    
     return response;
   } catch (error) {
     console.warn(`⚠️ 主要路徑載入失敗: ${primaryPath}`, error.message);
 
     // 如果有備用路徑，嘗試載入備用路徑
     if (fallbackPath) {
-      console.log(`📁 嘗試備用路徑: ${fallbackPath}`);
+      
 
       try {
         const fallbackResponse = await fetch(fallbackPath);
@@ -249,7 +249,7 @@ async function loadFile(primaryPath, fallbackPath = null) {
           throw new Error(`HTTP ${fallbackResponse.status}: ${fallbackResponse.statusText}`);
         }
 
-        console.log(`✅ 備用路徑載入成功: ${fallbackPath}`);
+        
         return fallbackResponse;
       } catch (fallbackError) {
         console.error(`❌ 備用路徑也載入失敗: ${fallbackPath}`, fallbackError.message);
@@ -345,7 +345,7 @@ async function loadFile(primaryPath, fallbackPath = null) {
  */
 export async function loadDataLayerJson(layer) {
   try {
-    console.log('🔄 載入數據圖層 JSON 資料...');
+    
 
     const fileName = layer.jsonFileName;
     // 數據圖層直接從 /data/ 路徑載入
@@ -473,7 +473,7 @@ export async function loadDataLayerJson(layer) {
  */
 export async function loadGridSchematicJson(layer) {
   try {
-    console.log('📊 載入網格示意圖 JSON 數據:', layer.jsonFileName);
+    
 
     // 載入 JSON 檔案
     const response = await loadFile(
@@ -631,13 +631,13 @@ function generateWeightedRandomValue() {
 }
 
 async function processGridSchematicJson(jsonData) {
-  console.log('📊 處理網格示意圖數據:', jsonData);
+  
 
   // 解析網格尺寸
   const gridX = parseInt(jsonData.x) || 10;
   const gridY = parseInt(jsonData.y) || 10;
 
-  console.log(`📊 網格尺寸: ${gridX} x ${gridY}`);
+  
 
   // 生成網格節點數據
   const gridNodes = [];
@@ -695,11 +695,7 @@ async function processGridSchematicJson(jsonData) {
     avg: (allValues.reduce((sum, val) => sum + val, 0) / allValues.length).toFixed(2),
   };
 
-  console.log('📊 網格統計數據計算完成:', {
-    xRowStats: xRowStats.slice(0, 3), // 顯示前3個 x 排的統計
-    yRowStats: yRowStats.slice(0, 3), // 顯示前3個 y 排的統計
-    overallStats,
-  });
+  
 
   // 建立摘要資料
   const dashboardData = {
@@ -922,7 +918,7 @@ async function processDataLayerJson(jsonData) {
   // 檢查是否為示意圖節點格式
   if (Array.isArray(jsonData) && jsonData.length > 0 && jsonData[0].nodes) {
     // 這是示意圖節點格式，不需要處理為地圖圖層
-    console.log('📊 載入示意圖節點數據，共', jsonData.length, '條路線');
+    
 
     // 為每個路線的節點隨機分配 1-5 的數值
     const processedJsonData = jsonData.map((line) => ({
@@ -965,7 +961,7 @@ async function processDataLayerJson(jsonData) {
   }
 
   // 標準 JSON 格式處理 - 示意圖節點數據
-  console.log('📊 載入標準 JSON 數據，共', jsonData.length, '個項目');
+  
 
   // 建立摘要資料
   const dashboardData = {
@@ -1005,7 +1001,7 @@ async function processDataLayerJson(jsonData) {
  * @returns {Object} 繪製用的數據結構
  */
 export function processGridToDrawData(processedData) {
-  console.log('🎨 處理網格示意圖繪製數據:', processedData);
+  
 
   if (!processedData || !processedData.nodes) {
     console.warn('網格數據不完整，無法生成繪製數據');
@@ -1167,7 +1163,7 @@ export function processGridToDrawData(processedData) {
  * @returns {Object} 繪製用的數據結構
  */
 export function processMetroToDrawData(processedData) {
-  console.log('🎨 處理台北捷運繪製數據:', processedData);
+  
 
   if (!Array.isArray(processedData) || processedData.length === 0) {
     console.warn('捷運數據不完整，無法生成繪製數據');

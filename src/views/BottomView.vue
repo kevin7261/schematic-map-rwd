@@ -52,7 +52,7 @@
           // 使用 nextTick 確保 DOM 更新完成後再進行任何後續操作
           nextTick(() => {
             // 這裡可以添加分頁切換後的特殊處理邏輯
-            console.log(`✅ 底部分頁已切換至: ${props.activeBottomTab}`);
+            
           });
         }
       );

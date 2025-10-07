@@ -79,9 +79,7 @@
       if (addedLayerIds.length > 0) {
         const newestAddedLayerId = addedLayerIds[addedLayerIds.length - 1];
         activeLayerTab.value = newestAddedLayerId;
-        console.log(
-          `🔄 自動切換到新開啟的圖層: ${newLayers.find((layer) => layer.layerId === newestAddedLayerId)?.layerName}`
-        );
+        
       }
       // 如果當前沒有選中分頁，或選中的分頁不在可見列表中，選中第一個
       else if (
@@ -111,7 +109,7 @@
    * 🚀 組件掛載事件 (Component Mounted Event)
    */
   onMounted(() => {
-    console.log('[DrawJsonDataTab] Component Mounted');
+    
 
     // 初始化第一個可見圖層為作用中分頁
     if (visibleLayers.value.length > 0 && !activeLayerTab.value) {

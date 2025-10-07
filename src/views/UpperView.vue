@@ -138,17 +138,9 @@ Features): * - 使用 Vue 2 Options API 進行組件管理 * - 整合多個分�
               if (dragging && tab === 'dashboard') {
                 // 拖曳時禁用儀表板的滑鼠事件
                 dashboardContainerRef.value.style.pointerEvents = 'none';
-                console.log('MainContent: Dashboard container pointer-events set to none');
               } else {
                 // 恢復儀表板的滑鼠事件
                 dashboardContainerRef.value.style.pointerEvents = 'auto';
-                console.log(
-                  'MainContent: Dashboard container pointer-events set to auto (dragging:',
-                  dragging,
-                  ', tab:',
-                  tab,
-                  ')'
-                );
               }
             }
 
@@ -157,17 +149,9 @@ Features): * - 使用 Vue 2 Options API 進行組件管理 * - 整合多個分�
               if (dragging && tab === 'd3js') {
                 // 拖曳時禁用 D3.js 容器的滑鼠事件
                 d3jsContainerRef.value.style.pointerEvents = 'none';
-                console.log('MainContent: D3.js container pointer-events set to none');
               } else {
                 // 恢復 D3.js 容器的滑鼠事件
                 d3jsContainerRef.value.style.pointerEvents = 'auto';
-                console.log(
-                  'MainContent: D3.js container pointer-events set to auto (dragging:',
-                  dragging,
-                  ', tab:',
-                  tab,
-                  ')'
-                );
               }
             }
 
@@ -175,16 +159,8 @@ Features): * - 使用 Vue 2 Options API 進行組件管理 * - 整合多個分�
             if (processedJsonDataContainerRef.value) {
               if (dragging && tab === 'processed-json-data') {
                 processedJsonDataContainerRef.value.style.pointerEvents = 'none';
-                console.log('MainContent: ProcessedJsonData container pointer-events set to none');
               } else {
                 processedJsonDataContainerRef.value.style.pointerEvents = 'auto';
-                console.log(
-                  'MainContent: ProcessedJsonData container pointer-events set to auto (dragging:',
-                  dragging,
-                  ', tab:',
-                  tab,
-                  ')'
-                );
               }
             }
 
@@ -192,16 +168,8 @@ Features): * - 使用 Vue 2 Options API 進行組件管理 * - 整合多個分�
             if (jsonDataContainerRef.value) {
               if (dragging && tab === 'json-data') {
                 jsonDataContainerRef.value.style.pointerEvents = 'none';
-                console.log('MainContent: JsonData container pointer-events set to none');
               } else {
                 jsonDataContainerRef.value.style.pointerEvents = 'auto';
-                console.log(
-                  'MainContent: JsonData container pointer-events set to auto (dragging:',
-                  dragging,
-                  ', tab:',
-                  tab,
-                  ')'
-                );
               }
             }
           });
@@ -215,15 +183,12 @@ Features): * - 使用 Vue 2 Options API 進行組件管理 * - 整合多個分�
        */
       watch(
         () => props.activeUpperTab,
-        (newTab, oldTab) => {
-          console.log('🔄 UpperView: Tab changed from', oldTab, 'to', newTab);
-
+        (newTab) => {
           // 當切換到 D3.js 分頁時，延遲觸發 resize 以確保容器已顯示
           if (newTab === 'd3js') {
             nextTick(() => {
               setTimeout(() => {
                 if (D3jsTab.value && D3jsTab.value.resize) {
-                  console.log('🔄 UpperView: 切換到 D3.js 分頁，觸發 resize');
                   D3jsTab.value.resize();
                 }
               }, 100); // 給容器一些時間來完成顯示動畫
@@ -252,9 +217,7 @@ Features): * - 使用 Vue 2 Options API 進行組件管理 * - 整合多個分�
        *
        * @param {Object} highlightData - 包含 layerId 和 id 的高亮數據物件
        */
-      const highlightFeature = (highlightData) => {
-        console.log('🎯 UpperView: highlightFeature called with data:', highlightData);
-        console.log('🎯 highlightFeature: 地圖功能已移除，無需高亮顯示');
+      const highlightFeature = () => {
         // 地圖功能已移除，不需要高亮顯示
       };
 
@@ -265,7 +228,6 @@ Features): * - 使用 Vue 2 Options API 進行組件管理 * - 整合多個分�
        */
       const resetView = () => {
         // 地圖功能已移除，不需要重設視圖
-        console.log('🔄 resetView: 地圖功能已移除，無需重設視圖');
       };
 
       /**
@@ -275,7 +237,6 @@ Features): * - 使用 Vue 2 Options API 進行組件管理 * - 整合多個分�
        */
       const fitToTainanBounds = () => {
         // 地圖功能已移除，不需要適應邊界
-        console.log('🗺️ fitToTainanBounds: 地圖功能已移除，無需適應邊界');
       };
 
       /**
@@ -284,11 +245,8 @@ Features): * - 使用 Vue 2 Options API 進行組件管理 * - 整合多個分�
        * 用於響應容器尺寸變化
        */
       const invalidateMapSize = () => {
-        console.log('📏 UpperView: invalidateMapSize 被調用');
-
         // 觸發 D3jsTab 重新繪製
         if (D3jsTab.value && D3jsTab.value.resize) {
-          console.log('📏 UpperView: 觸發 D3jsTab resize');
           D3jsTab.value.resize();
         }
 

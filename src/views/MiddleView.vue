@@ -120,7 +120,7 @@ Cheng * @since 1.0.0 */
    */
   const middleSectionTotalHeight = computed(() => {
     const totalHeight = props.dynamicMainAreaHeight;
-    console.log(`🔧 MiddleView: middleSectionTotalHeight (from prop): ${totalHeight}`);
+
     return Math.max(totalHeight, 0); // 確保不為負數，避免佈局錯誤
   });
 
@@ -130,9 +130,7 @@ Cheng * @since 1.0.0 */
    */
   const actualBottomViewPixelHeight = computed(() => {
     const pixelHeight = (bottomViewHeightPercent.value / 100) * middleSectionTotalHeight.value;
-    console.log(
-      `🔧 MiddleView: actualBottomViewPixelHeight calculated: ${pixelHeight} (percent: ${bottomViewHeightPercent.value}%, totalMiddle: ${middleSectionTotalHeight.value})`
-    );
+
     return pixelHeight;
   });
 
@@ -142,9 +140,7 @@ Cheng * @since 1.0.0 */
    */
   const contentHeight = computed(() => {
     const mainContentH = middleSectionTotalHeight.value - actualBottomViewPixelHeight.value;
-    console.log(
-      `🔧 MiddleView: contentHeight (for MainContent) calculated: ${mainContentH}, totalMiddle: ${middleSectionTotalHeight.value}, bottomViewPx: ${actualBottomViewPixelHeight.value}`
-    );
+
     return mainContentH;
   });
 
@@ -220,10 +216,8 @@ Cheng * @since 1.0.0 */
    */
   watch(
     () => props.activeUpperTab,
-    (newTab, oldTab) => {
-      console.log(
-        `🔧 MiddleView Watcher: activeUpperTab changed from "${oldTab}" to "${newTab}". Current bottomViewHeightPercent: ${bottomViewHeightPercent.value}%`
-      );
+    () => {
+      // Tab changed
     }
   );
 
@@ -233,16 +227,13 @@ Cheng * @since 1.0.0 */
    */
   onMounted(() => {
     // 初始計算將依賴從 HomeView 傳遞的正確 prop
-    console.log('🚀 MiddleView mounted');
   });
 
   /**
    * 🗑️ 組件卸載時清理 (Component Unmounted Cleanup)
    * 組件銷毀前的清理工作，確保沒有記憶體洩漏
    */
-  onUnmounted(() => {
-    console.log('🗑️ MiddleView unmounted');
-  });
+  onUnmounted(() => {});
 
   // --- 🔧 可從父組件呼叫的方法 (Methods Callable from Parent) ---
 
@@ -258,7 +249,7 @@ Cheng * @since 1.0.0 */
       console.warn('⚠️ 無法高亮顯示：mainContentRef 未定義');
       return;
     }
-    console.log('🎯 MiddleView: 呼叫 highlightFeature', highlightData);
+
     mainContentRef.value.highlightFeature(highlightData);
   };
 
@@ -269,7 +260,6 @@ Cheng * @since 1.0.0 */
    */
   const fitToTainanBounds = () => {
     if (mainContentRef.value) {
-      console.log('🗺️ MiddleView: 呼叫 fitToTainanBounds');
       mainContentRef.value.fitToTainanBounds();
     }
   };
@@ -278,9 +268,7 @@ Cheng * @since 1.0.0 */
    * 🔄 重設地圖視圖 (Reset Map View)
    * MapTab已移除，此功能不再需要
    */
-  const resetMapTab = () => {
-    console.log('🔄 MiddleView: MapTab已移除，resetMapTab功能已停用');
-  };
+  const resetMapTab = () => {};
 
   /**
    * 📏 刷新地圖尺寸 (Invalidate Map Size)
@@ -289,7 +277,6 @@ Cheng * @since 1.0.0 */
    */
   const invalidateMapSize = () => {
     if (mainContentRef.value) {
-      console.log('📏 MiddleView: 呼叫地圖尺寸刷新');
       mainContentRef.value.invalidateMapSize();
     }
   };
@@ -300,7 +287,6 @@ Cheng * @since 1.0.0 */
    */
   const stopMapClickMode = () => {
     if (mainContentRef.value) {
-      console.log('🛑 MiddleView: 停止地圖點擊模式');
       mainContentRef.value.stopMapClickMode();
     }
   };

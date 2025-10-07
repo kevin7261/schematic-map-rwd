@@ -170,7 +170,7 @@
        */
       const resetView = () => {
         // MapTab已移除，此功能不再需要
-        console.log('MapTab已移除，resetView功能已停用');
+        
       };
 
       // 🔧 拖拽調整功能 (Drag Resize Functions)
@@ -198,10 +198,7 @@
         // 獲取窗口尺寸以計算百分比
         const currentWindowWidth = windowWidth.value;
 
-        console.log(`🔧 開始調整 ${direction} 方向，初始值:`, {
-          leftWidth: startLeftWidth,
-          rightWidth: startRightWidth,
-        });
+        
 
         /**
          * 🖱️ 處理滑鼠移動事件 (Handle Mouse Move)
@@ -243,11 +240,7 @@
           // 驗證最終尺寸
           validatePanelSizes();
 
-          console.log('✅ 拖曳調整完成，最終值:', {
-            leftWidth: leftViewWidth.value,
-            rightWidth: rightViewWidth.value,
-            mainWidth: mainPanelWidth.value,
-          });
+          
         };
 
         // 註冊事件監聽器
@@ -287,9 +280,7 @@
 
         // 檢查是否跨越了響應式斷點
         if (prevIsDesktop !== currentIsDesktop) {
-          console.log(
-            `🔄 HomeView: 響應式斷點切換 ${prevIsDesktop ? '桌面版→響應式' : '響應式→桌面版'}`
-          );
+          
           handleScreenSizeChange();
         } else {
           // 同樣佈局模式下的大小變化，通知地圖重新計算尺寸
@@ -323,9 +314,7 @@
             const minHeight = calculateMinBottomHeight();
             if (mobileBottomViewHeight.value < minHeight) {
               mobileBottomViewHeight.value = Math.round(minHeight);
-              console.log(
-                `🔧 HomeView: 視窗大小變化，調整底部面板最小高度至 ${mobileBottomViewHeight.value}vh`
-              );
+              
             }
           }
         });
@@ -336,7 +325,7 @@
        * 初始化組件和事件監聽器
        */
       onMounted(() => {
-        console.log('🚀 Schematic Map平台已初始化');
+        
 
         // 添加視窗調整事件監聽
         window.addEventListener('resize', handleResize);
@@ -388,16 +377,10 @@
        * @param {Object} feature - 選中的地理特徵對象
        */
       const handleFeatureSelected = (feature) => {
-        console.log('HomeView - handleFeatureSelected called with:', {
-          feature: feature,
-          properties: feature.properties,
-          store: dataStore,
-        });
+        
         // 將選中的特徵設定到 Pinia store
         dataStore.setSelectedFeature(feature);
-        console.log('HomeView - After setting selectedFeature:', {
-          storeSelectedFeature: dataStore.selectedFeature,
-        });
+        
 
         // 檢查當前是桌面版還是響應式版本
         const isDesktop = window.innerWidth >= 1200; // xl breakpoint
@@ -422,7 +405,7 @@
        * @param {Object} highlightData - 包含 layerId 和 id 的物件
        */
       const handleHighlight = (highlightData) => {
-        console.log('🎯 HomeView 處理高亮顯示:', highlightData);
+        
 
         // 如果當前不在地圖視圖，先切換到地圖
         if (activeUpperTab.value !== 'map') {
@@ -489,12 +472,7 @@
         const startBottomHeight = mobileBottomViewHeight.value;
         const windowHeight = window.innerHeight;
 
-        console.log('🔧 HomeView - 開始垂直調整', {
-          startY,
-          startBottomHeight,
-          windowHeight,
-          isTouch,
-        });
+        
 
         /**
          * 🖱️ 處理移動事件（滑鼠或觸控）
@@ -537,9 +515,7 @@
           document.removeEventListener('touchend', handleEnd);
           document.removeEventListener('touchcancel', handleEnd);
 
-          console.log('🔧 HomeView - 垂直調整結束', {
-            finalHeight: mobileBottomViewHeight.value,
-          });
+          
         };
 
         // 註冊事件監聽器（同時支援滑鼠和觸控）
@@ -563,7 +539,7 @@
 
       // 🔄 監聽螢幕大小變化，在桌面版和響應式版本切換時重新渲染地圖
       const handleScreenSizeChange = () => {
-        console.log('🔄 HomeView: 螢幕尺寸跨越斷點，重新初始化地圖');
+        
 
         // 強制重新渲染響應式地圖
         mobileMapKey.value += 1;
@@ -576,7 +552,7 @@
             if (isDesktop) {
               // 桌面版：處理 MiddleView 中的地圖
               if (middlePanelRef.value) {
-                console.log('🖥️ HomeView: 切換到桌面版，處理 MiddleView 地圖');
+                
                 // 通過 MiddleView 調用 UpperView 的地圖尺寸重新計算
                 if (middlePanelRef.value.invalidateMapSize) {
                   middlePanelRef.value.invalidateMapSize();
@@ -590,7 +566,7 @@
             } else {
               // 響應式版本：處理 mobileUpperViewRef 中的地圖
               if (mobileUpperViewRef.value) {
-                console.log('📱 HomeView: 切換到響應式版本，處理 UpperView 地圖');
+                
                 // 直接調用 UpperView 的地圖尺寸重新計算
                 if (mobileUpperViewRef.value.invalidateMapSize) {
                   mobileUpperViewRef.value.invalidateMapSize();

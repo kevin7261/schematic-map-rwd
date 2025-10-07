@@ -570,14 +570,6 @@ export const useDataStore = defineStore(
         return;
       }
 
-      console.log('🔧 DataStore: 找到圖層', {
-        layerId,
-        layerName: layer.layerName,
-        currentVisible: layer.visible,
-        isLoaded: layer.isLoaded,
-        isLoading: layer.isLoading,
-      });
-
       // 切換可見性狀態
       layer.visible = !layer.visible;
 
@@ -586,12 +578,6 @@ export const useDataStore = defineStore(
 
       // 如果圖層被開啟且尚未載入，則載入資料
       const shouldLoad = layer.visible && !layer.isLoaded && !layer.isLoading;
-      console.log('🔧 DataStore: 載入條件檢查', {
-        visible: layer.visible,
-        isLoaded: layer.isLoaded,
-        isLoading: layer.isLoading,
-        shouldLoad,
-      });
 
       if (shouldLoad) {
         try {
@@ -611,13 +597,9 @@ export const useDataStore = defineStore(
           // 生成繪製數據
           if (layer.processToDrawData && layer.processedJsonData) {
             layer.drawJsonData = layer.processToDrawData(layer.processedJsonData);
-            console.log(`🎨 圖層 "${layer.layerName}" 繪製數據生成完成:`, layer.drawJsonData);
           }
 
           layer.isLoaded = true;
-
-          console.log(`✅ 圖層 "${layer.layerName}" 載入完成`);
-          console.log(`📊 圖層儀表板資料:`, layer.dashboardData);
 
           // 保存完整的圖層狀態
           saveLayerState(layerId, {
@@ -659,7 +641,6 @@ export const useDataStore = defineStore(
         width: Math.round(width),
         height: Math.round(height),
       };
-      console.log('📏 D3jsTab 尺寸更新:', d3jsDimensions.value);
     };
 
     // 更新當前圖層計算後的網格狀態（可見行列與單元尺寸）
@@ -674,21 +655,14 @@ export const useDataStore = defineStore(
         cellHeight: Math.round(state.cellHeight),
         updatedAt: Date.now(),
       };
-      console.log('📐 更新計算後網格狀態:', layerId, layerStates.value[layerId].computedGridState);
     };
 
     const setSelectedFeature = (feature) => {
       // 記錄選取變化的log
-      if (feature) {
-        console.log('🎯 DataStore: 設置選中要素:', feature.properties?.id);
-      } else {
-        console.log('🗑️ DataStore: 清除選中要素');
-      }
       selectedFeature.value = feature;
     };
 
     const clearSelectedFeature = () => {
-      console.log('🗑️ DataStore: 清除選中要素');
       selectedFeature.value = null;
     };
 

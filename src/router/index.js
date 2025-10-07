@@ -150,10 +150,6 @@ router.beforeEach((to, from, next) => {
   }
 
   // 記錄路由切換日誌（開發環境）
-  if (process.env.NODE_ENV === 'development') {
-    console.log(`🛣️ 路由切換: ${from.path} → ${to.path}`);
-  }
-
   // 繼續路由導航
   next();
 });
@@ -167,12 +163,8 @@ router.beforeEach((to, from, next) => {
  * @param {RouteLocationNormalized} to - 已進入的路由
  * @param {RouteLocationNormalized} from - 已離開的路由
  */
-router.afterEach((to) => {
+router.afterEach(() => {
   // 記錄路由切換完成日誌
-  if (process.env.NODE_ENV === 'development') {
-    console.log(`✅ 路由切換完成: ${to.path}`);
-  }
-
   // 可以在這裡添加頁面分析代碼
   // 例如：Google Analytics 頁面追蹤
   // gtag('config', 'GA_MEASUREMENT_ID', {

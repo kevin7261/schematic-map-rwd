@@ -337,29 +337,16 @@
         const minX = Math.min(...allXCoords);
         const maxX = Math.max(...allXCoords);
         gridX = maxX - minX + 1; // 網格寬度 = 最大x - 最小x + 1
-        console.log('🔍 從台北捷運數據計算網格寬度:', {
-          minX,
-          maxX,
-          gridX,
-          allXCoords: allXCoords.slice(0, 10),
-        });
+        
       }
     }
 
     if (!gridX) {
-      console.log('🔍 Grid Width Debug: 找不到 gridX 配置', {
-        layerInfoData,
-        currentLayer: currentLayer
-          ? {
-              processedJsonData: currentLayer.processedJsonData,
-              dashboardData: currentLayer.dashboardData,
-            }
-          : null,
-      });
+      
 
       // 如果是非網格圖層，返回 0 表示不適用
       if (currentLayer && !currentLayer.isGridSchematic) {
-        console.log('🔍 非網格圖層，Grid Width 不適用');
+        
         return 0;
       }
 
@@ -370,11 +357,7 @@
     const containerWidth = dataStore.d3jsDimensions.width;
     const cellWidth = Math.floor(containerWidth / gridX);
 
-    console.log('🔍 Grid Width Debug:', {
-      containerWidth,
-      gridX,
-      cellWidth,
-    });
+    
 
     return cellWidth;
   };
@@ -449,29 +432,16 @@
         const minY = Math.min(...allYCoords);
         const maxY = Math.max(...allYCoords);
         gridY = maxY - minY + 1; // 網格高度 = 最大y - 最小y + 1
-        console.log('🔍 從台北捷運數據計算網格高度:', {
-          minY,
-          maxY,
-          gridY,
-          allYCoords: allYCoords.slice(0, 10),
-        });
+        
       }
     }
 
     if (!gridY) {
-      console.log('🔍 Grid Height Debug: 找不到 gridY 配置', {
-        layerInfoData,
-        currentLayer: currentLayer
-          ? {
-              processedJsonData: currentLayer.processedJsonData,
-              dashboardData: currentLayer.dashboardData,
-            }
-          : null,
-      });
+      
 
       // 如果是非網格圖層，返回 0 表示不適用
       if (currentLayer && !currentLayer.isGridSchematic) {
-        console.log('🔍 非網格圖層，Grid Height 不適用');
+        
         return 0;
       }
 
@@ -482,11 +452,7 @@
     const containerHeight = dataStore.d3jsDimensions.height;
     const cellHeight = Math.floor(containerHeight / gridY);
 
-    console.log('🔍 Grid Height Debug:', {
-      containerHeight,
-      gridY,
-      cellHeight,
-    });
+    
 
     return cellHeight;
   };
@@ -637,7 +603,7 @@
         statistics: stats,
       };
 
-      console.log('圖層資訊載入完成:', analysisResults.value);
+      
     } catch (error) {
       console.error('載入圖層資訊失敗:', error);
       // 儲存錯誤資訊以供顯示
@@ -686,7 +652,7 @@
     },
     (newProcessedData) => {
       if (newProcessedData) {
-        console.log('🔄 網格預覽：檢測到數據變化，自動更新預覽');
+        
         // 觸發響應式更新，讓網格預覽重新渲染
         // Vue 會自動檢測到數據變化並重新渲染組件
       }

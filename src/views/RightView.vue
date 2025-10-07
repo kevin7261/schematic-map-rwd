@@ -119,12 +119,8 @@ Kevin Cheng * @since 1.0.0 */
        */
       watch(
         () => dataStore.selectedFeature,
-        (newFeature) => {
-          console.log('RightView - selectedFeature changed:', {
-            newFeature: newFeature,
-            properties: newFeature?.properties,
-            store: dataStore,
-          });
+        () => {
+          // Feature changed
         },
         { immediate: true }
       ); // immediate: true 表示立即執行一次
@@ -136,10 +132,7 @@ Kevin Cheng * @since 1.0.0 */
        */
       const selectedFeatureComputed = computed(() => {
         const feature = dataStore.selectedFeature;
-        console.log('RightView - Computing selectedFeature:', {
-          feature: feature,
-          properties: feature?.properties,
-        });
+
         return feature;
       });
 

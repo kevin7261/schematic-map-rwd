@@ -99,7 +99,6 @@
        * @param {string} layerId - 要切換的圖層 ID
        */
       const toggleLayer = (layerId) => {
-        console.log('🔘 LayersTab: 切換圖層', layerId);
         dataStore.toggleLayerVisibility(layerId);
       };
 
@@ -127,22 +126,10 @@
         }
 
         // 記錄詳細的狀態資訊用於除錯
-        console.log('🎛️ LayersTab: 開關變更觸發', {
-          layerId,
-          layerName: layer.layerName,
-          currentVisible: layer.visible,
-          targetChecked: event.target.checked,
-          isLoaded: layer.isLoaded,
-          isLoading: layer.isLoading,
-        });
-
         // 只有當當前狀態與 checkbox 狀態不一致時才切換
         // 這可以避免重複觸發和狀態衝突
         if (layer.visible !== event.target.checked) {
-          console.log('🎛️ LayersTab: 執行圖層切換', layerId, '新狀態:', event.target.checked);
           dataStore.toggleLayerVisibility(layerId);
-        } else {
-          console.log('🎛️ LayersTab: 狀態已一致，跳過切換', layerId);
         }
       };
 

@@ -197,13 +197,7 @@ Cheng * @since 1.0.0 */
     const count = layer.dataTableData?.length || 0;
 
     // 記錄詳細的除錯資訊，用於開發和問題排查
-    console.log('DataTable - Layer data count:', {
-      layerId: layer.layerId,
-      layerName: layer.layerName,
-      hasTableData: !!layer.dataTableData,
-      dataCount: count,
-      sampleData: layer.dataTableData?.[0] || null,
-    });
+    
 
     return count;
   };
@@ -310,7 +304,7 @@ Cheng * @since 1.0.0 */
    * @param {Object} layer - 圖層物件
    */
   const handleItemClick = (item, layer) => {
-    console.log('點擊項目:', { item, layer: layer.layerName });
+    
 
     // 創建符合 PropertiesTab 期望的 feature 格式
     const feature = {
@@ -322,7 +316,7 @@ Cheng * @since 1.0.0 */
       },
     };
 
-    console.log('設置 selectedFeature:', feature);
+    
     dataStore.setSelectedFeature(feature);
 
     // 觸發 feature-selected 事件，讓 HomeView 自動切換到屬性標籤
@@ -354,9 +348,7 @@ Cheng * @since 1.0.0 */
       if (addedLayerIds.length > 0) {
         const newestAddedLayerId = addedLayerIds[addedLayerIds.length - 1];
         activeLayerTab.value = newestAddedLayerId;
-        console.log(
-          `🔄 自動切換到新開啟的圖層: ${newLayers.find((layer) => layer.layerId === newestAddedLayerId)?.layerName}`
-        );
+        
       }
       // 如果當前沒有選中分頁，或選中的分頁不在可見列表中，選中第一個
       else if (
@@ -376,7 +368,7 @@ Cheng * @since 1.0.0 */
    * 🚀 組件掛載事件 (Component Mounted Event)
    */
   onMounted(() => {
-    console.log('[DataTableTab] Component Mounted');
+    
 
     // 初始化第一個可見圖層為作用中分頁
     if (visibleLayers.value.length > 0 && !activeLayerTab.value) {

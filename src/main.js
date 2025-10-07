@@ -131,7 +131,6 @@ import 'bootstrap/dist/js/bootstrap.bundle.min.js';
  * - 幫助開發者確認樣式文件是否正確引入
  * - 使用 emoji 提升日誌的可讀性
  */
-console.log('🎨 樣式文件載入完成');
 
 // ==================== 🚀 Vue 應用程式實例創建與配置 (Vue Application Instance Creation) ====================
 
@@ -220,16 +219,11 @@ app.mount('#app');
  */
 
 // 輸出平台啟動確認信息
-console.log('🚀 Schematic Map平台已啟動');
 
 // 輸出 Pinia 狀態管理系統初始化確認
-console.log('📦 Pinia 狀態管理已初始化');
 
 // 輸出 Vue Router 路由系統就緒確認
-console.log('🗺️ Vue Router 路由系統已就緒');
 
 // 輸出 Bootstrap 5 UI 框架載入確認
-console.log('🎨 Bootstrap 5 UI 框架已載入');
 
 // 輸出 Font Awesome 圖示庫載入確認
-console.log('🔤 Font Awesome 圖示庫已載入');
