@@ -533,7 +533,7 @@
   };
 
   /**
-   * 🔄 更新 drawJsonData（刪除被隱藏的行列）
+   * 🔄 更新 drawJsonData（刪除被隱藏的行列，並合併值）
    * @param {Array} hiddenColumnIndices - 被隱藏的列索引
    * @param {Array} hiddenRowIndices - 被隱藏的行索引
    */
@@ -542,6 +542,12 @@
 
     const currentLayer = dataStore.findLayerById(activeLayerTab.value);
     if (!currentLayer || !currentLayer.drawJsonData) return;
+
+    // 🎯 建立原始節點值的快速查找表
+    const nodeValueMap = new Map();
+    gridData.value.nodes.forEach((node) => {
+      nodeValueMap.set(`${node.x},${node.y}`, node.value);
+    });
 
     // 建立列和行的映射（原始索引 -> 新索引）
     const columnMapping = new Map();
@@ -561,18 +567,59 @@
       }
     }
 
-    // 過濾並重新映射節點
+    // 🎯 過濾並重新映射節點，同時合併被隱藏的相鄰格子的值
     const newNodes = gridData.value.nodes
       .filter((node) => !hiddenColumnIndices.includes(node.x) && !hiddenRowIndices.includes(node.y))
-      .map((node) => ({
-        ...node,
-        x: columnMapping.get(node.x),
-        y: rowMapping.get(node.y),
-        coord: {
+      .map((node) => {
+        let mergedValue = node.value;
+
+        // 🔍 檢查左邊列是否被隱藏
+        const leftColIndex = node.x - 1;
+        if (leftColIndex >= 0 && hiddenColumnIndices.includes(leftColIndex)) {
+          const leftValue = nodeValueMap.get(`${leftColIndex},${node.y}`);
+          if (leftValue !== undefined) {
+            mergedValue = Math.max(mergedValue, leftValue);
+          }
+        }
+
+        // 🔍 檢查右邊列是否被隱藏
+        const rightColIndex = node.x + 1;
+        if (rightColIndex < gridDimensions.value.x && hiddenColumnIndices.includes(rightColIndex)) {
+          const rightValue = nodeValueMap.get(`${rightColIndex},${node.y}`);
+          if (rightValue !== undefined) {
+            mergedValue = Math.max(mergedValue, rightValue);
+          }
+        }
+
+        // 🔍 檢查上面行是否被隱藏
+        const topRowIndex = node.y - 1;
+        if (topRowIndex >= 0 && hiddenRowIndices.includes(topRowIndex)) {
+          const topValue = nodeValueMap.get(`${node.x},${topRowIndex}`);
+          if (topValue !== undefined) {
+            mergedValue = Math.max(mergedValue, topValue);
+          }
+        }
+
+        // 🔍 檢查下面行是否被隱藏
+        const bottomRowIndex = node.y + 1;
+        if (bottomRowIndex < gridDimensions.value.y && hiddenRowIndices.includes(bottomRowIndex)) {
+          const bottomValue = nodeValueMap.get(`${node.x},${bottomRowIndex}`);
+          if (bottomValue !== undefined) {
+            mergedValue = Math.max(mergedValue, bottomValue);
+          }
+        }
+
+        return {
+          ...node,
+          value: mergedValue, // 使用合併後的最大值
           x: columnMapping.get(node.x),
           y: rowMapping.get(node.y),
-        },
-      }));
+          coord: {
+            x: columnMapping.get(node.x),
+            y: rowMapping.get(node.y),
+          },
+        };
+      });
 
     // 重新計算統計數據
     const newGridX = gridDimensions.value.x - hiddenColumnIndices.length;
@@ -834,13 +881,52 @@
       const x = margin.left + visibleColumnPositions[visibleColIdx] + columnWidths[node.x] / 2;
       const y = margin.top + visibleRowPositions[visibleRowIdx] + rowHeights[node.y] / 2;
 
+      // 🎯 計算合併後的值（如果相鄰的col或row被刪除，取最大值）
+      let mergedValue = node.value;
+
+      // 檢查左邊列是否被隱藏
+      const leftColIndex = node.x - 1;
+      if (leftColIndex >= 0 && hiddenColumnIndices.includes(leftColIndex)) {
+        const leftValue = nodeValueMap.get(`${leftColIndex},${node.y}`);
+        if (leftValue !== undefined) {
+          mergedValue = Math.max(mergedValue, leftValue);
+        }
+      }
+
+      // 檢查右邊列是否被隱藏
+      const rightColIndex = node.x + 1;
+      if (rightColIndex < gridDimensions.value.x && hiddenColumnIndices.includes(rightColIndex)) {
+        const rightValue = nodeValueMap.get(`${rightColIndex},${node.y}`);
+        if (rightValue !== undefined) {
+          mergedValue = Math.max(mergedValue, rightValue);
+        }
+      }
+
+      // 檢查上面行是否被隱藏
+      const topRowIndex = node.y - 1;
+      if (topRowIndex >= 0 && hiddenRowIndices.includes(topRowIndex)) {
+        const topValue = nodeValueMap.get(`${node.x},${topRowIndex}`);
+        if (topValue !== undefined) {
+          mergedValue = Math.max(mergedValue, topValue);
+        }
+      }
+
+      // 檢查下面行是否被隱藏
+      const bottomRowIndex = node.y + 1;
+      if (bottomRowIndex < gridDimensions.value.y && hiddenRowIndices.includes(bottomRowIndex)) {
+        const bottomValue = nodeValueMap.get(`${node.x},${bottomRowIndex}`);
+        if (bottomValue !== undefined) {
+          mergedValue = Math.max(mergedValue, bottomValue);
+        }
+      }
+
       // 節點數字顏色固定為白色
       const nodeColor = '#FFFFFF';
 
       // 使用固定字體大小，不受網格大小影響
       const fontSize = 14; // 固定字體大小
 
-      // 只繪製節點數值文字，使用動態決定的顏色
+      // 只繪製節點數值文字，使用合併後的值
       nodeGroup
         .append('text')
         .attr('x', x)
@@ -850,12 +936,10 @@
         .attr('font-size', fontSize)
         .attr('font-weight', 'bold')
         .attr('fill', nodeColor)
-        .text(node.value);
+        .text(mergedValue);
 
       // 🆕 顯示相鄰列的值（左右）
-      // 檢查左邊列（x-1）和右邊列（x+1）
-      const leftColIndex = node.x - 1;
-      const rightColIndex = node.x + 1;
+      // 使用前面已經宣告的 leftColIndex 和 rightColIndex
 
       // 確認左右列存在且未被隱藏
       const hasLeftCol = leftColIndex >= 0 && !hiddenColumnIndices.includes(leftColIndex);
@@ -923,9 +1007,7 @@
       }
 
       // 🆕 顯示相鄰行的值（上下）
-      // 檢查上面行（y-1）和下面行（y+1）
-      const topRowIndex = node.y - 1;
-      const bottomRowIndex = node.y + 1;
+      // 使用前面已經宣告的 topRowIndex 和 bottomRowIndex
 
       // 確認上下行存在且未被隱藏
       const hasTopRow = topRowIndex >= 0 && !hiddenRowIndices.includes(topRowIndex);
