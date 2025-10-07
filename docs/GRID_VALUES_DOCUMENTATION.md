@@ -177,3 +177,5 @@ Row 2:  6     1     9
 - `src/utils/dataProcessor.js` - 數據計算邏輯
 - `src/tabs/D3jsTab.vue` - 視覺化顯示
 - `src/stores/dataStore.js` - 數據存儲管理
+
+
