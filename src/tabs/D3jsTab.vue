@@ -89,46 +89,35 @@
    * @param {string} layerId - 圖層 ID
    */
   const setActiveLayerTab = (layerId) => {
-    
-
     // 如果切換到相同圖層，不需要重新處理
     if (activeLayerTab.value === layerId) {
-      
       return;
     }
 
     // 立即清除 SVG 內容，避免重疊
     d3.select('#schematic-container').selectAll('svg').remove();
-    
 
     // 清除數據狀態
     gridData.value = null;
     nodeData.value = null;
     linkData.value = null;
-    
 
     // 設置新的活動圖層
     activeLayerTab.value = layerId;
-    
   };
 
   /**
    * 📊 當前圖層摘要 (Current Layer Summary)
    */
   const currentLayerSummary = computed(() => {
-    
-    
-
     if (!activeLayerTab.value) {
-      
       return null;
     }
 
     const layer = visibleLayers.value.find((l) => l.layerId === activeLayerTab.value);
-    
 
     const result = layer ? layer.dashboardData || null : null;
-    
+
     return result;
   });
 
@@ -169,9 +158,6 @@
         throw new Error(`找不到圖層配置: ${layerId}`);
       }
 
-      
-      
-
       // 🎯 直接使用圖層已經載入的 processedJsonData，不重新載入
       // 這樣可以確保與網格預覽使用相同的數據
       if (targetLayer.processedJsonData) {
@@ -182,16 +168,15 @@
             x: targetLayer.processedJsonData.gridX,
             y: targetLayer.processedJsonData.gridY,
           };
-          
         } else if (Array.isArray(targetLayer.processedJsonData)) {
           // 行政區示意圖數據（陣列格式）
           nodeData.value = targetLayer.processedJsonData;
-          
+
           setLinkData();
         } else {
           // 其他格式的 processedJsonData
           nodeData.value = targetLayer.processedJsonData;
-          
+
           setLinkData();
         }
       } else if (targetLayer.dataTableData && targetLayer.dataTableData.length > 0) {
@@ -203,7 +188,7 @@
         }));
 
         nodeData.value = schematicData;
-        
+
         setLinkData();
       } else {
         console.error('❌ 無法找到圖層數據:', {
@@ -281,8 +266,6 @@
 
       linkData.value.push(data);
     });
-
-    
   };
 
   // ==================== 📏 容器尺寸和繪製函數 (Container Dimensions and Drawing Functions) ====================
@@ -293,15 +276,12 @@
    */
   const getDimensions = () => {
     const container = document.getElementById('schematic-container');
-    
 
     if (container) {
       // 獲取容器的實際可用尺寸
       const rect = container.getBoundingClientRect();
       const width = container.clientWidth || rect.width;
       const height = container.clientHeight || rect.height;
-
-      
 
       const dimensions = {
         width: Math.max(width, 40),
@@ -314,7 +294,6 @@
       return dimensions;
     }
 
-    
     // 如果找不到容器，使用預設尺寸
     const defaultDimensions = {
       width: 800,
@@ -331,9 +310,7 @@
    * 🎨 繪製網格示意圖 (Draw Grid Schematic)
    */
   const drawGridSchematic = () => {
-    
     if (!gridData.value) {
-      
       return;
     }
 
@@ -357,7 +334,6 @@
         Math.abs(existingWidth - (width + margin.left + margin.right)) < 2 &&
         Math.abs(existingHeight - (height + margin.top + margin.bottom)) < 2
       ) {
-        
         return;
       }
     }
@@ -434,7 +410,6 @@
         if (narrowColumns.length > 0 && visibleColumnMaxValues.length > 1) {
           hiddenCols.add(narrowColumns[0].index);
           needAdjust = true;
-          
         }
 
         // 🎯 找出實際高度 < 40 的行中，max 值最小的並隱藏
@@ -446,7 +421,6 @@
         if (shortRows.length > 0 && visibleRowMaxValues.length > 1) {
           hiddenRows.add(shortRows[0].index);
           needAdjust = true;
-          
         }
 
         // 如果這次迭代沒有調整，說明已達到穩定狀態
@@ -511,16 +485,6 @@
     for (let i = 0; i < rowHeights.length; i++) {
       rowPositions.push(rowPositions[i] + rowHeights[i]);
     }
-
-    
-
-    
-
-    
-
-    
-
-    
 
     // 繪製網格線
     drawGridLines(
@@ -669,8 +633,6 @@
         highlightRowIndices: [],
       },
     };
-
-    
   };
 
   /**
@@ -846,6 +808,13 @@
       }
     }
 
+    // 🎯 為每個節點計算相鄰列的資訊
+    // 創建一個快速查找表：根據 (x, y) 找到對應的節點 value
+    const nodeValueMap = new Map();
+    gridData.value.nodes.forEach((node) => {
+      nodeValueMap.set(`${node.x},${node.y}`, node.value);
+    });
+
     // 創建節點群組
     const nodeGroup = svg.append('g').attr('class', 'grid-nodes');
 
@@ -882,6 +851,146 @@
         .attr('font-weight', 'bold')
         .attr('fill', nodeColor)
         .text(node.value);
+
+      // 🆕 顯示相鄰列的值（左右）
+      // 檢查左邊列（x-1）和右邊列（x+1）
+      const leftColIndex = node.x - 1;
+      const rightColIndex = node.x + 1;
+
+      // 確認左右列存在且未被隱藏
+      const hasLeftCol = leftColIndex >= 0 && !hiddenColumnIndices.includes(leftColIndex);
+      const hasRightCol =
+        rightColIndex < gridDimensions.value.x && !hiddenColumnIndices.includes(rightColIndex);
+
+      if (hasLeftCol || hasRightCol) {
+        let selectedColIndex = null;
+        let selectedSide = null; // 'left' or 'right'
+
+        if (hasLeftCol && hasRightCol) {
+          // 比較左右列的 max 值，選擇較小的
+          const leftMax = columnMaxValues[leftColIndex] || 0;
+          const rightMax = columnMaxValues[rightColIndex] || 0;
+
+          if (leftMax <= rightMax) {
+            selectedColIndex = leftColIndex;
+            selectedSide = 'left';
+          } else {
+            selectedColIndex = rightColIndex;
+            selectedSide = 'right';
+          }
+        } else if (hasLeftCol) {
+          selectedColIndex = leftColIndex;
+          selectedSide = 'left';
+        } else if (hasRightCol) {
+          selectedColIndex = rightColIndex;
+          selectedSide = 'right';
+        }
+
+        // 獲取選中列在當前行（node.y）的值
+        if (selectedColIndex !== null) {
+          const adjacentValue = nodeValueMap.get(`${selectedColIndex},${node.y}`);
+
+          if (adjacentValue !== undefined) {
+            // 計算顯示位置（在對應的左邊或右邊）
+            const adjacentFontSize = 10;
+            const offset = columnWidths[node.x] / 4; // 距離中心的偏移量
+
+            let adjacentX;
+            let adjacentTextAnchor;
+
+            if (selectedSide === 'left') {
+              adjacentX = x - offset;
+              adjacentTextAnchor = 'end';
+            } else {
+              adjacentX = x + offset;
+              adjacentTextAnchor = 'start';
+            }
+
+            // 繪製相鄰列的值（使用較小的字體和不同的顏色）
+            nodeGroup
+              .append('text')
+              .attr('x', adjacentX)
+              .attr('y', y)
+              .attr('text-anchor', adjacentTextAnchor)
+              .attr('dominant-baseline', 'middle')
+              .attr('font-size', adjacentFontSize)
+              .attr('font-weight', 'normal')
+              .attr('fill', '#FFD700') // 使用金色顯示相鄰值
+              .attr('opacity', 0.8)
+              .text(adjacentValue);
+          }
+        }
+      }
+
+      // 🆕 顯示相鄰行的值（上下）
+      // 檢查上面行（y-1）和下面行（y+1）
+      const topRowIndex = node.y - 1;
+      const bottomRowIndex = node.y + 1;
+
+      // 確認上下行存在且未被隱藏
+      const hasTopRow = topRowIndex >= 0 && !hiddenRowIndices.includes(topRowIndex);
+      const hasBottomRow =
+        bottomRowIndex < gridDimensions.value.y && !hiddenRowIndices.includes(bottomRowIndex);
+
+      if (hasTopRow || hasBottomRow) {
+        let selectedRowIndex = null;
+        let selectedPosition = null; // 'top' or 'bottom'
+
+        if (hasTopRow && hasBottomRow) {
+          // 比較上下行的 max 值，選擇較小的
+          const topMax = rowMaxValues[topRowIndex] || 0;
+          const bottomMax = rowMaxValues[bottomRowIndex] || 0;
+
+          if (topMax <= bottomMax) {
+            selectedRowIndex = topRowIndex;
+            selectedPosition = 'top';
+          } else {
+            selectedRowIndex = bottomRowIndex;
+            selectedPosition = 'bottom';
+          }
+        } else if (hasTopRow) {
+          selectedRowIndex = topRowIndex;
+          selectedPosition = 'top';
+        } else if (hasBottomRow) {
+          selectedRowIndex = bottomRowIndex;
+          selectedPosition = 'bottom';
+        }
+
+        // 獲取選中行在當前列（node.x）的值
+        if (selectedRowIndex !== null) {
+          const adjacentRowValue = nodeValueMap.get(`${node.x},${selectedRowIndex}`);
+
+          if (adjacentRowValue !== undefined) {
+            // 計算顯示位置（在對應的上面或下面）
+            const adjacentFontSize = 10;
+            const offset = rowHeights[node.y] / 4; // 距離中心的偏移量
+
+            let adjacentY;
+            let adjacentDominantBaseline;
+
+            if (selectedPosition === 'top') {
+              adjacentY = y - offset;
+              adjacentDominantBaseline = 'auto';
+            } else {
+              adjacentY = y + offset;
+              adjacentDominantBaseline = 'hanging';
+            }
+
+            // 繪製相鄰行的值（使用較小的字體和不同的顏色）
+            nodeGroup
+              .append('text')
+              .attr('x', x)
+              .attr('y', adjacentY)
+              .attr('text-anchor', 'middle')
+              .attr('dominant-baseline', adjacentDominantBaseline)
+              .attr('font-size', adjacentFontSize)
+              .attr('font-weight', 'normal')
+              .attr('fill', '#00CED1') // 使用青藍色顯示相鄰行值
+              .attr('opacity', 0.8)
+              .text(adjacentRowValue);
+          }
+        }
+      }
     });
 
     // 繪製統計數據標籤
@@ -1070,14 +1179,9 @@
       }))
     );
 
-    
-
     // 找到點的最大最小值
     let xMax = d3.max(allPoints, (d) => d.x);
     let yMax = d3.max(allPoints, (d) => d.y);
-
-    
-    
 
     // 檢查是否已存在 SVG，如果存在且尺寸相同則不需要重繪
     const existingSvg = d3.select('#schematic-container').select('svg');
@@ -1091,7 +1195,6 @@
         Math.abs(existingWidth - (width + margin.left + margin.right)) < 2 &&
         Math.abs(existingHeight - (height + margin.top + margin.bottom)) < 2
       ) {
-        
         return;
       }
     }
@@ -1179,8 +1282,6 @@
         let dString = '';
         let nodes = [];
 
-        
-
         switch (node.type) {
           case 1:
             nodes = [
@@ -1261,13 +1362,7 @@
               ];
             }
 
-            
-
-            
-
             dString = lineGenerator(nodes);
-
-            
 
             const arc = d3
               .arc()
@@ -1309,13 +1404,7 @@
               ];
             }
 
-            
-
-            
-
             dString = lineGenerator(nodes);
-
-            
 
             const arc = d3
               .arc()
@@ -1357,13 +1446,7 @@
               ];
             }
 
-            
-
-            
-
             dString = lineGenerator(nodes);
-
-            
 
             const arc = d3
               .arc()
@@ -1405,13 +1488,7 @@
               ];
             }
 
-            
-
-            
-
             dString = lineGenerator(nodes);
-
-            
 
             const arc = d3
               .arc()
@@ -1457,8 +1534,6 @@
         }))
       );
 
-      
-
       allLinks.forEach((node) => {
         // 節點數字顏色固定為白色
         const nodeColor = '#FFFFFF';
@@ -1481,14 +1556,9 @@
    * 根據圖層類型選擇相應的繪製方法
    */
   const drawSchematic = () => {
-    
-    
-
     if (isGridSchematicLayer(activeLayerTab.value)) {
-      
       drawGridSchematic();
     } else {
-      
       drawAdministrativeSchematic();
     }
   };
@@ -1498,19 +1568,15 @@
    * 響應容器尺寸變化，重新繪製示意圖
    */
   const resize = () => {
-    
-
     // 確保容器存在且可見
     const container = document.getElementById('schematic-container');
     if (!container) {
-      
       return;
     }
 
     // 檢查容器是否可見（寬度和高度都大於 0）
     const rect = container.getBoundingClientRect();
     if (rect.width <= 0 || rect.height <= 0) {
-      
       // 如果容器不可見，延遲執行
       setTimeout(() => {
         resize();
@@ -1570,27 +1636,22 @@
     () => activeLayerTab.value,
     async (newLayerId, oldLayerId) => {
       if (newLayerId && newLayerId !== oldLayerId) {
-        
-
         // 確保 SVG 內容已清除（雙重保險）
         d3.select('#schematic-container').selectAll('svg').remove();
-        
 
         // 清除舊數據（雙重保險）
         gridData.value = null;
         nodeData.value = null;
         linkData.value = null;
-        
 
         // 載入新圖層數據
-        
+
         await loadLayerData(newLayerId);
 
         // 等待 DOM 更新後繪製
         await nextTick();
-        
+
         drawSchematic();
-        
       }
     }
   );
@@ -1607,7 +1668,6 @@
     },
     async (newProcessedData) => {
       if (newProcessedData && activeLayerTab.value) {
-        
         await loadLayerData(activeLayerTab.value);
         await nextTick();
         drawSchematic();
@@ -1633,13 +1693,9 @@
    * 🚀 組件掛載事件 (Component Mounted Event)
    */
   onMounted(async () => {
-    
-    
-
     // 初始化第一個可見圖層為作用中分頁
     if (visibleLayers.value.length > 0 && !activeLayerTab.value) {
       activeLayerTab.value = visibleLayers.value[0].layerId;
-      
 
       // 載入初始數據
       await loadLayerData(activeLayerTab.value);
